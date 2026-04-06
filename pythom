@@ -1,10 +1,2 @@
-from twilio.rest import Client
-account_sid = ""
-token = ""
-cliente = Client(account_sid, token)
-mensagem = cliente.messages.create( 
-    from_="+15187222690",
-    to="+5512974075279",
-    body="Alerta de SMS, risco de inundação"
-)
-print(mensagem.body)
+
+
