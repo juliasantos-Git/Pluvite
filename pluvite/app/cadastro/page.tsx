@@ -4,8 +4,10 @@ import React from "react";
 import Link from "next/link";
 import { UserRound, Mail, IdCard, Briefcase, Lock } from "lucide-react";
 
-const Infraestrutura = "Infraestrutura";
+const EngenheiroCivil = "Engenheiro Civil";
 const AgenteDefesaCivil = "Agente de Defesa Civil";
+const Geologo = "Geólogo";
+const VigilanciaAmbiental = "Vigilância Ambiental";
 
 export default function Cadastro() {
   // Função para lidar com o envio do formulário (backend futuro)
@@ -15,19 +17,49 @@ export default function Cadastro() {
   };
 
   return (
-    <main className=" min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="flex flex-col pb-15 justify-center items-center max-w-xl w-full bg-white rounded-3xl shadow-2xl p-10 border border-slate-100">
+    <main className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
+      {/* BACKGROUND DE NUVENS (Última camada) */}
+      <div className="absolute inset-0 pointer-events-none">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute animate-particle"
+            style={{
+              // Permite que as nuvens apareçam bem nas pontas (de -10% a 110%)
+              left: `${Math.random() * 120 - 10}%`,
+              bottom: "-150px",
+              animationDelay: `${Math.random() * 25}s`,
+              animationDuration: `${Math.random() * 15 + 25}s`,
+              opacity: 0.6,
+              // Escala aleatória para as nuvens terem tamanhos diferentes
+              transform: `scale(${Math.random() * 0.5 + 0.5})`,
+            }}
+          >
+            {/* Desenho da Nuvem Cyan-900 */}
+            <div className="relative bg-cyan-900 shadow-xl w-32 h-10 rounded-full">
+              <div className="absolute -top-6 left-4 w-14 h-14 bg-cyan-900 rounded-full"></div>
+              <div className="absolute -top-9 left-12 w-18 h-18 bg-cyan-900 rounded-full"></div>
+              <div className="absolute -top-5 left-24 w-12 h-12 bg-cyan-900 rounded-full"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col pb-15 justify-center items-center max-w-xl w-full bg-white rounded-4xl shadow-2xl shadow-zinc-900/50 p-10 border-slate-100 z-100">
         {/* FORMS */}
-
-        <img
-          src={"PluviteIcon.jpeg"}
-          alt="Logo"
-          className="w-15 h-15 rounded-xl mb-6"
-        />
-
+        <div className="bg-white p-3 rounded-2xl shadow-sm mb-6">
+          <img
+            src={"PluviteIcon.jpg"}
+            alt="Logo"
+            className="w-12 h-12 rounded-lg"
+          />
+        </div>
         <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-8  font-sans">
           Criar Conta
         </h1>
+        <p className="text-blue-900/60 pb-8 font-medium -mt-5">
+          Portal do Servidor Municipal
+        </p>
         {/* Campo: Nome */}
         <div className="w-full relative flex items-center w-full max-w-md">
           <input
@@ -45,7 +77,7 @@ export default function Cadastro() {
               type="text"
               required
               placeholder="E-Mail Institucional"
-              className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
+              className="pr-9 bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
             ></input>
             <Mail className="absolute right-4" />
           </div>
@@ -61,21 +93,25 @@ export default function Cadastro() {
           </div>
         </div>
 
-        <div className="flex flex-row sm:flex-row gap-4 mt-1 max-w-md">
+        <div className="flex flex-col sm:flex-row gap-4">
           {/* Campo: Cargo */}
-          <div className="flex-[2] relative flex items-center max-w-md mt-4">
-            <form>
-              <label className=" outline-none border border-none focus:ring-0 focus:outline-none">
-                <select id="cadastro" className="">
-                  <option selected>Escolha seu cargo</option>
-                  <option value={Infraestrutura}>Infraestrutura</option>
-                  <option value={AgenteDefesaCivil}>
-                    Agente de Defesa Civil
-                  </option>
-                </select>
-              </label>
-            </form>
-            <Briefcase className="absolute right-4" />
+          <div className="flex-[2] relative flex items-center max-w-md mt-4 bg-zinc-100 rounded-2xl focus-within:ring-3 focus-within:ring-cyan-700/20 transition-all duration-300">
+            <select
+              id="cadastro"
+              className="w-full p-4 pr-12 appearance-none outline-none cursor-pointer text-zinc-500"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Escolha seu cargo
+              </option>
+              <option value={EngenheiroCivil}>Engenheiro Civil</option>
+              <option value={AgenteDefesaCivil}>Agente de Defesa Civil</option>
+              <option value={Geologo}>Geólogo</option>
+              <option value={VigilanciaAmbiental}>Vigilância Ambiental</option>
+            </select>
+
+            {/* O ícone precisa de pointer-events-none para não atrapalhar o clique no select */}
+            <Briefcase className="absolute right-4 pointer-events-none" />
           </div>
           {/* Campo: RE */}
           <div className="flex-1 relative flex items-center max-w-md mt-4">
@@ -89,7 +125,7 @@ export default function Cadastro() {
           </div>
         </div>
         <div className="w-full relative flex items-center w-full max-w-md">
-          <button className="bg-[#5dafe7] mt-5 p-2 w-full rounded text-white font-medium tracking-wide font-sans hover:bg-cyan-800 transition-all duration-150 cursor-pointer">
+          <button className="bg-[#256ffe] mt-5 p-2 w-full rounded text-white font-medium tracking-wide font-sans hover:bg-cyan-800 transition-all duration-150 cursor-pointer">
             Enviar
           </button>
         </div>

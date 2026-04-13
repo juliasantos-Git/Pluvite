@@ -1,3 +1,14 @@
 /* PÁGINA ONDE VÃO FICAR OS CÓDIGOS DO CSS*/
 
 @import "tailwindcss";
+
+
+@keyframes float {
+  0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+}
+
+.animate-particle {
+  animation: float 15s infinite linear;
+}
