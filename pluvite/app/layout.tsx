@@ -1,6 +1,7 @@
 /* NÃO TIRAR NADA DAQUI. COLOCAR COISAS QUE PRECISAM SER FIXAS NO SITE.*/
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Navbar from "../components/navbar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,23 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pluvite - Gestão Municipal",
+  title: "Pluvite",
   description: "Plataforma de gestão de riscos e monitoramento",
   icons: {
     icon: "/Logo.png",
   },
 };
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="pt-br">
+      <body className="overflow-hidden">
+        <Navbar />
+        <main className="pt-10">{children}</main>
+      </body>
     </html>
   );
 }

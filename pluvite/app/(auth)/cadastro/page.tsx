@@ -17,8 +17,8 @@ export default function Cadastro() {
   };
 
   return (
-    <main className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
-      {/* BACKGROUND DE NUVENS (Última camada) */}
+    <main className="relative min-h-screen w-full h-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
+      {/* BACKGROUND DE NUVENS*/}
       <div className="absolute inset-0 pointer-events-none">
         {Array.from({ length: 20 }).map((_, i) => (
           <div
@@ -35,7 +35,6 @@ export default function Cadastro() {
               transform: `scale(${Math.random() * 0.5 + 0.5})`,
             }}
           >
-            {/* Desenho da Nuvem Cyan-900 */}
             <div className="relative bg-cyan-900 shadow-xl w-32 h-10 rounded-full">
               <div className="absolute -top-6 left-4 w-14 h-14 bg-cyan-900 rounded-full"></div>
               <div className="absolute -top-9 left-12 w-18 h-18 bg-cyan-900 rounded-full"></div>
@@ -44,9 +43,8 @@ export default function Cadastro() {
           </div>
         ))}
       </div>
-
-      <div className="flex flex-col pb-15 justify-center items-center max-w-xl w-full bg-white rounded-4xl shadow-2xl shadow-zinc-900/50 p-10 border-slate-100 z-100">
-        {/* FORMS */}
+      {/* CARD DE CADASTRO */}
+      <div className="flex flex-col -mt-5  pb-15 justify-center items-center max-w-xl w-full bg-white rounded-4xl shadow-2xl shadow-zinc-900/50 p-10 border-slate-100 z-100">
         <div className="bg-white p-3 rounded-2xl shadow-sm mb-6">
           <img
             src={"PluviteIcon.jpg"}
@@ -84,7 +82,7 @@ export default function Cadastro() {
           {/* Campo: Senha */}
           <div className="flex-1 relative flex items-center max-w-md mt-4">
             <input
-              type="text"
+              type="password"
               required
               placeholder="Senha"
               className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
@@ -110,13 +108,13 @@ export default function Cadastro() {
               <option value={VigilanciaAmbiental}>Vigilância Ambiental</option>
             </select>
 
-            {/* O ícone precisa de pointer-events-none para não atrapalhar o clique no select */}
+            {/*pointer-events-none para não atrapalhar o clique no select */}
             <Briefcase className="absolute right-4 pointer-events-none" />
           </div>
           {/* Campo: RE */}
           <div className="flex-1 relative flex items-center max-w-md mt-4">
             <input
-              type="text"
+              type="password"
               required
               placeholder="RE"
               className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
@@ -128,6 +126,12 @@ export default function Cadastro() {
           <button className="bg-[#256ffe] mt-5 p-2 w-full rounded text-white font-medium tracking-wide font-sans hover:bg-cyan-800 transition-all duration-150 cursor-pointer">
             Enviar
           </button>
+        </div>
+        <div className="mt-4 w-full max-w-md">
+          <span className="text-zinc-600">Já tem uma conta? </span>
+          <Link href="/login" className="text-[#256ffe] font-bold">
+            Entrar
+          </Link>
         </div>
       </div>
     </main>
