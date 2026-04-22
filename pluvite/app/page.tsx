@@ -36,7 +36,7 @@ export default function PluviteTaubate() {
       <Map
         center={[-23.0267, -45.5558]}
         zoom={13}
-        className="h-full w-full"
+        className="h-full w-full z-0 mt-7 fixed"
         geoProps={{
           data: bairrosData as any,
           style: (f: any) => ({
