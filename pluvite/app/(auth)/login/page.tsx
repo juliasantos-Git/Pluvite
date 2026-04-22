@@ -1,32 +1,63 @@
-"use client"; // Define como Client Component para lidar com cliques e digitação
+"use client";
 
-import React from "react";
+import React, { useState } from "react"; // 1. Importamos o useState
 import Link from "next/link";
-import { UserRound, Mail, IdCard, Briefcase, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
+import { useRouter } from "next/navigation"; // 2. Para mudar de página
 
 export default function Login() {
-  // Função para lidar com o envio do formulário (backend futuro)
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+
+  // Estados para armazenar email e senha
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Enviando login...");
+
+    try {
+      // 3. Faz a chamada para o seu servidor Node (Porta 3001)
+      const response = await fetch("http://localhost:3001/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 4. VERIFICAÇÃO INTELIGENTE
+        // O banco de dados vai dizer se é 'prefeitura' ou 'cidadao'
+        if (data.tipo === "prefeitura") {
+          router.push("/dashboard-prefeitura");
+        } else {
+          router.push("/home-cidadao");
+        }
+      } else {
+        alert("Email ou senha incorretos!");
+      }
+    } catch (error) {
+      console.error("Erro ao logar:", error);
+      alert(
+        "Servidor fora do ar. Verifique se o terminal do Node está rodando!",
+      );
+    }
   };
 
   return (
     <main className="relative h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
-      {/* BACKGROUND DE NUVENS*/}
+      {/* BACKGROUND DE NUVENS (Mantido igual) */}
       <div className="absolute inset-0 pointer-events-none">
         {Array.from({ length: 20 }).map((_, i) => (
           <div
             key={i}
             className="absolute animate-particle"
             style={{
-              // Permite que as nuvens apareçam bem nas pontas (de -10% a 110%)
               left: `${Math.random() * 120 - 10}%`,
               bottom: "-150px",
               animationDelay: `${Math.random() * 25}s`,
               animationDuration: `${Math.random() * 15 + 25}s`,
               opacity: 0.6,
-              // Escala aleatória para as nuvens terem tamanhos diferentes
               transform: `scale(${Math.random() * 0.5 + 0.5})`,
             }}
           >
@@ -38,8 +69,12 @@ export default function Login() {
           </div>
         ))}
       </div>
-      {/* CARD DE LOGIN */}
-      <div className="flex flex-col -mt-5 pb-15 justify-center items-center max-w-xl w-full bg-white rounded-4xl shadow-2xl shadow-zinc-900/50 p-10 border-slate-100 z-100">
+
+      {/* CARD DE LOGIN*/}
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col fixed -mt-5 pb-15 justify-center items-center max-w-xl w-full bg-white rounded-4xl shadow-2xl shadow-zinc-900/50 p-10 border-slate-100 z-10"
+      >
         <div className="bg-white p-3 rounded-2xl shadow-sm mb-6">
           <img
             src={"PluviteIcon.jpg"}
@@ -47,56 +82,53 @@ export default function Login() {
             className="w-12 h-12 rounded-lg"
           />
         </div>
-        <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-8  font-sans">
+
+        <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-8 font-sans">
           Fazer Login
         </h1>
-        <p className="text-blue-900/60 pb-8 font-medium -mt-5">
-          Portal do Servidor Municipal
-        </p>
-        {/* Campo: Email */}
+
+        {/* Campo: Email - Adicionado value e onChange */}
         <div className="w-full relative flex items-center w-full max-w-md">
           <input
-            type="text"
+            type="email"
             required
             placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
-          ></input>
-          <Mail className="absolute right-4" />
+          />
+          <Mail className="absolute right-4 text-zinc-400" />
         </div>
-        <div className="flex flex-row sm:flex-row gap-4 mt-1 w-full max-w-md">
-          {/* Campo: SENHA */}
-          <div className="flex relative flex items-center mt-4">
-            <input
-              type="password"
-              required
-              placeholder="Senha"
-              className="pr-9 bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
-            ></input>
-            <Lock className="absolute right-4" />
-          </div>
-          {/* Campo: RE */}
-          <div className="flex relative flex items-center mt-4">
-            <input
-              type="password"
-              required
-              placeholder="RE"
-              className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
-            ></input>
-            <IdCard className="absolute right-4" />
-          </div>
+
+        {/* Campo: SENHA - Adicionado value e onChange */}
+        <div className="w-full relative flex items-center w-full max-w-md mt-4">
+          <input
+            type="password"
+            required
+            placeholder="Senha"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            className="pr-9 bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500"
+          />
+          <Lock className="absolute right-4 text-zinc-400" />
         </div>
+
         <div className="w-full relative flex items-center w-full max-w-md">
-          <button className="bg-[#256ffe] mt-5 p-2 w-full rounded text-white font-medium tracking-wide font-sans hover:bg-cyan-800 transition-all duration-150 cursor-pointer">
-            Enviar
+          <button
+            type="submit"
+            className="bg-[#256ffe] mt-5 p-2 w-full rounded text-white font-medium tracking-wide font-sans hover:bg-cyan-800 transition-all duration-150 cursor-pointer"
+          >
+            Entrar
           </button>
         </div>
-        <div className="mt-4 w-full max-w-md">
+
+        <div className="mt-4 w-full max-w-md text-center">
           <span className="text-zinc-600">Não tem uma conta? </span>
-          <Link href="/cadastro" className="text-[#256ffe] font-bold">
+          <Link href="/selecao" className="text-[#256ffe] font-bold">
             Cadastre-se
           </Link>
         </div>
-      </div>
+      </form>
     </main>
   );
 }
