@@ -10,7 +10,7 @@ const Geologo = "Geólogo";
 const VigilanciaAmbiental = "Vigilância Ambiental";
 
 export default function Cadastro() {
-  // Função para lidar com o envio do formulário (backend futuro)
+  // prototipo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Enviando cadastro...");
@@ -19,7 +19,7 @@ export default function Cadastro() {
   return (
     <main className="relative min-h-screen w-full h-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
       {/* BACKGROUND DE NUVENS*/}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none -mt-5">
         {Array.from({ length: 20 }).map((_, i) => (
           <div
             key={i}
