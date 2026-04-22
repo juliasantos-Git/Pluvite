@@ -8,6 +8,9 @@ export default function Home() {
       {/*NAVBAR*/}
       <div className="flex items-end justify-">
         <a href="" id="#mapa" className="">
+          Interface Pública
+        </a>
+        {/*<a href="" id="#mapa" className="">
           Mapa
         </a>
         <a href="" id="#mapa" className="">
@@ -23,7 +26,7 @@ export default function Home() {
           <a href="" id="#mapa" className="">
             Entre
           </a>
-        </button>
+        </button>*/}
       </div>
     </main>
   );

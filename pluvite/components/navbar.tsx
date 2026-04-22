@@ -62,7 +62,7 @@ export default function Navbar() {
         <div className="w-[1px] h-6 bg-zinc-700"></div>
         {/*ENTRAR */}
         <Link
-          href="/cadastro"
+          href="/selecao" // <-- Altere aqui para /selecao
           className={`flex items-center gap-2 -ml-16 mt-1 w-fit text-white bg-[#256ffe]  hover:bg-cyan-800 transition-all duration-150 pr-2 pl-2 p-1 rounded`}
         >
           <CircleUserRound size={20} />
