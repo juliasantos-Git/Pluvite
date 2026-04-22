@@ -44,7 +44,7 @@ export default function Cadastro() {
         ))}
       </div>
       {/* CARD DE CADASTRO */}
-      <div className="flex flex-col -mt-5  pb-15 justify-center items-center max-w-xl w-full bg-white rounded-4xl shadow-2xl shadow-zinc-900/50 p-10 border-slate-100 z-100">
+      <div className="flex flex-col mt-12 pb-15 justify-center items-center max-w-xl w-full bg-white rounded-4xl shadow-2xl shadow-zinc-900/50 p-10 border-slate-100 z-100">
         <div className="bg-white p-3 rounded-2xl shadow-sm mb-6">
           <img
             src={"PluviteIcon.jpg"}
