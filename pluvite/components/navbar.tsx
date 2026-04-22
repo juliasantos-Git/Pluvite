@@ -2,19 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Map,
-  Users,
-  CloudRain,
-  Navigation,
-  CircleUserRound,
-} from "lucide-react";
+import { Map, Users, CloudRain, Navigation, UserRound } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
   const isActive = pathname === "/";
   return (
-    <nav className="fixed top-0 mt-3 right-0 left-0 z-[100] bg-white shadow-2xl shadow-zinc-700/20 w-full pb-3 flex items-center justify-between">
+    <nav className="fixed top-0 pt-3 right-0 left-0 z-[100] bg-white shadow-2xl shadow-zinc-700/20 w-full pb-3 flex items-center justify-between">
       <Link href="/" className="flex items-center gap-3 ml-10 group">
         <img
           src="PluviteIcon.jpg"
@@ -65,7 +59,7 @@ export default function Navbar() {
           href="/selecao" // <-- Altere aqui para /selecao
           className={`flex items-center gap-2 -ml-16 mt-1 w-fit text-white bg-[#256ffe]  hover:bg-cyan-800 transition-all duration-150 pr-2 pl-2 p-1 rounded`}
         >
-          <CircleUserRound size={20} />
+          <UserRound size={20} />
           Entrar
         </Link>
       </div>
