@@ -18,6 +18,7 @@ export default function CadastroServidor() {
     re: "",
   });
 
+  // Background de nuvens animadas
   const clouds = useMemo(() => {
     return Array.from({ length: 20 }).map((_, i) => ({
       id: i,
@@ -32,7 +33,6 @@ export default function CadastroServidor() {
     e.preventDefault();
     
     try {
-      // O 'fetch' envia os dados do formulário para o seu backend no Node.js
       const response = await fetch("http://localhost:3001/cadastro-prefeitura", {
         method: "POST",
         headers: {
@@ -45,7 +45,6 @@ export default function CadastroServidor() {
 
       if (response.ok) {
         alert("Cadastro do servidor realizado com sucesso!");
-        // Se quiser, pode limpar o formulário aqui
       } else {
         alert("Erro do servidor: " + data.message);
       }
@@ -56,7 +55,7 @@ export default function CadastroServidor() {
   };
 
   return (
-    <main className="relative min-h-screen w-full flex items-start pt-25 justify-center p-6 overflow-hidden bg-slate-50">
+    <main className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
       
       {/* BACKGROUND DE NUVENS */}
       <div className="absolute inset-0 pointer-events-none">
@@ -82,61 +81,65 @@ export default function CadastroServidor() {
         ))}
       </div>
 
-      {/* CARD DE CADASTRO - Mantendo max-w-xl e centralização original */}
+      {/* CARD DE CADASTRO */}
       <form 
         onSubmit={handleSubmit}
         className="flex flex-col justify-center items-center max-w-xl w-full bg-white rounded-[2.5rem] shadow-2xl shadow-zinc-900/50 p-10 z-10 border border-slate-100"
       >
-        <div className="mb-4">
+        <div className="bg-white p-3 rounded-2xl shadow-sm mb-4">
           <img src="/PluviteIcon.jpg" alt="Logo" className="w-14 h-14 rounded-xl" />
         </div>
         
-        <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-2 font-sans">
+        <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-2 font-sans text-center">
           Criar Conta
         </h1>
-        <p className="text-blue-900/60 pb-8 font-medium">Portal do Servidor Municipal</p>
+        <p className="text-blue-900/60 pb-8 font-medium text-center">Portal do Servidor Municipal</p>
 
         <div className="w-full space-y-4 max-w-md">
-          {/* Nome Completo */}
+          {/* Campo: Nome */}
           <div className="relative flex items-center group">
             <input
               type="text"
               required
               placeholder="Nome Completo"
+              value={formData.nome}
               onChange={(e) => setFormData({...formData, nome: e.target.value})}
-              className="bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+              className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
             />
-            <UserRound className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={20} />
+            <UserRound className="absolute right-4 text-zinc-400" size={20} />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Email */}
+            {/* Campo: Email */}
             <div className="relative flex-[2] flex items-center group">
               <input
                 type="email"
                 required
                 placeholder="E-mail Institucional"
+                value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
               />
-              <Mail className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={20} />
+              <Mail className="absolute right-4 text-zinc-400" size={20} />
             </div>
-            {/* Senha */}
+            
+            {/* Campo: Senha */}
             <div className="relative flex-1 flex items-center group">
               <input
                 type="password"
                 required
                 placeholder="Senha"
+                value={formData.senha}
                 onChange={(e) => setFormData({...formData, senha: e.target.value})}
-                className="bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
               />
-              <Lock className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={20} />
+              <Lock className="absolute right-4 text-zinc-400" size={20} />
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Cargo (Select Estilizado) */}
-            <div className="relative flex-[2] flex items-center group bg-zinc-100 rounded-2xl border-2 border-transparent hover:border-[#256ffe] focus-within:border-[#256ffe] transition-all duration-300">
+            {/* Campo: Cargo */}
+            <div className="relative flex-[2] flex items-center group bg-zinc-100 rounded-2xl focus-within:ring-3 focus-within:ring-cyan-700/20 transition-all duration-300">
               <select
                 required
                 value={formData.cargo}
@@ -149,26 +152,29 @@ export default function CadastroServidor() {
                 <option value={Geologo}>{Geologo}</option>
                 <option value={VigilanciaAmbiental}>{VigilanciaAmbiental}</option>
               </select>
-              <Briefcase className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] pointer-events-none" size={20} />
+              <Briefcase className="absolute right-4 text-zinc-400 pointer-events-none" size={20} />
             </div>
-            {/* RE */}
+
+            {/* Campo: RE */}
             <div className="relative flex-1 flex items-center group">
               <input
                 type="text"
                 required
                 placeholder="RE"
+                value={formData.re}
                 onChange={(e) => setFormData({...formData, re: e.target.value})}
-                className="bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
               />
-              <IdCard className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={20} />
+              <IdCard className="absolute right-4 text-zinc-400" size={20} />
             </div>
           </div>
         </div>
 
+        {/* Botão de Envio (Agora dentro do Form) */}
         <div className="w-full max-w-md">
           <button 
             type="submit"
-            className="bg-[#256ffe] mt-8 p-3.5 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] shadow-none transition-all duration-200 cursor-pointer active:scale-95"
+            className="bg-[#256ffe] mt-8 p-3.5 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] shadow-lg shadow-blue-500/30 transition-all duration-200 cursor-pointer active:scale-95"
           >
             Finalizar Cadastro
           </button>

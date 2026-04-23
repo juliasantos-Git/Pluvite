@@ -18,6 +18,7 @@ export default function CadastroCidadao() {
     pcd: false,
   });
 
+  // Background de nuvens animadas
   const clouds = useMemo(() => {
     return Array.from({ length: 20 }).map((_, i) => ({
       id: i,
@@ -31,6 +32,7 @@ export default function CadastroCidadao() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Conecta com o seu backend na porta 3001
       const response = await fetch("http://localhost:3001/cadastrar-cidadao", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,16 +45,16 @@ export default function CadastroCidadao() {
         alert("Cadastro de cidadão realizado com sucesso!");
         router.push("/login");
       } else {
-        alert("Erro: " + data.error);
+        alert("Erro: " + (data.error || data.message));
       }
     } catch (error) {
-      alert("Erro ao conectar com o servidor backend.");
+      console.error("Erro na conexão:", error);
+      alert("Erro ao conectar com o servidor backend. Verifique se o Node está rodando!");
     }
   };
 
   return (
-    // h-screen garante que o fundo ocupe a tela toda, items-center centraliza verticalmente
-    <main className="relative h-screen w-full flex items-start pt-30 justify-center p-4 overflow-hidden bg-slate-50">
+    <main className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-slate-50">
       
       {/* BACKGROUND DE NUVENS */}
       <div className="absolute inset-0 pointer-events-none">
@@ -78,7 +80,7 @@ export default function CadastroCidadao() {
         ))}
       </div>
 
-      {/* CARD DE CADASTRO - Ajustado para caber na tela */}
+      {/* CARD DE CADASTRO */}
       <form 
         onSubmit={handleSubmit}
         className="flex flex-col justify-center items-center max-w-[550px] w-full bg-white rounded-[2.5rem] shadow-2xl shadow-zinc-900/50 p-8 z-10 border border-slate-100 max-h-[95vh] overflow-y-auto scrollbar-hide"
@@ -101,10 +103,11 @@ export default function CadastroCidadao() {
               type="text"
               required
               placeholder="Nome Completo"
+              value={formData.nome}
               onChange={(e) => setFormData({...formData, nome: e.target.value})}
               className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
-            <UserRound className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={18} />
+            <UserRound className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe]" size={18} />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -114,9 +117,11 @@ export default function CadastroCidadao() {
                 type="email"
                 required
                 placeholder="E-mail"
+                value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
+              <Mail className="absolute right-4 text-zinc-400" size={18} />
             </div>
             {/* Senha */}
             <div className="relative flex-1 flex items-center group">
@@ -124,9 +129,11 @@ export default function CadastroCidadao() {
                 type="password"
                 required
                 placeholder="Senha"
+                value={formData.senha}
                 onChange={(e) => setFormData({...formData, senha: e.target.value})}
                 className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
+              <Lock className="absolute right-4 text-zinc-400" size={18} />
             </div>
           </div>
 
@@ -138,10 +145,11 @@ export default function CadastroCidadao() {
                 required
                 maxLength={11}
                 placeholder="CPF (números)"
+                value={formData.cpf}
                 onChange={(e) => setFormData({...formData, cpf: e.target.value})}
                 className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
-              <Fingerprint className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={16} />
+              <Fingerprint className="absolute right-4 text-zinc-400" size={16} />
             </div>
             {/* Telefone */}
             <div className="flex-1 relative flex items-center group">
@@ -149,10 +157,11 @@ export default function CadastroCidadao() {
                 type="text"
                 required
                 placeholder="Telefone"
+                value={formData.telefone}
                 onChange={(e) => setFormData({...formData, telefone: e.target.value})}
                 className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
-              <Phone className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={16} />
+              <Phone className="absolute right-4 text-zinc-400" size={16} />
             </div>
           </div>
 
@@ -162,10 +171,11 @@ export default function CadastroCidadao() {
               type="text"
               required
               placeholder="Seu Bairro"
+              value={formData.bairro}
               onChange={(e) => setFormData({...formData, bairro: e.target.value})}
               className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
-            <MapPin className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={18} />
+            <MapPin className="absolute right-4 text-zinc-400" size={18} />
           </div>
 
           {/* Opção PcD */}
@@ -173,6 +183,7 @@ export default function CadastroCidadao() {
             <input 
               type="checkbox" 
               id="pcd"
+              checked={formData.pcd}
               className="w-4 h-4 accent-[#256ffe] cursor-pointer"
               onChange={(e) => setFormData({...formData, pcd: e.target.checked})}
             />
@@ -185,7 +196,7 @@ export default function CadastroCidadao() {
         <div className="w-full max-w-md shrink-0">
           <button 
             type="submit"
-            className="bg-[#256ffe] mt-6 p-3 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] shadow-none transition-all duration-200 cursor-pointer active:scale-95"
+            className="bg-[#256ffe] mt-6 p-3 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] transition-all duration-200 cursor-pointer active:scale-95 shadow-lg shadow-blue-500/20"
           >
             Finalizar Cadastro
           </button>

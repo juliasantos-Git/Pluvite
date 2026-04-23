@@ -7,9 +7,12 @@ import { useRouter } from "next/navigation";
 
 export default function Login() {
   const router = useRouter();
+
+  // Estados para armazenar email e senha
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
 
+  // Background de nuvens animadas
   const clouds = useMemo(() => {
     return Array.from({ length: 20 }).map((_, i) => ({
       id: i,
@@ -28,20 +31,28 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, senha }),
       });
+
       const data = await response.json();
+
       if (response.ok) {
-        data.tipo === "prefeitura" ? router.push("/dashboard-prefeitura") : router.push("/home-cidadao");
+        // VERIFICAÇÃO DE TIPO DE USUÁRIO
+        // O backend deve retornar se o usuário é 'prefeitura' ou 'cidadao'
+        if (data.tipo === "prefeitura") {
+          router.push("/dashboard-prefeitura");
+        } else {
+          router.push("/home-cidadao");
+        }
       } else {
         alert("Email ou senha incorretos!");
       }
     } catch (error) {
       console.error("Erro ao logar:", error);
-      alert("Servidor fora do ar!");
+      alert("Servidor fora do ar. Verifique se o terminal do Node está rodando!");
     }
   };
 
   return (
-    <main className="relative h-screen w-full flex items-start pt-30 justify-center p-6 overflow-hidden bg-slate-50">
+    <main className="relative h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
       
       {/* BACKGROUND DE NUVENS */}
       <div className="absolute inset-0 pointer-events-none">
@@ -67,18 +78,19 @@ export default function Login() {
         ))}
       </div>
 
-      {/* CARD DE LOGIN - Sombra restaurada para intensidade original (shadow-2xl) */}
+      {/* CARD DE LOGIN */}
       <form 
         onSubmit={handleSubmit} 
-        className="flex flex-col mt-7 pb-15 justify-center items-center max-w-[500px] w-full bg-white rounded-[2.5rem] shadow-2xl shadow-zinc-900/50 p-10 z-10 border border-slate-100"
+        className="flex flex-col justify-center items-center max-w-[500px] w-full bg-white rounded-[2.5rem] shadow-2xl shadow-zinc-900/50 p-10 z-10 border border-slate-100"
       >
-        <div className="mb-6">
-          <img src="PluviteIcon.jpg" alt="Logo" className="w-14 h-14 rounded-xl" />
+        <div className="bg-white p-3 rounded-2xl shadow-sm mb-6">
+          <img src="/PluviteIcon.jpg" alt="Logo" className="w-12 h-12 rounded-lg" />
         </div>
-        
-        <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-8 font-sans">
+
+        <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-2 font-sans">
           Fazer Login
         </h1>
+        <p className="text-blue-900/60 pb-8 font-medium">Bem-vindo de volta!</p>
 
         <div className="w-full space-y-4 max-w-md">
           {/* Campo: Email */}
@@ -89,13 +101,12 @@ export default function Login() {
               placeholder="E-mail"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              // Borda aumentada no hover/focus (border-2)
               className="bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
             />
             <Mail className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={20} />
           </div>
 
-          {/* Campo: SENHA */}
+          {/* Campo: Senha */}
           <div className="relative flex items-center group">
             <input
               type="password"
@@ -103,7 +114,6 @@ export default function Login() {
               placeholder="Senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              // Borda aumentada no hover/focus (border-2)
               className="pr-12 bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
             />
             <Lock className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors" size={20} />
@@ -113,7 +123,7 @@ export default function Login() {
         <div className="w-full max-w-md">
           <button 
             type="submit" 
-            className="bg-[#256ffe] mt-8 p-3.5 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] shadow-none transition-all duration-200 cursor-pointer active:scale-95"
+            className="bg-[#256ffe] mt-8 p-3.5 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] transition-all duration-200 cursor-pointer active:scale-95 shadow-lg shadow-blue-500/20"
           >
             Entrar
           </button>
