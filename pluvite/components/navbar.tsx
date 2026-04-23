@@ -7,8 +7,10 @@ import { Map, Users, CloudRain, Navigation, UserRound } from "lucide-react";
 export default function Navbar() {
   const pathname = usePathname();
   const isActive = pathname === "/";
+
   return (
-    <nav className="fixed top-0 pt-3 right-0 left-0 z-[100] bg-white shadow-2xl shadow-zinc-700/20 w-full pb-3 flex items-center justify-between">
+    // Alterado: shadow-[0_2px_10px_rgba(0,0,0,0.08)] para ser contida e nítida
+    <nav className="fixed top-0 pt-3 right-0 left-0 z-[100] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] w-full pb-3 flex items-center justify-between">
       <Link href="/" className="flex items-center gap-3 ml-10 group">
         <img
           src="PluviteIcon.jpg"
@@ -19,45 +21,45 @@ export default function Navbar() {
           PLUVITE
         </span>
       </Link>
-      {/*MAPA */}
-      <div className="grid grid-cols-6 items-center gap-8">
+
+      <div className="grid grid-cols-6 items-center gap-8 mr-10">
         <Link
           href="/"
-          className={`flex items-center gap-2 hover:text-blue-700 transition-all duration-200`}
+          className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200"
         >
           <Map size={20} />
           Mapa
         </Link>
-        {/*FEED */}
+
         <Link
           href="/"
-          className={`flex items-center gap-2 hover:text-blue-700 transition-all duration-200 transition-all duration-200`}
+          className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200"
         >
           <Users size={20} />
           Feed
         </Link>
-        {/*CLIMA */}
+
         <Link
           href="/"
-          className={`flex items-center gap-2 hover:text-blue-700 transition-all duration-200 transition-all duration-200`}
+          className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200"
         >
           <CloudRain size={20} />
           Clima
         </Link>
-        {/*ROTAS */}
+
         <Link
           href="/"
-          className={`flex items-center gap-2 hover:text-blue-700 transition-all duration-200 transition-all duration-200`}
+          className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200"
         >
           <Navigation size={20} />
           Rotas
         </Link>
-        {/*LINHA ENTRE ENTRAR E ROTA*/}
-        <div className="w-[1px] h-6 bg-zinc-700"></div>
-        {/*ENTRAR */}
+
+        <div className="w-[1px] h-6 bg-zinc-200"></div>
+
         <Link
-          href="/selecao" // <-- Altere aqui para /selecao
-          className={`flex items-center gap-2 -ml-16 mt-1 w-fit text-white bg-[#256ffe]  hover:bg-[#003399] transition-all duration-150 pr-2 pl-2 p-1 rounded`}
+          href="/selecao"
+          className="flex items-center gap-2 -ml-16 mt-1 w-fit text-white bg-[#256ffe] hover:bg-[#1a56cc] transition-all duration-150 px-4 py-2 rounded-lg font-medium"
         >
           <UserRound size={20} />
           Entrar
