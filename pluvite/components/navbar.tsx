@@ -57,7 +57,7 @@ export default function Navbar() {
         {/*ENTRAR */}
         <Link
           href="/selecao" // <-- Altere aqui para /selecao
-          className={`flex items-center gap-2 -ml-16 mt-1 w-fit text-white bg-[#256ffe]  hover:bg-cyan-800 transition-all duration-150 pr-2 pl-2 p-1 rounded`}
+          className={`flex items-center gap-2 -ml-16 mt-1 w-fit text-white bg-[#256ffe]  hover:bg-[#003399] transition-all duration-150 pr-2 pl-2 p-1 rounded`}
         >
           <UserRound size={20} />
           Entrar
