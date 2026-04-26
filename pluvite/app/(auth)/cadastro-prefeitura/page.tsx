@@ -33,6 +33,7 @@ export default function CadastroServidor() {
     e.preventDefault();
     
     try {
+      //conecxão com banco de dados
       const response = await fetch("http://localhost:3001/cadastro-prefeitura", {
         method: "POST",
         headers: {
@@ -55,7 +56,7 @@ export default function CadastroServidor() {
   };
 
   return (
-    <main className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
+    <main className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-[#256ffe]">
       
       {/* BACKGROUND DE NUVENS */}
       <div className="absolute inset-0 pointer-events-none">
@@ -73,9 +74,9 @@ export default function CadastroServidor() {
             }}
           >
             <div className="relative bg-cyan-900 shadow-xl w-32 h-10 rounded-full">
-              <div className="absolute -top-6 left-4 w-14 h-14 bg-cyan-900 rounded-full"></div>
-              <div className="absolute -top-9 left-12 w-18 h-18 bg-cyan-900 rounded-full"></div>
-              <div className="absolute -top-5 left-24 w-12 h-12 bg-cyan-900 rounded-full"></div>
+              <div className="absolute -top-6 left-4 w-14 h-14 bg-slate-50 rounded-full"></div>
+              <div className="absolute -top-9 left-12 w-18 h-18 bg-slate-50 rounded-full"></div>
+              <div className="absolute -top-5 left-24 w-12 h-12 bg-slate-50 rounded-full"></div>
             </div>
           </div>
         ))}
@@ -104,7 +105,7 @@ export default function CadastroServidor() {
               placeholder="Nome Completo"
               value={formData.nome}
               onChange={(e) => setFormData({...formData, nome: e.target.value})}
-              className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+              className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
             <UserRound className="absolute right-4 text-zinc-400" size={20} />
           </div>
@@ -118,7 +119,7 @@ export default function CadastroServidor() {
                 placeholder="E-mail Institucional"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
               <Mail className="absolute right-4 text-zinc-400" size={20} />
             </div>
@@ -131,7 +132,7 @@ export default function CadastroServidor() {
                 placeholder="Senha"
                 value={formData.senha}
                 onChange={(e) => setFormData({...formData, senha: e.target.value})}
-                className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
               <Lock className="absolute right-4 text-zinc-400" size={20} />
             </div>
@@ -163,7 +164,7 @@ export default function CadastroServidor() {
                 placeholder="RE"
                 value={formData.re}
                 onChange={(e) => setFormData({...formData, re: e.target.value})}
-                className="bg-zinc-100 rounded-2xl p-4 w-full focus:ring-3 focus:ring-cyan-700/20 outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
               <IdCard className="absolute right-4 text-zinc-400" size={20} />
             </div>

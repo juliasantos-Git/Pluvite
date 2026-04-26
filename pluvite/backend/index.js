@@ -48,7 +48,7 @@ app.post('/cadastro-prefeitura', (req, res) => {
     });
 });
 
-// --- ROTA CADASTRO CIDADÃO ---
+// --- ROTA CADASTRO CIDADÃO ---    
 app.post('/cadastrar-cidadao', (req, res) => {
     const { nome, email, senha, cpf, telefone, bairro, pcd } = req.body;
 

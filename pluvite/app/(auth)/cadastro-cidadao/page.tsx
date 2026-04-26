@@ -54,7 +54,7 @@ export default function CadastroCidadao() {
   };
 
   return (
-    <main className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-slate-50">
+    <main className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-[#256ffe]">
       
       {/* BACKGROUND DE NUVENS */}
       <div className="absolute inset-0 pointer-events-none">
@@ -72,9 +72,9 @@ export default function CadastroCidadao() {
             }}
           >
             <div className="relative bg-cyan-900 shadow-xl w-32 h-10 rounded-full">
-              <div className="absolute -top-6 left-4 w-14 h-14 bg-cyan-900 rounded-full"></div>
-              <div className="absolute -top-9 left-12 w-18 h-18 bg-cyan-900 rounded-full"></div>
-              <div className="absolute -top-5 left-24 w-12 h-12 bg-cyan-900 rounded-full"></div>
+              <div className="absolute -top-6 left-4 w-14 h-14 bg-slate-50 rounded-full"></div>
+              <div className="absolute -top-9 left-12 w-18 h-18 bg-slate-50 rounded-full"></div>
+              <div className="absolute -top-5 left-24 w-12 h-12 bg-slate-50 rounded-full"></div>
             </div>
           </div>
         ))}
@@ -107,7 +107,7 @@ export default function CadastroCidadao() {
               onChange={(e) => setFormData({...formData, nome: e.target.value})}
               className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
-            <UserRound className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe]" size={18} />
+            <UserRound className="absolute right-4 text-zinc-700" size={18} />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">

@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <main className="relative h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-slate-50">
+    <main className="relative h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-[#256ffe]">
       
       {/* BACKGROUND DE NUVENS */}
       <div className="absolute inset-0 pointer-events-none">
@@ -70,9 +70,9 @@ export default function Login() {
             }}
           >
             <div className="relative bg-cyan-900 shadow-xl w-32 h-10 rounded-full">
-              <div className="absolute -top-6 left-4 w-14 h-14 bg-cyan-900 rounded-full"></div>
-              <div className="absolute -top-9 left-12 w-18 h-18 bg-cyan-900 rounded-full"></div>
-              <div className="absolute -top-5 left-24 w-12 h-12 bg-cyan-900 rounded-full"></div>
+              <div className="absolute -top-6 left-4 w-14 h-14 bg-slate-50 rounded-full"></div>
+              <div className="absolute -top-9 left-12 w-18 h-18 bg-slate-50 rounded-full"></div>
+              <div className="absolute -top-5 left-24 w-12 h-12 bg-slate-50 rounded-full"></div>
             </div>
           </div>
         ))}
