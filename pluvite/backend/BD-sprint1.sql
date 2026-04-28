@@ -1,42 +1,34 @@
-USE `ProjetoIntegrador`;
-
--- Agora podemos apagar tudo sem erros
-DROP TABLE IF EXISTS `Alerta`;
-DROP TABLE IF EXISTS `Ocorrencia`;
-DROP TABLE IF EXISTS `Governo`; -- Tabela antiga
-DROP TABLE IF EXISTS `Prefeitura`;
-DROP TABLE IF EXISTS `Cidadao`;
-DROP TABLE IF EXISTS `Usuarios`;
-
--- Criar a estrutura inteligente
-CREATE TABLE `Usuarios` (
-  `id_usuario` int NOT NULL AUTO_INCREMENT,
-  `email` varchar(100) NOT NULL UNIQUE,
-  `senha` varchar(255) NOT NULL,
+-- Tabela principal de Usuários (Login)
+CREATE TABLE IF NOT EXISTS `Usuarios` (
+  `id_usuario` INT NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(100) NOT NULL UNIQUE,
+  `senha` VARCHAR(255) NOT NULL,
   `tipo_usuario` ENUM('cidadao', 'prefeitura') NOT NULL,
   PRIMARY KEY (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `Prefeitura` (
-  `id_prefeitura` int NOT NULL AUTO_INCREMENT,
-  `nome_completo` varchar(100) NOT NULL,
-  `cargo` varchar(50) NOT NULL,
-  `re` varchar(20) NOT NULL UNIQUE,
-  `usuario_id` int NOT NULL,
-  PRIMARY KEY (`id_prefeitura`),
-  CONSTRAINT `fk_prefeitura_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `Usuarios` (`id_usuario`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `Cidadao` (
-  `id_cidadao` int NOT NULL AUTO_INCREMENT,
-  `nome_completo` varchar(100) NOT NULL,
-  `cpf` char(11) NOT NULL UNIQUE,
-  `telefone` varchar(15) NOT NULL,
-  `bairro` varchar(50) NOT NULL,
-  `usuario_id` int NOT NULL,
+-- Tabela de Perfil do Cidadão
+CREATE TABLE IF NOT EXISTS `Cidadao` (
+  `id_cidadao` INT NOT NULL AUTO_INCREMENT,
+  `nome_completo` VARCHAR(150) NOT NULL,
+  `cpf` VARCHAR(14) NOT NULL UNIQUE,
+  `telefone` VARCHAR(15),
+  `bairro` VARCHAR(100),
+  `pcd` TINYINT(1) NOT NULL DEFAULT 0,
+  `usuario_id` INT NOT NULL,
   PRIMARY KEY (`id_cidadao`),
-  CONSTRAINT `fk_cidadao_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `Usuarios` (`id_usuario`) ON DELETE CASCADE
+  CONSTRAINT `fk_cidadao_usuario` FOREIGN KEY (`usuario_id`) 
+    REFERENCES `Usuarios` (`id_usuario`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Reativar a segurança
-SET FOREIGN_KEY_CHECKS = 1;
+-- Tabela de Perfil da Prefeitura (Servidores)
+CREATE TABLE IF NOT EXISTS `Prefeitura` (
+  `id_servidor` INT NOT NULL AUTO_INCREMENT,
+  `nome_completo` VARCHAR(150) NOT NULL,
+  `cargo` VARCHAR(100),
+  `re` VARCHAR(20) NOT NULL UNIQUE,
+  `usuario_id` INT NOT NULL,
+  PRIMARY KEY (`id_servidor`),
+  CONSTRAINT `fk_prefeitura_usuario` FOREIGN KEY (`usuario_id`) 
+    REFERENCES `Usuarios` (`id_usuario`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

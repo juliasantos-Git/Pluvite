@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { UserRound, Mail, IdCard, Briefcase, Lock } from "lucide-react";
+import { useRouter } from "next/navigation"; // 1. Importação do Router
 import NuvensBackground from "@/components/NuvensBackground";
 
 const EngenheiroCivil = "Engenheiro Civil";
@@ -11,6 +12,8 @@ const Geologo = "Geólogo";
 const VigilanciaAmbiental = "Vigilância Ambiental";
 
 export default function CadastroServidor() {
+  const router = useRouter(); // 2. Inicialização do Router
+
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -23,7 +26,7 @@ export default function CadastroServidor() {
     e.preventDefault();
 
     try {
-      //conecxão com banco de dados
+      // Conexão com o backend
       const response = await fetch(
         "http://localhost:3001/cadastro-prefeitura",
         {
@@ -38,9 +41,12 @@ export default function CadastroServidor() {
       const data = await response.json();
 
       if (response.ok) {
+        // O alerta pausa a execução até você clicar em OK
         alert("Cadastro do servidor realizado com sucesso!");
+        // 3. Redirecionamento após o clique no OK
+        router.push("/login");
       } else {
-        alert("Erro do servidor: " + data.message);
+        alert("Erro do servidor: " + (data.error || data.message));
       }
     } catch (error) {
       console.error("Erro na conexão:", error);
@@ -166,11 +172,11 @@ export default function CadastroServidor() {
           </div>
         </div>
 
-        {/* Botão de Envio (Agora dentro do Form) */}
-        <div className="w-full max-w-md">
+        {/* Botão de Envio */}
+        <div className="w-full max-w-md shrink-0">
           <button
             type="submit"
-            className="bg-[#256ffe] mt-8 p-3.5 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] shadow-lg shadow-blue-500/30 transition-all duration-200 cursor-pointer active:scale-95"
+            className="bg-[#256ffe] mt-6 p-3 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] transition-all duration-200 cursor-pointer active:scale-95 shadow-lg shadow-blue-500/20"
           >
             Finalizar Cadastro
           </button>
