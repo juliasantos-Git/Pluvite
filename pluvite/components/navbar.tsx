@@ -8,7 +8,7 @@ export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 pt-3 right-0 left-0 z-[100] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] w-full pb-3 flex items-center justify-between">
+    <nav className="fixed top-0 pt-3 right-0 left-0 z-[10000] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.08)] w-full pb-3 flex items-center justify-between">
       <Link href="/" className="flex items-center gap-3 ml-10 group">
         <img
           src="/PluviteIcon.jpg"
