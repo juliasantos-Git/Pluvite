@@ -38,7 +38,7 @@ export default function Navbar() {
         </Link>
 
         <Link
-          href="/"
+          href="/Clima"
           className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200 text-slate-600 font-medium"
         >
           <CloudRain size={20} />
