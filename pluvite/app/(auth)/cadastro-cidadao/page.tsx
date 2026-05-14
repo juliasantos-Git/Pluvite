@@ -22,7 +22,7 @@ export default function CadastroCidadao() {
     senha: "",
     cpf: "",
     telefone: "",
-    bairro: "",
+    cidade: "",
     pcd: false,
   });
 
@@ -172,15 +172,15 @@ export default function CadastroCidadao() {
             </div>
           </div>
 
-          {/* Bairro */}
+          {/* Cidade */}
           <div className="relative flex items-center group">
             <input
               type="text"
               required
-              placeholder="Seu Bairro"
-              value={formData.bairro}
+              placeholder="Sua cidade"
+              value={formData.cidade}
               onChange={(e) =>
-                setFormData({ ...formData, bairro: e.target.value })
+                setFormData({ ...formData, cidade: e.target.value })
               }
               className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
