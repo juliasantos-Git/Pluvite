@@ -1,18 +1,17 @@
-const mysql = require('mysql2');
+const { Pool } = require('pg');
 
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'root', // <--- A senha do MySQL deste computador!
-  database: 'ProjetoIntegrador'
+// Configurações do seu novo banco
+const db = new Pool({
+  user: 'postgres',           // usuário padrão do postgres
+  host: 'localhost',          // seu computador
+  database: 'ProjetoIntegrador', // o nome que você criou no pgAdmin
+  password: 'root',   // coloque aqui a senha que você usa no pgAdmin
+  port: 5432,                 // porta padrão do postgres
 });
 
-db.connect((err) => {
-  if (err) {
-      console.error('Erro ao conectar: ' + err.stack);
-      return;
-  }
-  console.log('Conectado ao banco de dados!');
-});
+// Testa a conexão assim que o servidor ligar
+db.connect()
+  .then(() => console.log('✅ Conectado ao PostgreSQL com sucesso!'))
+  .catch(err => console.error('❌ Erro ao conectar ao banco:', err));
 
 module.exports = db;

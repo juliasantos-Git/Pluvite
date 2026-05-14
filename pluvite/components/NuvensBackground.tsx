@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -11,13 +12,13 @@ export default function NuvensBackground() {
 
   const clouds = useMemo(() => {
     return Array.from({ length: 20 }).map((_, i) => {
-      const duration = Math.random() * 15 + 20; // Tempo de subida
+      const duration = Math.random() * 20 + 15  // Tempo de subida
       return {
         id: i,
         left: `${Math.random() * 120 - 10}%`,
         duration: `${duration}s`,
         // O "-" antes do Math faz a nuvem já começar em uma altura aleatória
-        delay: `-${Math.random() * duration}s`,
+        delay: `${-Math.random() * duration}s`,
         scale: Math.random() * 0.5 + 0.5,
       };
     });
