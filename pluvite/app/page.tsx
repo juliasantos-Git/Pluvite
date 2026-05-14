@@ -113,7 +113,7 @@ export default function PluviteVale() {
                   <TriangleAlert className="mb-1" size={20} />
                   <p className="text-sm">Críticos</p>
                 </div>
-                <div className="text-2xl font-bold">0</div>
+                <div className="text-2xl font-bold">10</div>
               </div>
 
               <div className="bg-yellow-50 border border-yellow-600 rounded-xl p-6 flex justify-between items-center text-yellow-600">
@@ -121,7 +121,7 @@ export default function PluviteVale() {
                   <CircleAlert className="mb-1" size={20} />
                   <p className="text-sm">Médios</p>
                 </div>
-                <div className="text-2xl font-bold">1</div>
+                <div className="text-2xl font-bold">20</div>
               </div>
 
               <div className="bg-green-100 border border-green-700 rounded-xl p-6 flex justify-between items-center text-green-700">
@@ -129,7 +129,7 @@ export default function PluviteVale() {
                   <CircleCheck className="mb-1" size={20} />
                   <p className="text-sm">Baixos</p>
                 </div>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">40</div>
               </div>
             </div>
 
