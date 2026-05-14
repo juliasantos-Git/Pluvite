@@ -38,7 +38,7 @@ export default function ClimaPage() {
   }
 
   return (
-    <main className="min-h-screen bg-blue-950 flex items-start justify-center pt-24 pb-10 overflow-y-auto">
+    <main className="min-h-screen bg-blue-950 flex items-start justify-center pt-14 pb-10 overflow-y-auto">
       <div className="bg-blue-600 rounded-3xl p-6 w-80 text-white text-center">
 
         <div className="flex gap-2 mb-4">
