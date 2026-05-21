@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import NuvensBackground from "@/components/NuvensBackground";
+import NuvensBackground from "@/app/components/NuvensBackground";
 
 export default function Login() {
   const router = useRouter();
@@ -57,7 +57,8 @@ export default function Login() {
           <img
             src="/PluviteIcon.jpg"
             alt="Logo"
-            className="w-12 h-12 rounded-lg"
+            className="w-12 h-12 rounded-lg select-none"
+            draggable="false"
           />
         </div>
 

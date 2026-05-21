@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { UserRound, Briefcase } from "lucide-react";
-import NuvensBackground from "@/components/NuvensBackground";
+import NuvensBackground from "@/app/components/NuvensBackground";
 
 export default function SelecaoPerfil() {
   return (

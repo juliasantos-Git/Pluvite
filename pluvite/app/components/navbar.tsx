@@ -30,7 +30,7 @@ export default function Navbar() {
         </Link>
 
         <Link
-          href="/"
+          href="#"
           className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200 text-slate-600 font-medium"
         >
           <Users size={20} />
@@ -38,7 +38,7 @@ export default function Navbar() {
         </Link>
 
         <Link
-          href="/Clima"
+          href="Clima2"
           className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200 text-slate-600 font-medium"
         >
           <CloudRain size={20} />
@@ -46,7 +46,7 @@ export default function Navbar() {
         </Link>
 
         <Link
-          href="/"
+          href="#"
           className="flex items-center gap-2 hover:text-blue-700 transition-all duration-200 text-slate-600 font-medium"
         >
           <Navigation size={20} />

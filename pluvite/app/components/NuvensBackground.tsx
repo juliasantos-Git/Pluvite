@@ -12,7 +12,7 @@ export default function NuvensBackground() {
 
   const clouds = useMemo(() => {
     return Array.from({ length: 20 }).map((_, i) => {
-      const duration = Math.random() * 20 + 15  // Tempo de subida
+      const duration = Math.random() * 20 + 15; // Tempo de subida
       return {
         id: i,
         left: `${Math.random() * 120 - 10}%`,
