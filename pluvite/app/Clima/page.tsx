@@ -184,7 +184,7 @@ export default function ClimaPage() {
     },
   ];
 
-  const [busca, setBusca] = useState(""); / A variavel (busca) guarda o texto digitado pelo usuário no input e o setBusca serve para atualizar esse valor
+  const [busca, setBusca] = useState(""); // A variavel (busca) guarda o texto digitado pelo usuário no input e o setBusca serve para atualizar esse valor
   const [cidadeAtual, setCidadeAtual] = useState(cidades[0]); // cidadeAtual serve para mostra a cidade que está sendo exibida na tela no momento
   // E o setCidadeAtual serve para alterar essa cidade quando o usuário pesquisa outra.
 
