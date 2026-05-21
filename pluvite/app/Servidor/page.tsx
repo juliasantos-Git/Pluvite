@@ -10,37 +10,30 @@ import { Layers, AlertTriangle, Wrench, CheckCircle } from 'lucide-react';
 const dadosMunicipios = [
   { name: 'Taubaté', total: 12, color: '#ef4444' },
   { name: 'São José dos Campos', total: 15, color: '#f59e0b' },
-  { name: 'Jacareí', total: 7, color: '#10b981' },
-  { name: 'Pindamonhangaba', total: 2, color: '#3b82f6' },
-  { name: 'Caraguatatuba', total: 10, color: '#8b5cf6' },
-  { name: 'Ubatuba', total: 3, color: '#06b6d4' },
+  { name: 'Jacareí', total: 7, color: '#0a9667' },
+  { name: 'Pindamonhangaba', total: 2, color: '#2c70dd' },
+  { name: 'Caraguatatuba', total: 10, color: '#653dc2' },
+  { name: 'Ubatuba', total: 3, color: '#0d93aa' },
 ];
 
 const dadosStatus = [
-  { name: 'Visualizado', value: 15, color: '#3b82f6' },
-  { name: 'Aguardando', value: 21, color: '#9ca3af' },
-  { name: 'Concluído', value: 38, color: '#10b981' },
+  { name: 'Visualizado', value: 15, color: '#3267bd' },
+  { name: 'Aguardando', value: 21, color: '#787a7e' },
+  { name: 'Concluído', value: 38, color: '#179168' },
   { name: 'Em Andamento', value: 27, color: '#f59e0b' },
 ];
 
 export default function PainelAdministrativo() {
   return (
     <div className="w-full min-h-screen bg-slate-50 p-6 md:p-8 font-sans text-slate-800">
-      
-      {/* Título do Painel */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#0f172a] tracking-tight">Painel Administrativo</h1>
-        <p className="text-slate-500 mt-1">Gerencie ocorrências e despache equipes em tempo real</p>
-      </div>
 
       {/* --- QUADROS DE MÉTRICAS (CARDS) --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 mt-10">
         
         {/* Card 1: Chamados Ativos */}
         <div className="bg-blue-600 rounded-2xl p-6 text-white relative shadow-sm overflow-hidden flex flex-col justify-between h-44">
           <div className="flex justify-between items-start">
             <Layers className="w-8 h-8 opacity-90" />
-            <span className="text-xs font-semibold tracking-wider opacity-60">↗</span>
           </div>
           <div>
             <h2 className="text-4xl font-black mb-1">6</h2>
@@ -52,7 +45,6 @@ export default function PainelAdministrativo() {
         <div className="bg-red-600 rounded-2xl p-6 text-white relative shadow-sm overflow-hidden flex flex-col justify-between h-44">
           <div className="flex justify-between items-start">
             <AlertTriangle className="w-8 h-8 opacity-90" />
-            <span className="text-xs font-semibold tracking-wider opacity-60">↗</span>
           </div>
           <div>
             <h2 className="text-4xl font-black mb-1">3</h2>
@@ -64,7 +56,6 @@ export default function PainelAdministrativo() {
         <div className="bg-amber-500 rounded-2xl p-6 text-white relative shadow-sm overflow-hidden flex flex-col justify-between h-44">
           <div className="flex justify-between items-start">
             <Wrench className="w-8 h-8 opacity-90" />
-            <span className="text-xs font-semibold tracking-wider opacity-60">↗</span>
           </div>
           <div>
             <h2 className="text-4xl font-black mb-1">2</h2>
@@ -73,10 +64,9 @@ export default function PainelAdministrativo() {
         </div>
 
         {/* Card 4: Concluídos Hoje */}
-        <div className="bg-emerald-500 rounded-2xl p-6 text-white relative shadow-sm overflow-hidden flex flex-col justify-between h-44">
+        <div className="bg-emerald-700 rounded-2xl p-6 text-white relative shadow-sm overflow-hidden flex flex-col justify-between h-44">
           <div className="flex justify-between items-start">
             <CheckCircle className="w-8 h-8 opacity-90" />
-            <span className="text-xs font-semibold tracking-wider opacity-60">↗</span>
           </div>
           <div>
             <h2 className="text-4xl font-black mb-1">0</h2>

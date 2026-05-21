@@ -184,52 +184,58 @@ export default function ClimaPage() {
             <span className="text-sm font-bold text-gray-800 block mb-4">
               Mais informações
             </span>
-            {/*CHUVA*/}
+            
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <CloudRain size={16} />
-                  <span className="text-xs">Chuva</span>
+              
+              {/* CHUVA - AZUL SÓLIDO */}
+              <div className="bg-blue-600 p-5 rounded-2xl shadow-sm flex flex-col justify-between h-28 text-white">
+                <div className="flex items-center gap-2 opacity-90">
+                  <CloudRain size={18} />
+                  <span className="text-xs font-medium tracking-wide">Chuva</span>
                 </div>
-                <span className="text-lg font-bold text-gray-800">
+                <span className="text-2xl font-black">
                   {hoje.day.daily_chance_of_rain}%
                 </span>
               </div>
-              {/**SENSAÇÃO TÉRMICA*/}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Sun size={16} />
-                  <span className="text-xs">Sensação</span>
+
+              {/* SENSAÇÃO TÉRMICA - LARANJA/AMARELO SÓLIDO */}
+              <div className="bg-amber-500 p-5 rounded-2xl shadow-sm flex flex-col justify-between h-28 text-white">
+                <div className="flex items-center gap-2 opacity-90">
+                  <Sun size={18} />
+                  <span className="text-xs font-medium tracking-wide">Sensação</span>
                 </div>
-                <span className="text-lg font-bold text-gray-800">
+                <span className="text-2xl font-black">
                   {Math.round(current.feelslike_c)}°C
                 </span>
               </div>
-              {/**VENTO*/}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Wind size={16} />
-                  <span className="text-xs">Vento</span>
+
+              {/* VENTO - VERDE SÓLIDO */}
+              <div className="bg-emerald-500 p-5 rounded-2xl shadow-sm flex flex-col justify-between h-28 text-white">
+                <div className="flex items-center gap-2 opacity-90">
+                  <Wind size={18} />
+                  <span className="text-xs font-medium tracking-wide">Vento</span>
                 </div>
-                <span className="text-lg font-bold text-gray-800">
+                <span className="text-2xl font-black">
                   {current.wind_kph} km/h
                 </span>
               </div>
-              {/**UMIDADE*/}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Droplets size={16} />
-                  <span className="text-xs">Umidade</span>
+
+              {/* UMIDADE - ROXO SÓLIDO */}
+              <div className="bg-purple-600 p-5 rounded-2xl shadow-sm flex flex-col justify-between h-28 text-white">
+                <div className="flex items-center gap-2 opacity-90">
+                  <Droplets size={18} />
+                  <span className="text-xs font-medium tracking-wide">Umidade</span>
                 </div>
-                <span className="text-lg font-bold text-gray-800">
+                <span className="text-2xl font-black">
                   {current.humidity}%
                 </span>
               </div>
+
             </div>
           </div>
 
           {/* OUTRAS CIDADES */}
-          <div className="p-6 bg-white rounded-2xl border-2 border-gray-200 shadow-sm flex-1 flex flex-col justify-between">
+          <div className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm flex-1 flex flex-col justify-between">
             <div>
               <span className="text-sm font-bold text-gray-700 block mb-3">
                 Outras cidades próximas
