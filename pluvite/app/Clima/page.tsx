@@ -1,11 +1,11 @@
-"use client";  // Permite usar interações no navegador. Sem isso, useState e eventos como clique não funcionam.
+"use client"; // Permite usar interações no navegador. Sem isso, useState e eventos como clique não funcionam.
 import { useState } from "react"; // Importa o Hook useState do React para criar variáveis dinâmicas  e atualizar informações na tela em tempo real
 
 import { Search } from "lucide-react";
 
 export default function ClimaPage() {
-  
-  const cidades = [ // Vetor que contem todas as cidades e seus dados climáticos
+  const cidades = [
+    // Vetor que contem todas as cidades e seus dados climáticos
     {
       nome: "Tremembé",
       temp: 24,
@@ -188,15 +188,17 @@ export default function ClimaPage() {
   const [cidadeAtual, setCidadeAtual] = useState(cidades[0]); // cidadeAtual serve para mostra a cidade que está sendo exibida na tela no momento
   // E o setCidadeAtual serve para alterar essa cidade quando o usuário pesquisa outra.
 
-
-  const buscarCidade = () => { // A função buscarCidade serve para procurar a cidade digitada pelo usuário.
-    const encontrada = cidades.find( // O find() percorre todas as cidades até encontrar uma com o mesmo nome digitado no input.
+  const buscarCidade = () => {
+    // A função buscarCidade serve para procurar a cidade digitada pelo usuário.
+    const encontrada = cidades.find(
+      // O find() percorre todas as cidades até encontrar uma com o mesmo nome digitado no input.
       (c) => c.nome.toLowerCase() === busca.toLowerCase(), // O toLowerCase() transforma os textos em minúsculo para evitar problemas entre letras maiúsculas e minúsculas.
     );
     if (encontrada) setCidadeAtual(encontrada);
   };
 
-  return ( // O return ele mostra tudo que está na tela 
+  return (
+    // O return ele mostra tudo que está na tela
     <main className="min-h-screen bg-blue-950 flex items-start justify-center pt-10 pb-10 overflow-y-auto">
       <div className="bg-blue-600 rounded-3xl p-6 w-95 text-white text-center">
         <div className="flex gap-2 mb-4">
@@ -204,7 +206,7 @@ export default function ClimaPage() {
             type="text"
             placeholder="Digite uma cidade..."
             value={busca} // conecta o input ao estado busca.
-            onChange={(e) => setBusca(e.target.value)}// Atualiza o valor digitado em tempo real pelo usuário.
+            onChange={(e) => setBusca(e.target.value)} // Atualiza o valor digitado em tempo real pelo usuário.
             onKeyDown={(e) => e.key === "Enter" && buscarCidade()} // Faz a busca das cidades quando o usuário aperta enter.
             className="flex-1 bg-blue-700 rounded-xl px-3 py-2 text-sm text-white placeholder-blue-300 outline-none"
           />

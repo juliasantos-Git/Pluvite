@@ -1,7 +1,7 @@
 /* NÃO TIRAR NADA DAQUI. COLOCAR COISAS QUE PRECISAM SER FIXAS NO SITE.*/
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Navbar from "../components/navbar";
+import Navbar from "./components/navbar";
 import "./globals.css";
 
 const geistSans = Geist({
