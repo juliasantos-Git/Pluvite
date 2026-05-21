@@ -2,20 +2,57 @@
 import { useEffect, useState } from "react";
 import { Search, MapPin, CloudRain, Sun, Wind, Droplets } from "lucide-react";
 
+// 1. DICIONÁRIO DE EMOJIS PARA CADA CÓDIGO DE CLIMA
+const CLIMA_EMOJIS: { [key: number]: string } = {
+  1000: "☀️", // Céu limpo
+  1003: "⛅", // Parcialmente nublado
+  1006: "☁️", // Nublado
+  1009: "☁️", // Encoberto
+  1030: "🌫️", // Névoa
+  1063: "🌦️", // Chuvisco
+  1087: "⛈️", // Trovoadas
+  1183: "🌧️", // Chuva leve
+  1189: "🌧️", // Chuva moderada
+  1195: "🌧️", // Chuva forte
+  1213: "❄️", // Neve
+};
+
+// 2. PARA FORMATAR AS DATAS
+const formatarDiaSemana = (
+  dataTexto: string,
+  formato: "long" | "short" = "long",
+) => {
+  return new Date(dataTexto + "T00:00:00")
+    .toLocaleDateString("pt-BR", { weekday: formato })
+    .replace(".", "");
+};
+
+const formatarDataCompleta = (dataTexto: string) => {
+  return new Date(dataTexto + "T00:00:00").toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
 export default function ClimaPage() {
+  //VARIAVEIS DE ESTADO
   const [busca, setBusca] = useState("");
   const [cidadeAtual, setCidadeAtual] = useState<any>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   const API_KEY = "b73dd481d238464caf6232135262005";
 
+  //BUSCAR CIDADE NA API
   const BuscarCidade = async (nomeCidade: string) => {
     if (!nomeCidade) return;
     try {
+      //LIMPA O ERRO ANTERIOR, SE HOUVER
       setErro(null);
       const resposta = await fetch(
         `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${nomeCidade}&days=7&lang=pt`,
       );
+      //SE A RESPOSTA NÃO FOR OK, LANÇA UM ERRO PARA SER CAPTURADO PELO CATCH
       if (!resposta.ok) throw new Error();
 
       const dados = await resposta.json();
@@ -25,24 +62,26 @@ export default function ClimaPage() {
     }
   };
 
+  //BUSCA AUTOMÁTICA AO CARREGAR A PÁGINA
   useEffect(() => {
     BuscarCidade("Taubaté");
   }, []);
 
+  //APARECE ... ENQUANTO A CIDADE (PÁGINA) ESTÁ SENDO CARREGADA
   if (!cidadeAtual) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-100">
-        <p className="text-xl font-medium text-gray-600">Carregando dados...</p>
+        <p className="text-xl font-medium text-gray-600">...</p>
       </div>
     );
   }
 
-  // Atalhos para os dados da API para diminuir o tamanho das linhas do HTML
+  // EXTRAINDO INFORMAÇÕES PRINCIPAIS DA CIDADE ATUAL
   const { location, current, forecast } = cidadeAtual;
-  const hoje = forecast.forecastday[0].day;
+  const hoje = forecast.forecastday[0];
 
   return (
-    <main className="min-h-screen bg-gray-100 pt-10 pb-20 flex flex-col items-center gap-6 px-4">
+    <main className="h-screen bg-gray-100 pt-10 pb-20 flex flex-col items-center gap-6 px-4 overflow-y-auto">
       {/* BARRA DE BUSCA */}
       <div className="w-full max-w-5xl bg-white rounded-3xl p-2 flex items-center shadow-sm border border-gray-200">
         <input
@@ -55,7 +94,7 @@ export default function ClimaPage() {
         />
         <button
           onClick={() => BuscarCidade(busca)}
-          className="bg-[#2a68e2] rounded-full text-white p-2.5 hover:scale-105 transition-all"
+          className="bg-[#2a68e2] rounded-full text-white p-2.5 hover:scale-105 transition-all cursor-pointer"
         >
           <Search size={20} />
         </button>
@@ -74,108 +113,89 @@ export default function ClimaPage() {
                 <MapPin size={14} />
                 {location.name}
               </div>
+
               <div className="mt-4">
-                {/* Dia da semana grande e data/mês/ano em baixo */}
+                {/*DIA DA SEMANA E DATA FORMATADAS DE FORMA SIMPLES*/}
                 <h1 className="text-3xl font-bold text-gray-900 capitalize">
-                  {new Date(
-                    forecast.forecastday[0].date + "T00:00:00",
-                  ).toLocaleDateString("pt-BR", { weekday: "long" })}
+                  {formatarDiaSemana(hoje.date, "long")}
                 </h1>
                 <p className="text-xs text-gray-400 font-medium mt-0.5">
-                  {new Date(
-                    forecast.forecastday[0].date + "T00:00:00",
-                  ).toLocaleDateString("pt-BR", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {formatarDataCompleta(hoje.date)}
                 </p>
 
-                {/* Temperatura Atual */}
                 <h2 className="text-5xl font-bold mt-4 text-gray-900 mb-6">
                   {Math.round(current.temp_c)}°C
                 </h2>
 
-                {/* Máxima e Mínima em baixo do grau */}
-                <div className="flex gap-2 text-xs font-semibold mt-1 text-zinc-400">
-                  <span className="">
-                    Máxima: {Math.round(hoje.maxtemp_c)}°
-                  </span>
-                  <span className="">
-                    Mínima: {Math.round(hoje.mintemp_c)}°
-                  </span>
+                {/* MAXIMA E MÍNIMA */}
+                <div className="flex gap-3 text-xs font-semibold text-gray-400 mb-4">
+                  <span>Máxima: {Math.round(hoje.day.maxtemp_c)}°</span>
+                  <span>Mínima: {Math.round(hoje.day.mintemp_c)}°</span>
                 </div>
 
-                {/* Texto do clima (ex: Ensolarado) */}
-                <p className="text-sm font-medium text-gray-500 mt-3 capitalize bg-zinc-100 p-2 rounded-2xl w-fit">
+                <p className="text-sm font-medium text-gray-500 px-3 py-1.5 bg-zinc-100 rounded-xl w-fit capitalize">
                   {current.condition.text}
                 </p>
               </div>
             </div>
 
-            {/* Ícone do Clima */}
-            <img
-              src={`https:${current.condition.icon}`}
-              alt="Clima"
-              className="w-24 h-24 object-contain"
-            />
+            {/* ÍCONE DO CLIMA */}
+            <span className="text-9xl select-none pr-4">
+              {CLIMA_EMOJIS[current.condition.code] || "☀️"}
+            </span>
           </div>
 
-          {/* PREVISÃO DA SEMANA AUTOMÁTICA */}
-          <div className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+          {/* PREVISÃO DA SEMANA */}
+          <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <span className="text-sm font-bold text-gray-800 block mb-3">
               Próximos dias
             </span>
+            <div className="bg-zinc-200 w-full rounded mb-4 h-10"></div>
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {forecast.forecastday.map((item: any, idx: number) => {
-                const diaSemana = new Date(
-                  item.date + "T00:00:00",
-                ).toLocaleDateString("pt-BR", { weekday: "short" });
-                return (
-                  <div
-                    key={idx}
-                    className="flex flex-col items-center p-2 rounded-xl border border-gray-200 min-w-[75px] bg-gray-50 text-center"
-                  >
-                    <span className="text-xs font-bold text-gray-600 capitalize">
-                      {diaSemana.replace(".", "")}
-                    </span>
-                    <img
-                      src={`https:${item.day.condition.icon}`}
-                      alt="ícone"
-                      className="w-8 h-8 my-1"
-                    />
-                    <span className="text-xs font-bold text-gray-800">
-                      {Math.round(item.day.maxtemp_c)}°
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {Math.round(item.day.mintemp_c)}°
-                    </span>
-                  </div>
-                );
-              })}
+              {forecast.forecastday.map((item: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="flex flex-col items-center p-2 rounded-xl border border-gray-200 min-w-[75px] bg-gray-50 text-center"
+                >
+                  <span className="text-xs font-bold text-gray-600 capitalize">
+                    {formatarDiaSemana(item.date, "short")}
+                  </span>
+
+                  {/* EMOJI DO CLIMA DA SEMANA*/}
+                  <span className="text-2xl my-1.5 select-none">
+                    {CLIMA_EMOJIS[item.day.condition.code] || "☀️"}
+                  </span>
+
+                  <span className="text-xs font-bold text-gray-800">
+                    {Math.round(item.day.maxtemp_c)}°
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {Math.round(item.day.mintemp_c)}°
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* BLOCO DA DIREITA: MAIS INFORMAÇÕES */}
+        {/* BLOCO DA DIREIRA: MAIS INFORMAÇÕES */}
         <div className="flex flex-col gap-6">
           <div className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
             <span className="text-sm font-bold text-gray-800 block mb-4">
               Mais informações
             </span>
-
+            {/*CHUVA*/}
             <div className="grid grid-cols-2 gap-4">
-              {/* CHUVA */}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
                 <div className="flex items-center gap-2 text-gray-400">
                   <CloudRain size={16} />
                   <span className="text-xs">Chuva</span>
                 </div>
                 <span className="text-lg font-bold text-gray-800">
-                  {hoje.daily_chance_of_rain}%
+                  {hoje.day.daily_chance_of_rain}%
                 </span>
               </div>
-              {/* SENSACÃO */}
+              {/**SENSAÇÃO TÉRMICA*/}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
                 <div className="flex items-center gap-2 text-gray-400">
                   <Sun size={16} />
@@ -185,7 +205,7 @@ export default function ClimaPage() {
                   {Math.round(current.feelslike_c)}°C
                 </span>
               </div>
-              {/* VENTO */}
+              {/**VENTO*/}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
                 <div className="flex items-center gap-2 text-gray-400">
                   <Wind size={16} />
@@ -195,7 +215,7 @@ export default function ClimaPage() {
                   {current.wind_kph} km/h
                 </span>
               </div>
-              {/* UMIDADE */}
+              {/**UMIDADE*/}
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between h-24">
                 <div className="flex items-center gap-2 text-gray-400">
                   <Droplets size={16} />
@@ -207,31 +227,25 @@ export default function ClimaPage() {
               </div>
             </div>
           </div>
-          {/*OUTRAS CIDADES*/}
 
+          {/* OUTRAS CIDADES */}
           <div className="p-6 bg-white rounded-2xl border-2 border-gray-200 shadow-sm flex-1 flex flex-col justify-between">
             <div>
               <span className="text-sm font-bold text-gray-700 block mb-3">
                 Outras cidades próximas
               </span>
 
-              {/*TREMEMBÉ*/}
-
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
                   <div>
                     <h4 className="font-bold text-gray-700">Tremembé</h4>
-
                     <span className="text-[10px] text-gray-400">
                       Ensolarado
                     </span>
                   </div>
-
-                  <span className="font-bold text-gray-800 text-2xl">☀️</span>
+                  <span className="text-2xl select-none">☀️</span>
                 </div>
               </div>
-
-              {/*TREMEMBÉ*/}
 
               <div className="flex flex-col gap-2 mt-3">
                 <div className="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-xs">
@@ -239,11 +253,9 @@ export default function ClimaPage() {
                     <h4 className="font-bold text-gray-700">
                       São José dos Campos
                     </h4>
-
                     <span className="text-[10px] text-gray-400">Chuvoso</span>
                   </div>
-
-                  <span className="font-bold text-gray-800 text-2xl">🌧️</span>
+                  <span className="text-2xl select-none">🌧️</span>
                 </div>
               </div>
             </div>
