@@ -11,7 +11,7 @@ import {
   Fingerprint,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import NuvensBackground from "@/components/NuvensBackground";
+import NuvensBackground from "@/app/components/NuvensBackground";
 
 export default function CadastroCidadao() {
   const router = useRouter();
@@ -65,7 +65,8 @@ export default function CadastroCidadao() {
           <img
             src="/PluviteIcon.jpg"
             alt="Logo"
-            className="w-12 h-12 rounded-xl"
+            className="w-12 h-12 rounded-xl select-none"
+            draggable="false"
           />
         </div>
 

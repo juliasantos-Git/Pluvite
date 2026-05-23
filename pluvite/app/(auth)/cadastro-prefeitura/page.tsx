@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { UserRound, Mail, IdCard, Briefcase, Lock } from "lucide-react";
 import { useRouter } from "next/navigation"; // 1. Importação do Router
-import NuvensBackground from "@/components/NuvensBackground";
+import NuvensBackground from "@/app/components/NuvensBackground";
 
 const EngenheiroCivil = "Engenheiro Civil";
 const AgenteDefesaCivil = "Agente de Defesa Civil";
@@ -69,7 +69,8 @@ export default function CadastroServidor() {
           <img
             src="/PluviteIcon.jpg"
             alt="Logo"
-            className="w-14 h-14 rounded-xl"
+            className="w-14 h-14 rounded-xl select-none"
+            draggable="false"
           />
         </div>
 

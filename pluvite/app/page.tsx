@@ -1,4 +1,5 @@
 "use client";
+
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import bairros from "../public/map.json";
@@ -30,7 +31,7 @@ export default function PluviteVale() {
   const [localAberto, setLocalAberto] = useState<string | null>(null);
 
   return (
-    <main className="h-screen w-full">
+    <main className="h-screen w-full relative">
       <MapContainer
         key="mapa-vale"
         // AJUSTE: Centro aproximado do Vale do Paraíba e zoom mais distante (9)
@@ -52,6 +53,7 @@ export default function PluviteVale() {
             const nome =
               feature.properties.NM_MUN ||
               feature.properties.name ||
+              feature.properties.NM_MUNICIPIO || // Fallback comum para arquivos do IBGE
               "Município";
 
             /*etiqueta da cidade*/
@@ -69,6 +71,34 @@ export default function PluviteVale() {
         />
       </MapContainer>
 
+      {/* --- BOX DE LEGENDA FIXA NO CANTO SUPERIOR DIREITO --- */}
+      <div className="absolute top-12 right-4 z-[1000] bg-slate-200 border-slate-200/50 p-4 rounded-2xl shadow-lg max-w-xs flex flex-col gap-2.5 font-sans">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">
+          Status de Monitoramento
+        </h3>
+        
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-purple-600 animate-pulse" />
+          <span className="text-sm font-semibold text-slate-800">Alerta Máximo</span>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-red-500" />
+          <span className="text-sm font-semibold text-slate-800">Estado de Alerta</span>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-amber-400" />
+          <span className="text-sm font-semibold text-slate-800">Atenção</span>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-emerald-500" />
+          <span className="text-sm font-semibold text-slate-800">Seguro</span>
+        </div>
+      </div>
+
+      {/* --- MODAL DETALHADO DO MUNICÍPIO --- */}
       {localAberto && (
         <div className="fixed inset-0 left-0 z-[9999] flex items-center justify-center p-4">
           <div
