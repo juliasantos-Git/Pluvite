@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from "@/app/lib/banco";
 import React, { useState } from "react";
 import Link from "next/link";
 import {
@@ -29,26 +29,37 @@ export default function CadastroCidadao() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Conecta com o seu backend na porta 3001
-      const response = await fetch("http://localhost:3001/cadastrar-cidadao", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      // 1. Cria o login no Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.senha,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Cadastro de cidadão realizado com sucesso!");
-        router.push("/login");
-      } else {
-        alert("Erro: " + (data.error || data.message));
+      if (error) {
+        alert("Erro ao criar conta: " + error.message);
+        return;
       }
+
+      // 2. Salva os dados na tabela cidadao
+      const { error: erroPerfil } = await supabase.from("cidadao").insert({
+        auth_id: data.user?.id, // liga com o Auth
+        nome_completo: formData.nome,
+        cpf: formData.cpf,
+        telefone: formData.telefone,
+        cidade: formData.cidade,
+        pcd: formData.pcd,
+      });
+
+      if (erroPerfil) {
+        alert("Erro ao salvar dados: " + erroPerfil.message);
+        return;
+      }
+
+      alert("Cadastro realizado com sucesso!");
+      router.push("/login");
     } catch (error) {
-      console.error("Erro na conexão:", error);
-      alert(
-        "Erro ao conectar com o servidor backend. Verifique se o Node está rodando!",
-      );
+      console.error("Erro inesperado:", error);
+      alert("Algo deu errado, tente novamente.");
     }
   };
 
