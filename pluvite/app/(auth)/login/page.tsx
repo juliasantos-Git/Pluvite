@@ -30,7 +30,7 @@ export default function Login() {
         if (data.tipo === "prefeitura") {
           router.push("/dashboard-prefeitura");
         } else {
-          router.push("/home-cidadao");
+          router.push("/Mapa");
         }
       } else {
         alert("Email ou senha incorretos!");

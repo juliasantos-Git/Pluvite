@@ -1,0 +1,167 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import {
+  CircleCheckBig,
+  Users,
+  TriangleAlert,
+  CircleAlert,
+  CircleCheck,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
+
+// Importa o bloco do mapa garantindo o bloqueio de SSR (Server-Side Rendering)
+const MapaSemSSR = dynamic(() => import("../components/MapaValeComponent"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-screen w-full bg-slate-900 flex items-center justify-center text-white">
+      <p className="animate-pulse tracking-wide text-sm font-medium">
+        A carregar mapa interativo do Vale...
+      </p>
+    </div>
+  ),
+});
+
+export default function PluviteVale() {
+  const [localAberto, setLocalAberto] = useState<string | null>(null);
+  const [dadosBairros, setDadosBairros] = useState<any>(null);
+
+  // Carrega o JSON da pasta public apenas quando a página abre no navegador
+  useEffect(() => {
+    fetch("/map.json")
+      .then((res) => res.json())
+      .then((data) => setDadosBairros(data))
+      .catch((err) => console.error("Erro ao carregar o mapa JSON:", err));
+  }, []);
+
+  return (
+    <main className="h-screen w-full relative">
+      {/* MAPA INTERATIVO SEGURO - Só renderiza quando o JSON terminar de carregar */}
+      {dadosBairros ? (
+        <MapaSemSSR bairrosDados={dadosBairros} setLocalAberto={setLocalAberto} />
+      ) : (
+        <div className="h-screen w-full bg-slate-900 flex items-center justify-center text-white">
+          <p className="animate-pulse tracking-wide text-sm font-medium">
+            A ler dados geográficos...
+          </p>
+        </div>
+      )}
+
+      {/* --- BOX DE LEGENDA FIXA NO CANTO SUPERIOR DIREITO --- */}
+      <div className="absolute top-12 right-4 z-[1000] bg-slate-200 border-slate-200/50 p-4 rounded-2xl shadow-lg max-w-xs flex flex-col gap-2.5 font-sans">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">
+          Status de Monitoramento
+        </h3>
+        
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-purple-600 animate-pulse" />
+          <span className="text-sm font-semibold text-slate-800">Alerta Máximo</span>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-red-500" />
+          <span className="text-sm font-semibold text-slate-800">Estado de Alerta</span>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-amber-400" />
+          <span className="text-sm font-semibold text-slate-800">Atenção</span>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 rounded-full bg-emerald-500" />
+          <span className="text-sm font-semibold text-slate-800">Seguro</span>
+        </div>
+      </div>
+
+      {/* --- MODAL DETALHADO DO MUNICÍPIO --- */}
+      {localAberto && (
+        <div className="fixed inset-0 left-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-md"
+            onClick={() => setLocalAberto(null)}
+          />
+
+          <div className="relative bg-white w-full max-w-2xl rounded-[1rem] p-8 shadow-2xl flex flex-col gap-6 pb-10">
+            <button
+              onClick={() => setLocalAberto(null)}
+              className="absolute top-6 right-6 text-zinc-400 hover:text-zinc-800 cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                <CircleCheckBig className="text-green-500" size={25} />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900">
+                  {localAberto}
+                </h2>
+
+                <div className="flex items-center gap-4 mt-3">
+                  <div className="px-3 py-1 rounded-md border border-zinc-300 text-zinc-600 font-bold text-sm tracking-wide bg-white">
+                    Monitorado
+                  </div>
+                  <div className="flex items-center gap-2 text-zinc-500">
+                    <Users size={18} />
+                    <p className="tracking-wide text-sm font-medium">
+                      Dados Regionais
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 w-full gap-3 mt-4">
+              <div className="bg-red-50 border border-red-300 rounded-xl p-6 flex justify-between items-center text-red-700">
+                <div>
+                  <TriangleAlert className="mb-1" size={20} />
+                  <p className="text-sm">Críticos</p>
+                </div>
+                <div className="text-2xl font-bold">10</div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-600 rounded-xl p-6 flex justify-between items-center text-yellow-600">
+                <div>
+                  <CircleAlert className="mb-1" size={20} />
+                  <p className="text-sm">Médios</p>
+                </div>
+                <div className="text-2xl font-bold">20</div>
+              </div>
+
+              <div className="bg-green-100 border border-green-700 rounded-xl p-6 flex justify-between items-center text-green-700">
+                <div>
+                  <CircleCheck className="mb-1" size={20} />
+                  <p className="text-sm">Baixos</p>
+                </div>
+                <div className="text-2xl font-bold">40</div>
+              </div>
+            </div>
+
+            <div className="p-3 w-full mt-2 bg-green-100 border border-green-700 rounded-xl flex flex-col text-green-800">
+              <div className="flex items-center gap-2">
+                <CircleCheckBig size={22} />
+                <h1 className="font-bold text-xl tracking-wide">
+                  Situação tranquila
+                </h1>
+              </div>
+              <p className="tracking-wide mt-2">
+                Nenhum alerta crítico para {localAberto} no momento.
+              </p>
+            </div>
+
+            <Link href={`/feed?local=${localAberto}`} className="w-full">
+              <button className="bg-black w-full rounded-lg text-white flex items-center justify-center p-4 font-medium hover:bg-zinc-800 transition-all gap-2 cursor-pointer">
+                Ver todas as postagens de {localAberto}
+                <ArrowRight size={20} />
+              </button>
+            </Link>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}

@@ -15,7 +15,7 @@ export default function CadastroServidor() {
   const router = useRouter(); // 2. Inicialização do Router
 
   const [formData, setFormData] = useState({
-    nome: "",
+    id_servidor: "",
     email: "",
     senha: "",
     cargo: "",
@@ -87,10 +87,10 @@ export default function CadastroServidor() {
             <input
               type="text"
               required
-              placeholder="Nome Completo"
-              value={formData.nome}
+              placeholder="ID do servidor"
+              value={formData.id_servidor}
               onChange={(e) =>
-                setFormData({ ...formData, nome: e.target.value })
+                setFormData({ ...formData, id_servidor: e.target.value })
               }
               className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
