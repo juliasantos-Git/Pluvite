@@ -132,7 +132,7 @@ app.post("/login", async (req, res) => {
     const { data, error } = await supabase
       .from("cidadao")
       .select("*")
-      .eq("id_servidor", id_servidor)
+      .eq("email", email)
       .single();
 
     if (error || !data) {
