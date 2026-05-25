@@ -50,7 +50,7 @@ export default function Navbar() {
         <div className="w-[1px] h-6 bg-zinc-200 mx-3"></div>
 
         <Link
-          href="/selecao"
+          href="/login"
           className="flex items-center gap-2 text-white bg-[#1a2744] hover:bg-[#1a56cc] transition-all duration-150 px-5 py-2 rounded-xl font-semibold tracking-wide active:scale-95"
         >
           <UserRound size={20} />

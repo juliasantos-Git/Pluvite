@@ -9,6 +9,8 @@ import {
   Phone,
   MapPin,
   Fingerprint,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import NuvensBackground from "@/app/components/NuvensBackground";
@@ -26,10 +28,28 @@ export default function CadastroCidadao() {
     pcd: false,
   });
 
+  const [cpfDisplay, setCpfDisplay] = useState("");
+  const [telefoneDisplay, setTelefoneDisplay] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+
+  const formatarCPF = (valor: string) => {
+    const nums = valor.replace(/\D/g, "").slice(0, 11);
+    return nums
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  };
+
+  const formatarTelefone = (valor: string) => {
+    const nums = valor.replace(/\D/g, "").slice(0, 11);
+    return nums
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // 1. Cria o login no Auth
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.senha,
@@ -40,10 +60,10 @@ export default function CadastroCidadao() {
         return;
       }
 
-      // 2. Salva os dados na tabela cidadao
       const { error: erroPerfil } = await supabase.from("cidadao").insert({
-        auth_id: data.user?.id, // liga com o Auth
+        auth_id: data.user?.id,
         nome_completo: formData.nome,
+        email: formData.email,
         cpf: formData.cpf,
         telefone: formData.telefone,
         cidade: formData.cidade,
@@ -65,29 +85,24 @@ export default function CadastroCidadao() {
 
   return (
     <main className="relative h-screen w-full flex flex-col items-center justify-center p-4 overflow-hidden bg-[#256ffe]">
-      {/* BACKGROUND DE NUVENS */}
       <NuvensBackground />
-      {/* CARD DE CADASTRO */}
       <form
         onSubmit={handleSubmit}
         className="flex flex-col justify-center items-center max-w-[550px] w-full bg-white rounded-[2.5rem] shadow-2xl shadow-zinc-900/50 p-8 z-10 border border-slate-100 max-h-[95vh] overflow-y-auto scrollbar-hide"
       >
-        <div className="mb-2 shrink-0">
+        <div className="bg-white p-3 rounded-2xl shadow-sm mb-6">
           <img
             src="/PluviteIcon.jpg"
             alt="Logo"
-            className="w-12 h-12 rounded-xl select-none"
+            className="w-12 h-12 rounded-lg select-none"
             draggable="false"
           />
         </div>
 
         <div className="text-center shrink-0">
-          <h1 className="font-bold tracking-wider text-2xl text-blue-950 font-sans">
+          <h1 className="font-bold tracking-wider text-2xl text-blue-950 font-sans pb-6">
             Criar Conta
           </h1>
-          <p className="text-blue-900/60 pb-6 font-medium text-sm">
-            Portal do Cidadão
-          </p>
         </div>
 
         <div className="w-full space-y-3 max-w-md">
@@ -104,7 +119,7 @@ export default function CadastroCidadao() {
               className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
             <UserRound
-              className="absolute right-4 text-zinc-500 focus:shadow-2xl group-focus-within:text-[#256ffe] transition-colors"
+              className="absolute right-4 text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
               size={18}
             />
           </div>
@@ -123,26 +138,29 @@ export default function CadastroCidadao() {
                 className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
               <Mail
-                className="absolute right-4  text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
+                className="absolute right-4 text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
                 size={18}
               />
             </div>
             {/* Senha */}
             <div className="relative flex-1 flex items-center group">
               <input
-                type="password"
+                type={mostrarSenha ? "text" : "password"}
                 required
                 placeholder="Senha"
                 value={formData.senha}
                 onChange={(e) =>
                   setFormData({ ...formData, senha: e.target.value })
                 }
-                className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
+                className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm pr-10"
               />
-              <Lock
-                className="absolute right-4  text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
-                size={18}
-              />
+              <button
+                type="button"
+                onClick={() => setMostrarSenha(!mostrarSenha)}
+                className="absolute right-4 text-zinc-500 group-focus-within:text-[#256ffe] hover:text-[#256ffe] transition-colors cursor-pointer"
+              >
+                {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
@@ -152,16 +170,17 @@ export default function CadastroCidadao() {
               <input
                 type="text"
                 required
-                maxLength={11}
-                placeholder="CPF (números)"
-                value={formData.cpf}
-                onChange={(e) =>
-                  setFormData({ ...formData, cpf: e.target.value })
-                }
+                placeholder="000.000.000-00"
+                value={cpfDisplay}
+                onChange={(e) => {
+                  const nums = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  setFormData({ ...formData, cpf: nums });
+                  setCpfDisplay(formatarCPF(e.target.value));
+                }}
                 className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
               <Fingerprint
-                className="absolute right-4 text-zinc-400 text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
+                className="absolute right-4 text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
                 size={16}
               />
             </div>
@@ -170,15 +189,17 @@ export default function CadastroCidadao() {
               <input
                 type="text"
                 required
-                placeholder="Telefone"
-                value={formData.telefone}
-                onChange={(e) =>
-                  setFormData({ ...formData, telefone: e.target.value })
-                }
+                placeholder="(00) 00000-0000"
+                value={telefoneDisplay}
+                onChange={(e) => {
+                  const nums = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  setFormData({ ...formData, telefone: nums });
+                  setTelefoneDisplay(formatarTelefone(e.target.value));
+                }}
                 className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
               />
               <Phone
-                className="absolute right-4  text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
+                className="absolute right-4 text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
                 size={16}
               />
             </div>
@@ -197,7 +218,7 @@ export default function CadastroCidadao() {
               className="bg-zinc-100 rounded-2xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 text-sm"
             />
             <MapPin
-              className="absolute right-4  text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
+              className="absolute right-4 text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
               size={18}
             />
           </div>
