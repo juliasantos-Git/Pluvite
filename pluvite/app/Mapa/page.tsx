@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// Importa o bloco do mapa garantindo o bloqueio de SSR (Server-Side Rendering)
 const MapaSemSSR = dynamic(() => import("../components/MapaValeComponent"), {
   ssr: false,
   loading: () => (
@@ -40,7 +39,10 @@ export default function PluviteVale() {
     <main className="h-screen w-full relative">
       {/* MAPA INTERATIVO SEGURO - Só renderiza quando o JSON terminar de carregar */}
       {dadosBairros ? (
-        <MapaSemSSR bairrosDados={dadosBairros} setLocalAberto={setLocalAberto} />
+        <MapaSemSSR
+          bairrosDados={dadosBairros}
+          setLocalAberto={setLocalAberto}
+        />
       ) : (
         <div className="h-screen w-full bg-slate-900 flex items-center justify-center text-white">
           <p className="animate-pulse tracking-wide text-sm font-medium">
@@ -54,15 +56,19 @@ export default function PluviteVale() {
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">
           Status de Monitoramento
         </h3>
-        
+
         <div className="flex items-center gap-2.5">
           <span className="w-3.5 h-3.5 rounded-full bg-purple-600 animate-pulse" />
-          <span className="text-sm font-semibold text-slate-800">Alerta Máximo</span>
+          <span className="text-sm font-semibold text-slate-800">
+            Alerta Máximo
+          </span>
         </div>
 
         <div className="flex items-center gap-2.5">
           <span className="w-3.5 h-3.5 rounded-full bg-red-500" />
-          <span className="text-sm font-semibold text-slate-800">Estado de Alerta</span>
+          <span className="text-sm font-semibold text-slate-800">
+            Estado de Alerta
+          </span>
         </div>
 
         <div className="flex items-center gap-2.5">
