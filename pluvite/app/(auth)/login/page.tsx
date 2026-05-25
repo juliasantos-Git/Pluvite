@@ -2,16 +2,16 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import NuvensBackground from "@/app/components/NuvensBackground";
 
 export default function Login() {
   const router = useRouter();
 
-  // Estados para armazenar email e senha
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +25,6 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // VERIFICAÇÃO DE TIPO DE USUÁRIO
-        // O backend deve retornar se o usuário é 'prefeitura' ou 'cidadao'
         if (data.tipo === "prefeitura") {
           router.push("/dashboard-prefeitura");
         } else {
@@ -34,21 +32,21 @@ export default function Login() {
         }
       } else {
         alert("Email ou senha incorretos!");
+        setEmail("");
+        setSenha("");
       }
     } catch (error) {
       console.error("Erro ao logar:", error);
-      alert(
-        "Servidor fora do ar. Verifique se o terminal do Node está rodando!",
-      );
+      alert("Servidor fora do ar. Verifique se o terminal do Node está rodando!");
+      setEmail("");
+      setSenha("");
     }
   };
 
   return (
     <main className="relative h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-[#256ffe]">
-      {/* BACKGROUND DE NUVENS */}
       <NuvensBackground />
 
-      {/* CARD DE LOGIN */}
       <form
         onSubmit={handleSubmit}
         className="flex flex-col justify-center items-center max-w-[550px] w-full bg-white rounded-[2.5rem] shadow-2xl shadow-zinc-900/50 p-10 z-10 border border-slate-100"
@@ -87,17 +85,20 @@ export default function Login() {
           {/* Campo: Senha */}
           <div className="relative flex items-center group">
             <input
-              type="password"
+              type={mostrarSenha ? "text" : "password"}
               required
               placeholder="Senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               className="pr-12 bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
             />
-            <Lock
-              className="absolute right-4   text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
-              size={20}
-            />
+            <button
+              type="button"
+              onClick={() => setMostrarSenha(!mostrarSenha)}
+              className="absolute right-4 text-zinc-500 hover:text-[#256ffe] group-focus-within:text-[#256ffe] transition-colors cursor-pointer"
+            >
+              {mostrarSenha ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
         </div>
 
@@ -113,7 +114,7 @@ export default function Login() {
         <div className="mt-6 text-center">
           <span className="text-zinc-500">Não tem uma conta? </span>
           <Link
-            href="/selecao"
+            href="/cadastro-cidadao"
             className="text-[#256ffe] font-bold hover:underline"
           >
             Cadastre-se

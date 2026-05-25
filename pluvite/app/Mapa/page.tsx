@@ -9,8 +9,10 @@ import {
   CircleAlert,
   CircleCheck,
   ArrowRight,
+  X,
 } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "../lib/banco";
 
 const MapaSemSSR = dynamic(() => import("../components/MapaValeComponent"), {
   ssr: false,
@@ -27,12 +29,60 @@ export default function PluviteVale() {
   const [localAberto, setLocalAberto] = useState<string | null>(null);
   const [dadosBairros, setDadosBairros] = useState<any>(null);
 
-  // Carrega o JSON da pasta public apenas quando a página abre no navegador
+  // --- ESTADOS PARA O POP-UP DE ALERTA EM TEMPO REAL ---
+  const [exibirAlerta, setExibirAlerta] = useState(false);
+  const [dadosAlerta, setDadosAlerta] = useState<{
+    cidade: string;
+    condicao: string;
+    temperatura: string;
+    nome: string;
+  } | null>(null);
+
+  // 1. Carrega o JSON do mapa
   useEffect(() => {
     fetch("/map.json")
       .then((res) => res.json())
       .then((data) => setDadosBairros(data))
       .catch((err) => console.error("Erro ao carregar o mapa JSON:", err));
+  }, []);
+
+  // 2. 📡 ESCUTA DO SUPABASE EM TEMPO REAL (Substitui o arquivo .js antigo)
+  useEffect(() => {
+    // SIMULAÇÃO: Aqui você pegaria o ID e Nome vindos do seu sistema de login/sessão.
+    // Para testar agora, você pode mudar esses valores para bater com o banco!
+    const idCidadaoLogado = 1;
+    const nomeCidadaoLogado = "Quezia";
+
+    console.log(
+      `📡 Pluvite conectado e monitorando para: ${nomeCidadaoLogado}`,
+    );
+
+    const canalRealtimes = supabase
+      .channel("canal-pluvite")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "alertas_tempo_real" },
+        (payload) => {
+          const novoAlerta = payload.new;
+
+          // Se o alerta gerado pelo Python for para o cidadão que está logado
+          if (novoAlerta.id_cidadao === idCidadaoLogado) {
+            setDadosAlerta({
+              cidade: novoAlerta.cidade_alerta,
+              condicao: novoAlerta.condicao,
+              temperatura: novoAlerta.temperatura,
+              nome: nomeCidadaoLogado,
+            });
+            setExibirAlerta(true);
+          }
+        },
+      )
+      .subscribe();
+
+    // Remove a escuta quando o usuário sai da página para não gastar memória
+    return () => {
+      supabase.removeChannel(canalRealtimes);
+    };
   }, []);
 
   return (
@@ -81,6 +131,70 @@ export default function PluviteVale() {
           <span className="text-sm font-semibold text-slate-800">Seguro</span>
         </div>
       </div>
+
+      {/* --- 🚨 POP-UP DE EMERGÊNCIA EM TEMPO REAL (IGUAL AO DA FOTO) --- */}
+      {exibirAlerta && dadosAlerta && (
+        <div className="fixed inset-0 left-0 z-[10000] flex items-center justify-center p-4">
+          {/* Fundo escuro com desfoque */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+          {/* Card do Pop-up */}
+          <div className="relative bg-white w-full max-w-xs rounded-xl p-5 shadow-2xl flex flex-col font-sans text-slate-800 border border-slate-300">
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
+              <div className="flex items-center gap-2 text-red-600 font-bold text-sm tracking-wide">
+                <TriangleAlert size={16} />
+                <span>ALERTA DE EMERGÊNCIA</span>
+              </div>
+              <button
+                onClick={() => setExibirAlerta(false)}
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Conteúdo do Alerta */}
+            <div className="flex flex-col gap-3 text-sm">
+              <p className="font-medium text-slate-900">
+                Olá, {dadosAlerta.nome}!
+              </p>
+
+              <div>
+                <p className="text-slate-600">
+                  Risco detectado em{" "}
+                  <span className="font-semibold text-slate-900">
+                    {dadosAlerta.cidade}
+                  </span>
+                  :
+                </p>
+                <p className="font-bold text-slate-900 tracking-wide uppercase mt-0.5">
+                  {dadosAlerta.condicao}
+                </p>
+              </div>
+
+              <p className="text-slate-700 font-medium">
+                Temperatura:{" "}
+                <span className="font-semibold">{dadosAlerta.temperatura}</span>
+              </p>
+
+              <p className="text-red-600 font-semibold text-xs mt-1 animate-pulse">
+                Tome precauções imediatamente.
+              </p>
+            </div>
+
+            {/* Botão de Fechar */}
+            <div className="text-right mt-4 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setExibirAlerta(false)}
+                className="bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-800 font-medium text-xs px-5 py-1.5 rounded cursor-pointer transition-all shadow-sm"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- MODAL DETALHADO DO MUNICÍPIO --- */}
       {localAberto && (

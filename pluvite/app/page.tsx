@@ -24,7 +24,7 @@ export default function Home() {
         <section className="max-w-5xl mx-auto px-6 pt-15 pb-30 flex flex-col items-center text-center gap-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-bold border border-blue-100">
             <Activity size={16} className="animate-pulse" />
-            Monitoramento Vale do Paraíba e Litoral Norte
+            Monitoramento do Vale do Paraíba e Litoral Norte
           </div>
 
           <h1 className="text-5=4xl md:text-5xl font-extrabold tracking-tight max-w-4xl text-slate-950 leading-tight">
@@ -73,8 +73,8 @@ export default function Home() {
               </h2>
 
               <p className="text-lg text-slate-600 leading-relaxed mt-4">
-                O Pluvite centraliza chamados, monitora bairros criticamente
-                afetados e oferece suporte visual imediato para equipes de
+                O Pluvite centraliza chamados, monitora cidades criticamente
+                afetadas e oferece suporte visual imediato para equipes de
                 resposta.
               </p>
             </div>
@@ -168,8 +168,8 @@ export default function Home() {
             </h2>
 
             <p className="text-lg text-slate-500 font-medium mt-2">
-              Ecossistema completo voltado à contenção de riscos e segurança
-              urbana
+              Ecossistema completo voltado à contenção de riscos e segurança da
+              população
             </p>
           </div>
 
@@ -228,7 +228,7 @@ export default function Home() {
               </h3>
 
               <p className="text-base text-slate-600 leading-relaxed mt-2">
-                Rotas alternativas para evitar ruas bloqueadas ou inundadas.
+                Rotas alternativas para evitar locais bloqueados ou inundados.
               </p>
             </div>
           </div>
@@ -408,7 +408,7 @@ export default function Home() {
           <div className="max-w-6xl mx-auto flex flex-col items-center gap-12">
             <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-8 pb-8 border-b border-white/20">
               <div className="flex flex-col md:flex-row items-center gap-4 text-center md:text-left max-w-xl">
-                <div className="w-14 h-14 rounded-xl bg-red-700 flex items-center justify-center shadow-lg">
+                <div className="w-14 h-14 rounded-xl bg-red-800 flex items-center justify-center shadow-lg">
                   <Phone size={28} />
                 </div>
 
@@ -424,28 +424,33 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
-                <div className="bg-white p-4 rounded-xl text-center min-w-[180px] shadow-md">
-                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
+                <div className="group bg-white hover:bg-red-800 p-4 rounded-xl text-center min-w-[180px] cursor-pointer shadow-md transition-colors duration-300">
+                  <span className="text-xs font-bold text-red-600 group-hover:text-white uppercase tracking-wider">
                     Defesa Civil
                   </span>
-
-                  <p className="text-2xl font-black text-slate-900">199</p>
+                  <p className="text-2xl font-black text-slate-900 group-hover:text-white">
+                    199
+                  </p>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl text-center min-w-[180px] shadow-md">
-                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
+                <div className="group bg-white hover:bg-red-800 p-4 rounded-xl text-center min-w-[180px] cursor-pointer shadow-md transition-colors duration-300">
+                  <span className="text-xs font-bold text-red-600 group-hover:text-white uppercase tracking-wider">
                     Bombeiros
                   </span>
 
-                  <p className="text-2xl font-black text-slate-900">193</p>
+                  <p className="text-2xl font-black text-slate-900 group-hover:text-white">
+                    193
+                  </p>
                 </div>
 
-                <div className="bg-white p-4 rounded-xl text-center min-w-[180px] shadow-md">
-                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
+                <div className="group bg-white hover:bg-red-800 p-4 rounded-xl text-center min-w-[180px] cursor-pointer shadow-md transition-colors duration-300">
+                  <span className="text-xs font-bold text-red-600 group-hover:text-white uppercase tracking-wider">
                     SAMU
                   </span>
 
-                  <p className="text-2xl font-black text-slate-900">192</p>
+                  <p className="text-2xl font-black text-slate-900 group-hover:text-white">
+                    192
+                  </p>
                 </div>
               </div>
             </div>
