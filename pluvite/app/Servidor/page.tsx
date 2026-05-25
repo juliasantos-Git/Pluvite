@@ -343,7 +343,7 @@ export default function PainelAdministrativo() {
       </div>
 
       {/* --- HISTÓRICO DE OCORRÊNCIAS --- */}
-      <div className="space-y-4">
+      <div className="space-y-4 mb-8">
         {chamadosFiltrados.length === 0 ? (
           <div className="bg-white rounded-2xl p-10 border border-slate-200 text-center text-slate-400 text-xs font-semibold">
             Nenhuma ocorrência encontrada para esta combinação de região e filtros.

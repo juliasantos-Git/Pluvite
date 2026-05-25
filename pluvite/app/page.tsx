@@ -423,7 +423,7 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
-                <div className="bg-white hover:bg[#e5020c] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
                   <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
                     Defesa Civil
                   </span>
@@ -431,7 +431,7 @@ export default function Home() {
                   <p className="text-2xl font-black text-slate-900">199</p>
                 </div>
 
-                <div className="bg-white hover:bg[#e5020c] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
                   <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
                     Bombeiros
                   </span>
@@ -439,7 +439,7 @@ export default function Home() {
                   <p className="text-2xl font-black text-slate-900">193</p>
                 </div>
 
-                <div className="bg-white hover:bg[#e5020c] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
                   <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
                     SAMU
                   </span>
