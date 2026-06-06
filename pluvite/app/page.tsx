@@ -424,8 +424,8 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
-                <div className="group bg-white hover:bg-red-800 p-4 rounded-xl text-center min-w-[180px] cursor-pointer shadow-md transition-colors duration-300">
-                  <span className="text-xs font-bold text-red-600 group-hover:text-white uppercase tracking-wider">
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
                     Defesa Civil
                   </span>
                   <p className="text-2xl font-black text-slate-900 group-hover:text-white">
@@ -433,8 +433,8 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="group bg-white hover:bg-red-800 p-4 rounded-xl text-center min-w-[180px] cursor-pointer shadow-md transition-colors duration-300">
-                  <span className="text-xs font-bold text-red-600 group-hover:text-white uppercase tracking-wider">
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
                     Bombeiros
                   </span>
 
@@ -443,8 +443,8 @@ export default function Home() {
                   </p>
                 </div>
 
-                <div className="group bg-white hover:bg-red-800 p-4 rounded-xl text-center min-w-[180px] cursor-pointer shadow-md transition-colors duration-300">
-                  <span className="text-xs font-bold text-red-600 group-hover:text-white uppercase tracking-wider">
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
                     SAMU
                   </span>
 
