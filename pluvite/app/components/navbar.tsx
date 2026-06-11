@@ -8,9 +8,9 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "Mapa", icon: Map, label: "Mapa" },
-    { href: "#", icon: Users, label: "Feed" },
-    { href: "Clima2", icon: CloudRain, label: "Clima" },
+    { href: "/Mapa", icon: Map, label: "Mapa" },
+    { href: "/", icon: Users, label: "Feed" },
+    { href: "/Clima2", icon: CloudRain, label: "Clima" },
     { href: "#", icon: Navigation, label: "Rotas" },
   ];
 
