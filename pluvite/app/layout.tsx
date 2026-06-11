@@ -1,7 +1,7 @@
 /* NÃO TIRAR NADA DAQUI. COLOCAR COISAS QUE PRECISAM SER FIXAS NO SITE.*/
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Navbar from "./components/navbar";
+import NavbarWrapper from "./components/NavbarWrapper";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,8 +30,8 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body className="overflow-hidden">
-        <Navbar />
-        <main className="pt-10">{children}</main>
+        <NavbarWrapper />
+        <main>{children}</main>
       </body>
     </html>
   );

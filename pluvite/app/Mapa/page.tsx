@@ -12,17 +12,8 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "../lib/banco";
 
-// ⚠️ IMPORTANTE: Instale o SDK do Supabase no seu projeto Next.js rodando no terminal:
-// npm install @supabase/supabase-js
-import { createClient } from "@supabase/supabase-js";
-
-// Inicializa o cliente do Supabase (Substitua com as suas credenciais reais)
-const SUPABASE_URL = "https://qhughmeaxbyupuglpvud.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodWdobWVheGJ5dXB1Z2xwdnVkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTAyNzgzMCwiZXhwIjoyMDk0NjAzODMwfQ.LbYDKH9U7IfKfJEbo_RAd4xkQPWBHzoFKLD5ADzdVyc";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Importa o bloco do mapa garantindo o bloqueio de SSR (Server-Side Rendering)
 const MapaSemSSR = dynamic(() => import("../components/MapaValeComponent"), {
   ssr: false,
   loading: () => (
@@ -59,10 +50,12 @@ export default function PluviteVale() {
   useEffect(() => {
     // SIMULAÇÃO: Aqui você pegaria o ID e Nome vindos do seu sistema de login/sessão.
     // Para testar agora, você pode mudar esses valores para bater com o banco!
-    const idCidadaoLogado = 1; 
+    const idCidadaoLogado = 1;
     const nomeCidadaoLogado = "Quezia";
 
-    console.log(`📡 Pluvite conectado e monitorando para: ${nomeCidadaoLogado}`);
+    console.log(
+      `📡 Pluvite conectado e monitorando para: ${nomeCidadaoLogado}`,
+    );
 
     const canalRealtimes = supabase
       .channel("canal-pluvite")
@@ -82,7 +75,7 @@ export default function PluviteVale() {
             });
             setExibirAlerta(true);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -96,7 +89,10 @@ export default function PluviteVale() {
     <main className="h-screen w-full relative">
       {/* MAPA INTERATIVO SEGURO - Só renderiza quando o JSON terminar de carregar */}
       {dadosBairros ? (
-        <MapaSemSSR bairrosDados={dadosBairros} setLocalAberto={setLocalAberto} />
+        <MapaSemSSR
+          bairrosDados={dadosBairros}
+          setLocalAberto={setLocalAberto}
+        />
       ) : (
         <div className="h-screen w-full bg-slate-900 flex items-center justify-center text-white">
           <p className="animate-pulse tracking-wide text-sm font-medium">
@@ -110,15 +106,19 @@ export default function PluviteVale() {
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-0.5">
           Status de Monitoramento
         </h3>
-        
+
         <div className="flex items-center gap-2.5">
           <span className="w-3.5 h-3.5 rounded-full bg-purple-600 animate-pulse" />
-          <span className="text-sm font-semibold text-slate-800">Alerta Máximo</span>
+          <span className="text-sm font-semibold text-slate-800">
+            Alerta Máximo
+          </span>
         </div>
 
         <div className="flex items-center gap-2.5">
           <span className="w-3.5 h-3.5 rounded-full bg-red-500" />
-          <span className="text-sm font-semibold text-slate-800">Estado de Alerta</span>
+          <span className="text-sm font-semibold text-slate-800">
+            Estado de Alerta
+          </span>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -146,7 +146,7 @@ export default function PluviteVale() {
                 <TriangleAlert size={16} />
                 <span>ALERTA DE EMERGÊNCIA</span>
               </div>
-              <button 
+              <button
                 onClick={() => setExibirAlerta(false)}
                 className="text-slate-400 hover:text-slate-700 cursor-pointer"
               >
@@ -156,15 +156,26 @@ export default function PluviteVale() {
 
             {/* Conteúdo do Alerta */}
             <div className="flex flex-col gap-3 text-sm">
-              <p className="font-medium text-slate-900">Olá, {dadosAlerta.nome}!</p>
-              
+              <p className="font-medium text-slate-900">
+                Olá, {dadosAlerta.nome}!
+              </p>
+
               <div>
-                <p className="text-slate-600">Risco detectado em <span className="font-semibold text-slate-900">{dadosAlerta.cidade}</span>:</p>
-                <p className="font-bold text-slate-900 tracking-wide uppercase mt-0.5">{dadosAlerta.condicao}</p>
+                <p className="text-slate-600">
+                  Risco detectado em{" "}
+                  <span className="font-semibold text-slate-900">
+                    {dadosAlerta.cidade}
+                  </span>
+                  :
+                </p>
+                <p className="font-bold text-slate-900 tracking-wide uppercase mt-0.5">
+                  {dadosAlerta.condicao}
+                </p>
               </div>
 
               <p className="text-slate-700 font-medium">
-                Temperatura: <span className="font-semibold">{dadosAlerta.temperatura}</span>
+                Temperatura:{" "}
+                <span className="font-semibold">{dadosAlerta.temperatura}</span>
               </p>
 
               <p className="text-red-600 font-semibold text-xs mt-1 animate-pulse">

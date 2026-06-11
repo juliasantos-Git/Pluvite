@@ -1,14 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
 
-const supabaseUrl =
-  "https://qhughmeaxbyupuglpvud.supabase.co";
+dotenv.config();
 
-const supabaseKey =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodWdobWVheGJ5dXB1Z2xwdnVkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTAyNzgzMCwiZXhwIjoyMDk0NjAzODMwfQ.LbYDKH9U7IfKfJEbo_RAd4xkQPWBHzoFKLD5ADzdVyc";
+// Buscando os dados das variáveis de ambiente protegidas
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY; // USE A ANON KEY AQUI!
 
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseKey
-);
+if (!supabaseUrl || !supabaseKey) {
+  console.error("ERRO: Variáveis de ambiente do Supabase não foram encontradas!");
+}
 
-console.log("SUPABASE CONECTADO");
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false, // Evita o erro de múltiplas instâncias no ambiente Node.js
+    autoRefreshToken: false,
+  },
+});
+
+console.log("SUPABASE CONFIGURADO COM SUCESSO");

@@ -17,10 +17,10 @@ const listaMunicipios = [
 
 // --- CORRESPONDÊNCIA DE CORES DA LEGENDA OFICIAL ---
 const CORES_PRIORIDADE: Record<string, string> = {
-  'Alerta Máximo': '#653dc2',    // Roxo
-  'Estado de Alerta': '#ef4444',  // Vermelho
-  'Atenção Crítica': '#f59e0b',   // Laranja
-  'Zona Segura': '#0a9667',       // Verde
+  'Alerta Máximo': '#653dc2',
+  'Estado de Alerta': '#ef4444',
+  'Atenção Crítica': '#f59e0b',
+  'Zona Segura': '#0a9667',
 };
 
 // --- BASE DE DADOS EXPANDIDA COM EXEMPLOS DE VÁRIAS CIDADES ---
@@ -93,7 +93,7 @@ const chamadosIniciais = [
     municipio: 'Jacareí',
     usuario: 'Fernanda Lima',
     endereco: 'Av. Getúlio Vargas, 1200',
-    tempo: 'há 2 hours',
+    tempo: 'há 2 horas',
     descricao: 'Árvore de grande porte caída interditando meia pista.',
     statusAtual: 'Em Andamento'
   },
@@ -198,17 +198,19 @@ export default function PainelAdministrativo() {
   }, [chamadosFiltrados]);
 
   return (
-    // pb-16 na div principal adiciona um espaçamento natural de 64px no final da rolagem
-    <div className="h-screen w-full overflow-y-auto bg-slate-50 p-6 md:p-8 font-sans text-slate-800 pb-16">
+    // ✅ FIX: w-[calc(100vw-64px)] desconta a largura da sidebar (64px)
+    // overflow-x-hidden evita scroll horizontal indesejado
+    <div className="h-screen overflow-y-auto overflow-x-hidden w-[calc(100vw-64px)] bg-slate-50 p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
 
-      {/* --- HEADER DO PAINEL (EQUILIBRADO) --- */}
+      {/* --- HEADER DO PAINEL --- */}
       <div className="pt-8 mb-8">
         <h1 className="text-4xl font-black text-slate-900 tracking-tight">Painel Administrativo</h1>
         <p className="text-slate-500 text-sm font-medium mt-1">Gerencie ocorrências e despache equipes em tempo real</p>
       </div>
 
-      {/* --- CARDS METRICOS OPERACIONAIS --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* --- CARDS MÉTRICOS OPERACIONAIS --- */}
+      {/* ✅ FIX: [&>*]:min-w-0 permite que os cards encolham sem ultrapassar o container */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 [&>*]:min-w-0">
         <div className="bg-blue-600 rounded-2xl p-6 text-white relative shadow-sm overflow-hidden flex flex-col justify-between h-40">
           <Layers className="w-7 h-7 opacity-90" />
           <div>
@@ -294,7 +296,7 @@ export default function PainelAdministrativo() {
                     paddingAngle={1} 
                     dataKey="value"
                     isAnimationActive={true}
-                    animationDuration={350}
+                    animationDuration={800}
                     animationEasing="ease-out"
                   >
                     {metricas.dadosPizza.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2} />)}
@@ -352,7 +354,7 @@ export default function PainelAdministrativo() {
           chamadosFiltrados.map((chamado) => (
             <div key={chamado.id} className="bg-white rounded-2xl p-5 md:p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <div 
                     className="p-1.5 rounded-lg text-white shadow-sm"

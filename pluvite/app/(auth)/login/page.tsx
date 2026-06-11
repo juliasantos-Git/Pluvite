@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import NuvensBackground from "@/app/components/NuvensBackground";
 
 export default function Login() {
   const router = useRouter();
@@ -44,83 +43,130 @@ export default function Login() {
   };
 
   return (
-    <main className="relative h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-[#256ffe]">
-      <NuvensBackground />
+    <main className="h-screen w-full flex overflow-hidden">
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col justify-center items-center max-w-[550px] w-full bg-white rounded-[2.5rem] shadow-2xl shadow-zinc-900/50 p-10 z-10 border border-slate-100"
-      >
-        <div className="bg-white p-3 rounded-2xl shadow-sm mb-6">
-          <img
-            src="/PluviteIcon.jpg"
-            alt="Logo"
-            className="w-12 h-12 rounded-lg select-none"
-            draggable="false"
-          />
-        </div>
+      {/* ── LADO ESQUERDO — decorativo, sem conteúdo textual ── */}
+      <div className="relative hidden md:block md:w-[42%] shrink-0 overflow-hidden bg-[#1447c4]">
+        {/* Elipse grande inspirada no layout de referência */}
+        <div className="absolute -right-24 top-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-[#2a5fe0] rounded-full" />
+        <div className="absolute -right-10 top-1/2 -translate-y-1/2 w-[320px] h-[320px] bg-[#3d72f5]/40 rounded-full" />
+      </div>
 
-        <h1 className="font-bold tracking-wider text-3xl text-blue-950 pb-2 font-sans">
-          Fazer Login
-        </h1>
-        <p className="text-blue-900/60 pb-8 font-medium">Bem-vindo de volta!</p>
+      {/* ── LADO DIREITO — formulário centralizado ── */}
+      <div className="flex flex-col justify-center items-center flex-1 bg-white px-8 overflow-y-auto">
+        <div className="w-full max-w-sm py-12">
 
-        <div className="w-full space-y-4 max-w-md">
-          {/* Campo: Email */}
-          <div className="relative flex items-center group">
-            <input
-              type="email"
-              required
-              placeholder="E-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
-            />
-            <Mail
-              className="absolute right-4 text-zinc-500 group-focus-within:text-[#256ffe] transition-colors"
-              size={20}
-            />
+          {/* Logo / ícone do sistema */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-[#1447c4] rounded-2xl flex items-center justify-center shadow-xl shadow-blue-600/20 mb-4">
+              <img
+                src="/PluviteIcon.jpg"
+                alt="Pluvite"
+                className="w-10 h-10 rounded-xl select-none"
+                draggable="false"
+                onError={(e) => {
+                  const el = e.currentTarget as HTMLImageElement;
+                  el.style.display = "none";
+                  (el.parentElement as HTMLElement).innerHTML =
+                    '<span style="color:white;font-weight:800;font-size:18px;letter-spacing:-1px">Pv</span>';
+                }}
+              />
+            </div>
+            <p className="text-xs font-bold tracking-[0.2em] text-slate-400 uppercase">
+              Plataforma Pluvite
+            </p>
           </div>
 
-          {/* Campo: Senha */}
-          <div className="relative flex items-center group">
-            <input
-              type={mostrarSenha ? "text" : "password"}
-              required
-              placeholder="Senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className="pr-12 bg-zinc-100 rounded-2xl p-4 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
-            />
+          {/* Título */}
+          <h1 className="text-[26px] font-bold text-slate-900 tracking-tight text-center">
+            Acesse sua conta
+          </h1>
+          <p className="text-sm text-slate-400 text-center mt-1.5 mb-8">
+            Ainda não tem conta?{" "}
+            <Link href="/cadastro-cidadao" className="text-[#1447c4] font-semibold hover:underline">
+              Cadastre-se aqui
+            </Link>
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* E-mail */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700">
+                E-mail
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="voce@exemplo.com.br"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white text-sm text-slate-900 rounded-xl px-4 py-3 border-2 border-slate-200 hover:border-slate-300 focus:border-[#1447c4] outline-none transition-all duration-200 placeholder:text-slate-300"
+              />
+            </div>
+
+            {/* Senha */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-slate-700">
+                  Senha
+                </label>
+                <Link href="/esqueci-senha" className="text-xs text-[#1447c4] font-medium hover:underline">
+                  Esqueci minha senha
+                </Link>
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  type={mostrarSenha ? "text" : "password"}
+                  required
+                  placeholder="••••••••"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="w-full bg-white text-sm text-slate-900 rounded-xl px-4 py-3 pr-12 border-2 border-slate-200 hover:border-slate-300 focus:border-[#1447c4] outline-none transition-all duration-200 placeholder:text-slate-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-4 text-slate-300 hover:text-slate-500 transition-colors cursor-pointer"
+                  aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {mostrarSenha ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Botão principal */}
             <button
-              type="button"
-              onClick={() => setMostrarSenha(!mostrarSenha)}
-              className="absolute right-4 text-zinc-500 hover:text-[#256ffe] group-focus-within:text-[#256ffe] transition-colors cursor-pointer"
+              type="submit"
+              className="w-full bg-[#1447c4] hover:bg-[#0f38a0] active:scale-[0.98] text-white text-sm font-bold py-3.5 rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-blue-600/20 mt-2"
             >
-              {mostrarSenha ? <EyeOff size={20} /> : <Eye size={20} />}
+              Entrar
             </button>
+          </form>
+
+          {/* Divisor */}
+          <div className="flex items-center gap-3 my-6">
+            <hr className="flex-1 border-slate-200" />
+            <span className="text-xs text-slate-400 font-medium">ou, se preferir</span>
+            <hr className="flex-1 border-slate-200" />
           </div>
-        </div>
 
-        <div className="w-full max-w-md">
-          <button
-            type="submit"
-            className="bg-[#256ffe] mt-8 p-3.5 w-full rounded-xl text-white font-semibold tracking-wide hover:bg-[#1a56cc] transition-all duration-200 cursor-pointer active:scale-95 shadow-lg shadow-blue-500/20"
-          >
-            Entrar
-          </button>
-        </div>
-
-        <div className="mt-6 text-center">
-          <span className="text-zinc-500">Não tem uma conta? </span>
-          <Link
-            href="/cadastro-cidadao"
-            className="text-[#256ffe] font-bold hover:underline"
-          >
-            Cadastre-se
+          {/* Botão cadastro cidadão */}
+          <Link href="/cadastro-cidadao" className="block">
+            <button className="w-full border-2 border-slate-200 hover:border-[#1447c4] hover:text-[#1447c4] text-slate-600 text-sm font-semibold py-3 rounded-xl transition-all duration-200 cursor-pointer">
+              Criar conta como cidadão
+            </button>
           </Link>
+
+          {/* Botão cadastro prefeitura */}
+          <Link href="/cadastro-prefeitura" className="block mt-3">
+            <button className="w-full border-2 border-slate-200 hover:border-[#1447c4] hover:text-[#1447c4] text-slate-600 text-sm font-semibold py-3 rounded-xl transition-all duration-200 cursor-pointer">
+              Acesso para prefeituras
+            </button>
+          </Link>
+
         </div>
-      </form>
+      </div>
     </main>
   );
 }
