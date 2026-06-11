@@ -586,36 +586,34 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full lg:w-auto">
-                {[
-                  {
-                    label: "Defesa Civil",
-                    numero: "199",
-                    desc: "Desastres naturais e evacuações",
-                  },
-                  {
-                    label: "Bombeiros",
-                    numero: "193",
-                    desc: "Incêndios, resgates e acidentes",
-                  },
-                  {
-                    label: "SAMU",
-                    numero: "192",
-                    desc: "Emergências médicas e trauma",
-                  },
-                ].map(({ label, numero, desc }) => (
-                  <div
-                    key={label}
-                    className="bg-white hover:bg-[#ececea] p-5 rounded-xl text-center shadow-md transition-colors"
-                  >
-                    <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
-                      {label}
-                    </span>
-                    <p className="text-3xl font-black text-slate-900 my-1">
-                      {numero}
-                    </p>
-                    <p className="text-xs text-slate-500">{desc}</p>
-                  </div>
-                ))}
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
+                    Defesa Civil
+                  </span>
+                  <p className="text-2xl font-black text-slate-900 group-hover:text-white">
+                    199
+                  </p>
+                </div>
+
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
+                    Bombeiros
+                  </span>
+
+                  <p className="text-2xl font-black text-slate-900 group-hover:text-white">
+                    193
+                  </p>
+                </div>
+
+                <div className="bg-white hover:bg-[#ececea] p-4 rounded-xl text-center min-w-[180px] shadow-md">
+                  <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
+                    SAMU
+                  </span>
+
+                  <p className="text-2xl font-black text-slate-900 group-hover:text-white">
+                    192
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -660,7 +658,6 @@ export default function Home() {
         {/* BRANQUINHO DEPOIS DA EMERGÊNCIA */}
         <div className="w-full h-2 bg-white" />
 
-        {/* FOOTER COMPLETO */}
         {/* FOOTER COMPLETO */}
         <footer className="w-full bg-slate-900 text-slate-400 pt-10 pb-6 px-6">
           <div className="max-w-6xl mx-auto">

@@ -1,7 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Lendo com o prefixo correto exigido pelo Next.js para o ambiente do navegador
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = "https://supabase.com/dashboard/project/qhughmeaxbyupuglpvud";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodWdobWVheGJ5dXB1Z2xwdnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMjc4MzAsImV4cCI6MjA5NDYwMzgzMH0.lrvg087MamSPfBkhfwt0bkFuBtdZOVWO7lOq1OKrQg8";
 
-export const supabase = createClient(supabaseUrl!, supabaseKey!);
+export const supabase = createClient(supabaseUrl, supabaseKey);
