@@ -105,7 +105,7 @@ export default function PluviteVale() {
 
       {/* BOTÃO E CONTAINER PRINCIPAL DO PAINEL DE BUSCA DE CIDADES */}
       {dadosBairros && (
-        <div className="absolute top-10 left-20 z-[9999] w-72">
+        <div className="absolute top-10 left-20 w-72">
           <button
             onClick={() => setPainelAberto(!painelAberto)}
             className="w-full rounded-xl bg-white p-4 shadow-xl text-left border border-slate-200"
@@ -206,15 +206,9 @@ export default function PluviteVale() {
 
       {/* POP-UP MODAL COM INFORMAÇÕES DETALHADAS DA CIDADE CLICADA */}
       {localAberto && (
-        <div className="fixed inset-0 left-0 z-[9999] flex items-center justify-center p-4">
-          {/* FUNDO ESCURO E DESFOCADO ATRÁS DO POP-UP */}
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setLocalAberto(null)}
-          />
-
+        <div className="fixed inset-0 left-0 z-[9999] flex items-center justify-center ml-250 mt-50 p-4 max-w-[500px]">
           {/* CAIXA BRANCA DO CONTEÚDO DO POP-UP */}
-          <div className="relative bg-white w-full max-w-2xl rounded-[1rem] p-8 shadow-2xl flex flex-col gap-6 pb-10">
+          <div className="relative bg-white w-full max-w-xl rounded-[1rem] p-8 shadow-2xl flex flex-col gap-4 pb-10">
             {/* BOTÃO PARA FECHAR O POP-UP */}
             <button
               onClick={() => setLocalAberto(null)}
@@ -224,7 +218,7 @@ export default function PluviteVale() {
             </button>
 
             {/* CABEÇALHO DO POP-UP COM NOME DA CIDADE E STATUS */}
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-2">
               <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
                 <CircleCheckBig className="text-green-500" size={25} />
               </div>
@@ -248,8 +242,8 @@ export default function PluviteVale() {
             </div>
 
             {/* GRID DOS CONTADORES DE ALERTAS (CRÍTICOS, MÉDIOS E BAIXOS) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 w-full gap-3 mt-4">
-              <div className="bg-red-50 border border-red-300 rounded-xl p-6 flex justify-between items-center text-red-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 w-full gap-3 mt-2">
+              <div className="bg-red-50 border border-red-300 rounded-xl max-h-20 p-6 flex justify-between items-center text-red-700">
                 <div>
                   <TriangleAlert className="mb-1" size={20} />
                   <p className="text-sm">Críticos</p>
@@ -257,7 +251,7 @@ export default function PluviteVale() {
                 <div className="text-2xl font-bold">10</div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-600 rounded-xl p-6 flex justify-between items-center text-yellow-600">
+              <div className="bg-yellow-50 border border-yellow-600 rounded-xl max-h-20 p-6 flex justify-between items-center text-yellow-600">
                 <div>
                   <CircleAlert className="mb-1" size={20} />
                   <p className="text-sm">Médios</p>
@@ -265,7 +259,7 @@ export default function PluviteVale() {
                 <div className="text-2xl font-bold">20</div>
               </div>
 
-              <div className="bg-green-100 border border-green-700 rounded-xl p-6 flex justify-between items-center text-green-700">
+              <div className="bg-green-100 border border-green-700 rounded-xl max-h-20 p-6 flex justify-between items-center text-green-700">
                 <div>
                   <CircleCheck className="mb-1" size={20} />
                   <p className="text-sm">Baixos</p>
@@ -275,7 +269,7 @@ export default function PluviteVale() {
             </div>
 
             {/* CARD DE STATUS GERAL DA SITUAÇÃO DO MUNICÍPIO */}
-            <div className="p-3 w-full mt-2 bg-green-100 border border-green-700 rounded-xl flex flex-col text-green-800">
+            <div className="p-2 w-full bg-green-100 border border-green-700 rounded-xl flex flex-col text-green-800">
               <div className="flex items-center gap-2">
                 <CircleCheckBig size={22} />
                 <h1 className="font-bold text-xl tracking-wide">

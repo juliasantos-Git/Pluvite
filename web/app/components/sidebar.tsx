@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Map, CloudSun, Navigation, UserRound, ChevronRight } from "lucide-react";
+import {
+  Map,
+  CloudSun,
+  Navigation,
+  UserRound,
+  ChevronRight,
+} from "lucide-react";
 
 const navItems = [
   { href: "/Mapa", icon: Map, label: "Mapa" },
@@ -20,14 +26,17 @@ export default function Sidebar() {
     <aside
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
-      className="fixed top-0 left-0 h-screen z-[9999] flex flex-col transition-all duration-300 ease-in-out shadow-xl"
+      className="fixed top-0 left-0 h-screen z-[100] flex flex-col transition-all duration-300 ease-in-out shadow-xl"
       style={{
         width: expanded ? "200px" : "64px",
         backgroundColor: "#1b56cc",
       }}
     >
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-3 px-4 py-5 border-b border-white/10 overflow-hidden">
+      <Link
+        href="/"
+        className="flex items-center gap-3 px-4 py-5 border-b border-white/10 overflow-hidden"
+      >
         <img
           src="/PluviteIcon.jpg"
           alt="Logo"
@@ -51,13 +60,18 @@ export default function Sidebar() {
               href={href}
               className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-150 overflow-hidden group"
               style={{
-                backgroundColor: active ? "rgba(255,255,255,0.2)" : "transparent",
+                backgroundColor: active
+                  ? "rgba(255,255,255,0.2)"
+                  : "transparent",
               }}
               onMouseEnter={(e) => {
-                if (!active) e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)";
+                if (!active)
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(255,255,255,0.1)";
               }}
               onMouseLeave={(e) => {
-                if (!active) e.currentTarget.style.backgroundColor = "transparent";
+                if (!active)
+                  e.currentTarget.style.backgroundColor = "transparent";
               }}
             >
               <Icon
@@ -76,8 +90,12 @@ export default function Sidebar() {
                 {label}
               </span>
               {active && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"
-                  style={{ opacity: expanded ? 1 : 0, transition: "opacity 0.3s" }}
+                <div
+                  className="ml-auto w-1.5 h-1.5 rounded-full bg-white flex-shrink-0"
+                  style={{
+                    opacity: expanded ? 1 : 0,
+                    transition: "opacity 0.3s",
+                  }}
                 />
               )}
             </Link>
@@ -114,10 +132,12 @@ export default function Sidebar() {
 
       {/* Setinha indicadora */}
       <div
-        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center transition-transform duration-300"
-        style={{ transform: `translateY(-50%) rotate(${expanded ? 180 : 0}deg)` }}
+        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center transition-transform duration-300"
+        style={{
+          transform: `translateY(-50%) text-white rotate(${expanded ? 180 : 0}deg)`,
+        }}
       >
-        <ChevronRight size={14} className="text-[#1b56cc]" />
+        <ChevronRight size={14} className="text-white" />
       </div>
     </aside>
   );
