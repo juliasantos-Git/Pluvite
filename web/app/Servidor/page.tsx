@@ -5,13 +5,13 @@ import { Layers, AlertTriangle, Wrench, CheckCircle, Eye, Navigation } from 'luc
 
 // --- LISTA OFICIAL DOS 39 MUNICÍPIOS DO VALE DO PARAÍBA E LITORAL NORTE ---
 const listaMunicipios = [
-  "Aparecida", "Arapeí", "Areias", "Bananal", "Caçapava", "Cachoeira Paulista", 
-  "Campos do Jordão", "Caraguatatuba", "Cruzeiro", "Cunha", "Guaratinguetá", 
-  "Igaratá", "Ilhabela", "Jacareí", "Jambeiro", "Lagoinha", "Lorena", 
-  "Monteiro Lobato", "Natividade da Serra", "Paraibuna", "Pindamonhangaba", 
-  "Piquete", "Potim", "Potunduva", "Redenção da Serra", "Roseira", "Santa Branca", 
-  "Santo Antônio do Pinhal", "São Bento do Sapucaí", "São José do Barreiro", 
-  "São José dos Campos", "São Luís do Paraitinga", "São Sebastião", "Silveiras", 
+  "Aparecida", "Arapeí", "Areias", "Bananal", "Caçapava", "Cachoeira Paulista",
+  "Campos do Jordão", "Caraguatatuba", "Cruzeiro", "Cunha", "Guaratinguetá",
+  "Igaratá", "Ilhabela", "Jacareí", "Jambeiro", "Lagoinha", "Lorena",
+  "Monteiro Lobato", "Natividade da Serra", "Paraibuna", "Pindamonhangaba",
+  "Piquete", "Potim", "Potunduva", "Redenção da Serra", "Roseira", "Santa Branca",
+  "Santo Antônio do Pinhal", "São Bento do Sapucaí", "São José do Barreiro",
+  "São José dos Campos", "São Luís do Paraitinga", "São Sebastião", "Silveiras",
   "Taubaté", "Tremembé", "Ubatuba"
 ].sort((a, b) => a.localeCompare(b));
 
@@ -35,7 +35,7 @@ const chamadosIniciais = [
     endereco: 'Av. Charles Schnneider, 1500',
     tempo: 'há 15 min',
     descricao: 'Alagamento grave, água ultrapassando 50cm',
-    statusAtual: 'Aguardando' 
+    statusAtual: 'Aguardando'
   },
   {
     id: 2,
@@ -83,7 +83,7 @@ const chamadosIniciais = [
     endereco: 'Rua Emílio Winther, 800',
     tempo: 'há 3 horas',
     descricao: 'Bueiro completamente entupido com lixo',
-    statusAtual: 'Visualizado' 
+    statusAtual: 'Visualizado'
   },
   {
     id: 6,
@@ -259,9 +259,9 @@ export default function PainelAdministrativo() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-25} textAnchor="end" />
                   <YAxis allowDecimals={false} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Bar 
-                    dataKey="total" 
-                    radius={[4, 4, 0, 0]} 
+                  <Bar
+                    dataKey="total"
+                    radius={[4, 4, 0, 0]}
                     maxBarSize={35}
                     isAnimationActive={true}
                     animationDuration={400}
@@ -287,13 +287,13 @@ export default function PainelAdministrativo() {
             <div className="h-48 w-full flex justify-center items-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie 
-                    data={metricas.dadosPizza} 
-                    cx="50%" 
-                    cy="50%" 
-                    innerRadius={0} 
-                    outerRadius={70} 
-                    paddingAngle={1} 
+                  <Pie
+                    data={metricas.dadosPizza}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={0}
+                    outerRadius={70}
+                    paddingAngle={1}
                     dataKey="value"
                     isAnimationActive={true}
                     animationDuration={800}
@@ -315,7 +315,7 @@ export default function PainelAdministrativo() {
       {/* --- SELETORES DE FILTRO --- */}
       <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200 mb-6">
         <div className="flex-1 max-w-xs relative">
-          <select 
+          <select
             value={municipioFiltro}
             onChange={(e) => setMunicipioFiltro(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
@@ -327,9 +327,9 @@ export default function PainelAdministrativo() {
           </select>
           <span className="absolute right-4 top-3.5 text-[9px] text-slate-400 pointer-events-none">▼</span>
         </div>
-        
+
         <div className="flex-1 max-w-xs relative">
-          <select 
+          <select
             value={prioridadeFiltro}
             onChange={(e) => setPrioridadeFiltro(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
@@ -353,25 +353,25 @@ export default function PainelAdministrativo() {
         ) : (
           chamadosFiltrados.map((chamado) => (
             <div key={chamado.id} className="bg-white rounded-2xl p-5 md:p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              
+
               <div className="flex-1 space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div 
+                  <div
                     className="p-1.5 rounded-lg text-white shadow-sm"
                     style={{ backgroundColor: CORES_PRIORIDADE[chamado.prioridade] || '#94a3b8' }}
                   >
                     <AlertTriangle size={15} />
                   </div>
-                  
+
                   <h4 className="font-black text-slate-900 text-sm md:text-base">{chamado.tipo}</h4>
-                  
-                  <span 
+
+                  <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
                     style={{ backgroundColor: CORES_PRIORIDADE[chamado.prioridade] || '#94a3b8' }}
                   >
                     {chamado.prioridade}
                   </span>
-                  
+
                   <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                     {chamado.bairro}
                   </span>
@@ -390,16 +390,16 @@ export default function PainelAdministrativo() {
 
               {/* Botões Operacionais das Equipes */}
               <div className="flex flex-col items-stretch md:items-end gap-2 shrink-0 w-full md:w-auto min-w-[170px]">
-                
+
                 {chamado.statusAtual === 'Aguardando' && (
                   <div className="flex flex-col gap-2 w-full">
-                    <button 
+                    <button
                       onClick={() => handleMarcarComoVisto(chamado.id)}
                       className="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm"
                     >
                       Marcar como Visto
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDespacharEquipe(chamado.id)}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
                     >
@@ -413,7 +413,7 @@ export default function PainelAdministrativo() {
                     <span className="bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
                       <Eye size={12} /> Visualizado
                     </span>
-                    <button 
+                    <button
                       onClick={() => handleDespacharEquipe(chamado.id)}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
                     >
@@ -427,7 +427,7 @@ export default function PainelAdministrativo() {
                     <span className="bg-amber-50 text-amber-600 border border-amber-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
                       <Wrench size={12} /> Em Andamento
                     </span>
-                    <button 
+                    <button
                       onClick={() => handleMarcarConcluido(chamado.id)}
                       className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
                     >
