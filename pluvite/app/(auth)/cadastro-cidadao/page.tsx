@@ -2,18 +2,8 @@
 import { supabase } from "@/app/lib/banco";
 import React, { useState } from "react";
 import Link from "next/link";
-import {
-  UserRound,
-  Mail,
-  Phone,
-  MapPin,
-  Fingerprint,
-  Eye,
-  EyeOff,
-  Activity,
-} from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import NuvensBackground from "@/app/components/NuvensBackground";
 
 export default function CadastroCidadao() {
   const router = useRouter();
@@ -22,256 +12,172 @@ export default function CadastroCidadao() {
     nome: "",
     email: "",
     senha: "",
-    cpf: "",
-    telefone: "",
-    cidade: "",
+    confirmarSenha: "",
   });
 
-  const [cpfDisplay, setCpfDisplay] = useState("");
-  const [telefoneDisplay, setTelefoneDisplay] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
-
-  const formatarCPF = (valor: string) => {
-    const nums = valor.replace(/\D/g, "").slice(0, 11);
-    return nums
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-  };
-
-  const formatarTelefone = (valor: string) => {
-    const nums = valor.replace(/\D/g, "").slice(0, 11);
-    return nums
-      .replace(/(\d{2})(\d)/, "($1) $2")
-      .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
-  };
+  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
+  const [carregando, setCarregando] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.senha !== formData.confirmarSenha) {
+      alert("As senhas não coincidem!");
+      return;
+    }
+    setCarregando(true);
     try {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.senha,
       });
-
-      if (error) {
-        alert("Erro ao criar conta: " + error.message);
-        return;
-      }
-
+      if (error) { alert("Erro ao criar conta: " + error.message); return; }
       const { error: erroPerfil } = await supabase.from("cidadao").insert({
         auth_id: data.user?.id,
         nome_completo: formData.nome,
         email: formData.email,
-        cpf: formData.cpf,
-        telefone: formData.telefone,
-        cidade: formData.cidade,
       });
-
-      if (erroPerfil) {
-        alert("Erro ao salvar dados: " + erroPerfil.message);
-        return;
-      }
-
+      if (erroPerfil) { alert("Erro ao salvar dados: " + erroPerfil.message); return; }
       alert("Cadastro realizado com sucesso!");
       router.push("/login");
     } catch (error) {
       console.error("Erro inesperado:", error);
       alert("Algo deu errado, tente novamente.");
+    } finally {
+      setCarregando(false);
     }
   };
 
   return (
-    <main className="relative h-screen w-full flex overflow-hidden">
+    <main className="min-h-screen w-full flex items-center justify-center bg-[#1447c4] px-6 py-12 relative overflow-hidden">
 
-      {/* LADO ESQUERDO — Azul com nuvens e informações */}
-      <div className="relative hidden md:flex md:w-1/2 flex-col justify-between bg-[#256ffe] p-12 text-white overflow-hidden">
+      {/* Bolhas no fundo da página */}
+      <div className="absolute bottom-[-80px] left-[-40px] w-[380px] h-[380px] rounded-full bg-[#0f2d7a] z-10" />
+      <div className="absolute bottom-[60px] left-[60px] w-[220px] h-[220px] rounded-full bg-[#1a3d9e] z-10" />
+      <div className="absolute top-[-60px] right-[-60px] w-[280px] h-[280px] rounded-full bg-[#0f2d7a]/60 z-10" />
 
-        {/* Nuvens só no lado esquerdo */}
-        <NuvensBackground />
+      {/* Card */}
+      <div className="relative z-20 w-full max-w-4xl flex rounded-3xl overflow-hidden shadow-2xl min-h-[560px]">
 
-        {/* Conteúdo sobre as nuvens */}
-        <div className="relative z-10 space-y-6">
-          <div className="flex items-center gap-2 bg-white/10 w-fit px-4 py-1.5 rounded-full backdrop-blur-sm border border-white/15">
-            <Activity size={16} className="animate-pulse" />
-            <span className="text-xs font-semibold tracking-wide">Plataforma Pluvite</span>
-          </div>
+        {/* LADO ESQUERDO — Azul transparente */}
+        <div className="hidden md:flex md:w-[42%] flex-col justify-between p-10 relative overflow-visible bg-transparent">
 
-          <div className="space-y-4 mt-8">
-            <h2 className="text-4xl font-extrabold tracking-tight leading-tight">
-              Crie sua<br />Conta
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-10">
+              <img src="/PluviteIcon.jpg" alt="Logo" className="w-9 h-9 rounded-xl select-none" draggable="false" />
+              <span className="text-white font-bold text-base tracking-wide">Pluvite</span>
+            </div>
+            <h2 className="text-4xl font-extrabold text-white leading-tight tracking-tight mb-3">
+              Bem-vindo!
             </h2>
-            <p className="text-blue-100 text-sm leading-relaxed font-medium opacity-90 max-w-xs">
-              Junte-se à nossa rede colaborativa de monitoramento. Receba notificações preventivas e informe ocorrências na sua região instantaneamente.
+            <p className="text-blue-100 text-xs leading-relaxed max-w-[200px]">
+              Junte-se à nossa rede colaborativa de monitoramento pluvial e proteja sua cidade com dados reais.
             </p>
           </div>
-        </div>
 
-        {/* Rodapé do lado esquerdo */}
-        <div className="relative z-10 pt-6 border-t border-white/10">
-          <p className="text-xs text-blue-200 font-medium mb-3">Já possui cadastro?</p>
-          <Link href="/login">
-            <button className="bg-white text-[#256ffe] font-bold text-sm py-3 px-6 rounded-xl hover:bg-zinc-50 transition-colors cursor-pointer shadow-md">
-              Acessar minha Conta
-            </button>
-          </Link>
-        </div>
-      </div>
-
-      {/* LADO DIREITO — Branco com formulário */}
-      <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-white px-8 md:px-16 overflow-y-auto">
-
-        {/* Mobile: badge visível só em telas pequenas */}
-        <div className="flex md:hidden items-center gap-2 bg-[#256ffe]/10 w-fit px-4 py-1.5 rounded-full mb-6">
-          <Activity size={14} className="text-[#256ffe] animate-pulse" />
-          <span className="text-xs font-semibold tracking-wide text-[#256ffe]">Plataforma Pluvite</span>
-        </div>
-
-        {/* Card do formulário */}
-        <div className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/60 p-8 flex flex-col items-center">
-
-          {/* Logo */}
-          <div className="bg-white p-2.5 rounded-2xl shadow-sm border border-slate-100 mb-4">
-            <img
-              src="/PluviteIcon.jpg"
-              alt="Logo"
-              className="w-10 h-10 rounded-lg select-none"
-              draggable="false"
-            />
+          <div className="relative z-10">
+            <p className="text-blue-200 text-xs mb-3">Já possui uma conta?</p>
+            <Link href="/login">
+              <button className="bg-white text-[#1447c4] font-bold text-xs py-2.5 px-6 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer">
+                Entrar agora
+              </button>
+            </Link>
           </div>
+        </div>
 
-          <h1 className="font-bold tracking-tight text-2xl text-blue-950 pb-6 font-sans">
-            Cadastrar Cidadão
-          </h1>
+        {/* LADO DIREITO — Card branco */}
+        <div className="flex-1 bg-white rounded-3xl flex flex-col justify-center px-8 py-10 md:px-10 relative overflow-hidden">
 
-          <form onSubmit={handleSubmit} className="w-full space-y-3">
-            {/* Nome Completo */}
-            <div className="relative flex items-center group">
+          {/* Bolha no canto inferior direito do card */}
+          <div className="absolute bottom-[-60px] right-[-60px] w-[200px] h-[200px] rounded-full bg-[#0f2d7a] z-0" />
+
+          <div className="relative z-10">
+            {/* Logo mobile */}
+            <div className="flex md:hidden items-center gap-3 mb-8">
+              <img src="/PluviteIcon.jpg" alt="Logo" className="w-8 h-8 rounded-xl" draggable="false" />
+              <span className="text-[#1447c4] font-bold text-base">Pluvite</span>
+            </div>
+
+            <h1 className="text-2xl font-extrabold text-[#0f172a] mb-1">Criar Conta</h1>
+            <p className="text-slate-400 text-xs mb-7">Preencha os campos para se cadastrar.</p>
+
+            {/* Botões sociais */}
+            <div className="flex flex-col gap-3 mb-5">
+              <button type="button" className="h-11 w-full bg-[#1877f2] rounded-xl text-white text-sm font-semibold hover:bg-[#1565d8] transition-all cursor-pointer">
+                Continuar com o Facebook
+              </button>
+              <button type="button" className="h-11 w-full bg-white border border-slate-200 rounded-xl text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-all cursor-pointer shadow-sm">
+                Continuar com o Google
+              </button>
+            </div>
+
+            {/* Divisor */}
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-xs text-slate-400 font-semibold tracking-widest">OU</span>
+              <div className="flex-1 h-px bg-slate-100" />
+            </div>
+
+            {/* Formulário */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <input
                 type="text"
                 required
-                placeholder="Nome Completo"
+                placeholder="Nome completo"
                 value={formData.nome}
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                className="bg-zinc-100 text-sm rounded-xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all"
               />
-              <UserRound
-                className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors"
-                size={18}
+              <input
+                type="email"
+                required
+                placeholder="E-mail institucional ou pessoal"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all"
               />
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Email */}
-              <div className="relative flex-[5] flex items-center group">
-                <input
-                  type="email"
-                  required
-                  placeholder="E-mail"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="bg-zinc-100 text-sm rounded-xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
-                />
-                <Mail
-                  className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors"
-                  size={18}
-                />
-              </div>
-
-              {/* Senha */}
-              <div className="relative flex-[4] flex items-center group">
+              <div className="relative">
                 <input
                   type={mostrarSenha ? "text" : "password"}
                   required
-                  placeholder="Senha"
+                  placeholder="Criar uma senha"
                   value={formData.senha}
                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                  className="bg-zinc-100 text-sm rounded-xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900 pr-10"
+                  className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all w-full"
                 />
-                <button
-                  type="button"
-                  onClick={() => setMostrarSenha(!mostrarSenha)}
-                  className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] hover:text-[#256ffe] transition-colors cursor-pointer"
-                >
-                  {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
+                <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1447c4] transition-colors">
+                  {mostrarSenha ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* CPF */}
-              <div className="flex-1 relative flex items-center group">
+              <div className="relative">
                 <input
-                  type="text"
+                  type={mostrarConfirmar ? "text" : "password"}
                   required
-                  placeholder="CPF"
-                  value={cpfDisplay}
-                  onChange={(e) => {
-                    const nums = e.target.value.replace(/\D/g, "").slice(0, 11);
-                    setFormData({ ...formData, cpf: nums });
-                    setCpfDisplay(formatarCPF(e.target.value));
-                  }}
-                  className="bg-zinc-100 text-sm rounded-xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
+                  placeholder="Confirmar senha"
+                  value={formData.confirmarSenha}
+                  onChange={(e) => setFormData({ ...formData, confirmarSenha: e.target.value })}
+                  className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all w-full"
                 />
-                <Fingerprint
-                  className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors"
-                  size={16}
-                />
+                <button type="button" onClick={() => setMostrarConfirmar(!mostrarConfirmar)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1447c4] transition-colors">
+                  {mostrarConfirmar ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
+              <button
+                type="submit"
+                disabled={carregando}
+                className="h-11 bg-[#1447c4] rounded-xl text-white text-sm font-bold tracking-wide hover:bg-[#1e3a8a] transition-all duration-200 cursor-pointer active:scale-95 mt-1 shadow-lg shadow-blue-500/20 disabled:opacity-60"
+              >
+                {carregando ? "Cadastrando..." : "Criar Conta"}
+              </button>
+            </form>
 
-              {/* Telefone */}
-              <div className="flex-1 relative flex items-center group">
-                <input
-                  type="text"
-                  required
-                  placeholder="Telefone"
-                  value={telefoneDisplay}
-                  onChange={(e) => {
-                    const nums = e.target.value.replace(/\D/g, "").slice(0, 11);
-                    setFormData({ ...formData, telefone: nums });
-                    setTelefoneDisplay(formatarTelefone(e.target.value));
-                  }}
-                  className="bg-zinc-100 text-sm rounded-xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
-                />
-                <Phone
-                  className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors"
-                  size={16}
-                />
-              </div>
-            </div>
-
-            {/* Cidade */}
-            <div className="relative flex items-center group">
-              <input
-                type="text"
-                required
-                placeholder="Sua Cidade"
-                value={formData.cidade}
-                onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
-                className="bg-zinc-100 text-sm rounded-xl p-3.5 w-full border-2 border-transparent hover:border-[#256ffe] focus:border-[#256ffe] outline-none transition-all duration-300 placeholder:text-zinc-500 text-slate-900"
-              />
-              <MapPin
-                className="absolute right-4 text-zinc-400 group-focus-within:text-[#256ffe] transition-colors"
-                size={18}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="bg-[#256ffe] mt-6 p-3.5 w-full rounded-xl text-white text-sm font-bold tracking-wide hover:bg-[#1a56cc] transition-all duration-200 cursor-pointer active:scale-95 shadow-lg shadow-blue-500/10"
-            >
-              Finalizar Cadastro
-            </button>
-          </form>
-
-          {/* Link de login visível só no mobile */}
-          <p className="flex md:hidden mt-6 text-xs text-blue-900/50 font-medium">
-            Já possui cadastro?{" "}
-            <Link href="/login" className="text-[#256ffe] font-bold ml-1 hover:underline">
-              Entrar
-            </Link>
-          </p>
-
+            <p className="text-center text-xs text-slate-400 mt-5">
+              Já possui uma conta?{" "}
+              <Link href="/login" className="text-[#1447c4] font-semibold hover:underline">
+                Entrar agora
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </main>
