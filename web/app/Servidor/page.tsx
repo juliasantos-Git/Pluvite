@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import { Layers, AlertTriangle, Wrench, CheckCircle, Eye, Navigation } from 'lucide-react';
 
@@ -128,17 +128,77 @@ export default function PainelAdministrativo() {
   const [prioridadeFiltro, setPrioridadeFiltro] = useState('Todas as Prioridades');
   const [chamados, setChamados] = useState(chamadosIniciais);
 
-  // --- HANDLERS INTERATIVOS ---
+  // --- BUSCA AUTOMÁTICA DOS ALERTAS REAIS DO EXPRESS/SUPABASE ---
+  const buscarAlertasBanco = async () => {
+    try {
+      const resposta = await fetch('http://localhost:3001/api/alertas');
+      if (!resposta.ok) return;
+      const alertasReais = await resposta.json();
+
+      if (alertasReais && Array.isArray(alertasReais)) {
+        // ✅ ALTERAÇÃO: Mapeamento de IDs, propriedades de status e tratamento de duplicidade
+        const alertasFormatados = alertasReais.map((alerta: any) => {
+          const statusSalvo = alerta.orientacao;
+          const statusValidos = ['Aguardando', 'Visualizado', 'Em Andamento', 'Concluído'];
+          const possuiStatusDefinido = statusValidos.includes(statusSalvo);
+
+          return {
+            id: typeof alerta.id === 'number' ? alerta.id + 100 : alerta.id,
+            tipo: alerta.condicao || 'Alerta Meteorológico',
+            prioridade: Number(alerta.temperatura) > 35 ? 'Alerta Máximo' : 'Estado de Alerta',
+            bairro: alerta.tipo_risco || 'Região Monitorada',
+            municipio: alerta.cidade_alerta || 'Taubaté',
+            usuario: 'Monitoramento Civil',
+            endereco: 'Área Operacional',
+            tempo: 'Agora mesmo',
+            descricao: possuiStatusDefinido ? 'Condição de risco climático identificada via satélite.' : (alerta.orientacao || 'Sem orientações adicionais.'),
+            statusAtual: possuiStatusDefinido ? statusSalvo : 'Aguardando'
+          };
+        });
+
+        // ✅ ALTERAÇÃO: Substitui diretamente o array juntando os estáticos e dinâmicos de forma limpa
+        setChamados([...chamadosIniciais, ...alertasFormatados]);
+      }
+    } catch (e) {
+      console.log("Conectando ao servidor Express de monitoramento...");
+    }
+  };
+
+  useEffect(() => {
+    buscarAlertasBanco();
+    const idIntervalo = setInterval(buscarAlertasBanco, 5000);
+    return () => clearInterval(idIntervalo);
+  }, []);
+
+  // --- ENVIAR PERSISTÊNCIA PARA O SUPABASE ---
+  const sincronizarStatusBanco = async (id: number, novoStatus: string) => {
+    if (chamadosIniciais.map(c => c.id).includes(id)) return;
+
+    try {
+      await fetch(`http://localhost:3001/api/alertas/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_atual: novoStatus })
+      });
+    } catch (err) {
+      console.error("Erro ao atualizar status remoto no Supabase:", err);
+    }
+  };
+
+  // --- HANDLERS INTERATIVOS ATUALIZADOS ---
   const handleMarcarComoVisto = (id: number) => {
     setChamados(prev => prev.map(c => c.id === id ? { ...c, statusAtual: 'Visualizado' } : c));
+    sincronizarStatusBanco(id, 'Visualizado');
   };
 
   const handleDespacharEquipe = (id: number) => {
     setChamados(prev => prev.map(c => c.id === id ? { ...c, statusAtual: 'Em Andamento' } : c));
+    sincronizarStatusBanco(id, 'Em Andamento');
   };
 
   const handleMarcarConcluido = (id: number) => {
     setChamados(prev => prev.map(c => c.id === id ? { ...c, statusAtual: 'Concluído' } : c));
+    sincronizarStatusBanco(id, 'Concluído');
   };
 
   // --- FILTRAGEM REATIVA DA LISTA ---
@@ -198,8 +258,6 @@ export default function PainelAdministrativo() {
   }, [chamadosFiltrados]);
 
   return (
-    // ✅ FIX: w-[calc(100vw-64px)] desconta a largura da sidebar (64px)
-    // overflow-x-hidden evita scroll horizontal indesejado
     <div className="h-screen overflow-y-auto overflow-x-hidden w-[calc(100vw-64px)] bg-slate-50 p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
 
       {/* --- HEADER DO PAINEL --- */}
@@ -209,7 +267,6 @@ export default function PainelAdministrativo() {
       </div>
 
       {/* --- CARDS MÉTRICOS OPERACIONAIS --- */}
-      {/* ✅ FIX: [&>*]:min-w-0 permite que os cards encolham sem ultrapassar o container */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 [&>*]:min-w-0">
         <div className="bg-blue-600 rounded-2xl p-6 text-white relative shadow-sm overflow-hidden flex flex-col justify-between h-40">
           <Layers className="w-7 h-7 opacity-90" />
@@ -412,7 +469,8 @@ export default function PainelAdministrativo() {
                   <div className="flex flex-col gap-2 w-full">
                     <span className="bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
                       <Eye size={12} /> Visualizado
-                    </span>
+                    </span
+                    >
                     <button
                       onClick={() => handleDespacharEquipe(chamado.id)}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
