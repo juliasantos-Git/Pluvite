@@ -1,182 +1,272 @@
 "use client";
+
 import { supabase } from "@/app/lib/banco";
 import React, { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function CadastroCidadao() {
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
-    nome: "",
-    email: "",
-    senha: "",
-    confirmarSenha: "",
-  });
+  // Estados do Formulário de Cadastro
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
 
+  // Estados de Controle Visual
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.senha !== formData.confirmarSenha) {
+
+    if (senha !== confirmarSenha) {
       alert("As senhas não coincidem!");
       return;
     }
+
     setCarregando(true);
+
     try {
+      // 1. Criação do usuário na autenticação do Supabase
       const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.senha,
+        email: email,
+        password: senha,
       });
-      if (error) { alert("Erro ao criar conta: " + error.message); return; }
+
+      if (error) {
+        alert("Erro ao criar conta: " + error.message);
+        return;
+      }
+
+      // 2. Inserção dos dados complementares na tabela 'cidadao'
       const { error: erroPerfil } = await supabase.from("cidadao").insert({
         auth_id: data.user?.id,
-        nome_completo: formData.nome,
-        email: formData.email,
+        nome_completo: nome,
+        email: email,
       });
-      if (erroPerfil) { alert("Erro ao salvar dados: " + erroPerfil.message); return; }
+
+      if (erroPerfil) {
+        alert("Erro ao salvar perfil: " + erroPerfil.message);
+        return;
+      }
+
       alert("Cadastro realizado com sucesso!");
-      router.push("/login");
+      router.push("/login"); // Redirecionando para a tela de login
     } catch (error) {
-      console.error("Erro inesperado:", error);
-      alert("Algo deu errado, tente novamente.");
+      console.error("Erro inesperado no cadastro:", error);
+      alert("Ocorreu um erro no servidor. Tente novamente.");
     } finally {
       setCarregando(false);
     }
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center bg-[#1447c4] px-6 py-12 relative overflow-hidden">
+    <main className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 sm:p-8 md:p-12 font-sans antialiased relative overflow-hidden">
+      {/* ── ELEMENTOS ARREDONDADOS / BOLHAS DE FUNDO IGUAIS AO LOGIN ── */}
+      <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#1447f2]/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#1447c4]/8 rounded-full pointer-events-none" />
 
-      {/* Bolhas no fundo da página */}
-      <div className="absolute bottom-[-80px] left-[-40px] w-[380px] h-[380px] rounded-full bg-[#0f2d7a] z-10" />
-      <div className="absolute bottom-[60px] left-[60px] w-[220px] h-[220px] rounded-full bg-[#1a3d9e] z-10" />
-      <div className="absolute top-[-60px] right-[-60px] w-[280px] h-[280px] rounded-full bg-[#0f2d7a]/60 z-10" />
+      <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#1447c4]/5 rounded-full blur-xl pointer-events-none" />
+      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#1447c4]/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute top-10 right-[560px] w-32 h-32 bg-[#1447c4]/5 rounded-full pointer-events-none" />
 
-      {/* Card */}
-      <div className="relative z-20 w-full max-w-4xl flex rounded-3xl overflow-hidden shadow-2xl min-h-[560px]">
+      <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#1447c4]/8 rounded-full blur-sm pointer-events-none" />
+      <div className="absolute top-8 right-5 w-16 h-16 bg-[#1447f2]/6 rounded-full pointer-events-none z-0" />
+      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#1447c4]/3 rounded-full blur-md pointer-events-none" />
 
-        {/* LADO ESQUERDO — Azul transparente */}
-        <div className="hidden md:flex md:w-[42%] flex-col justify-between p-10 relative overflow-visible bg-transparent">
-
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-10">
-              <img src="/PluviteIcon.jpg" alt="Logo" className="w-9 h-9 rounded-xl select-none" draggable="false" />
-              <span className="text-white font-bold text-base tracking-wide">Pluvite</span>
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative z-10">
+        
+        {/*TEXTOS INFORMATIVOS*/}
+        <div className="text-slate-900 space-y-6 pr-0 md:pr-8 text-center md:text-left flex flex-col items-center md:items-start">
+          <h1 className="text-5xl uppercase lg:text-6xl font-black tracking-tight leading-tight text-black">
+            Plataforma
+            <div className="flex flex-row">
+              <img
+                src="/pluvite-xl.png"
+                alt="Pluvite"
+                className="w-15 h-15 -ml-3 mt-2 -mr-2 rounded-xl select-none object-cover flex-row flex"
+                draggable="false"
+              />
+              luvite
             </div>
-            <h2 className="text-4xl font-extrabold text-white leading-tight tracking-tight mb-3">
-              Bem-vindo!
-            </h2>
-            <p className="text-blue-100 text-xs leading-relaxed max-w-[200px]">
-              Junte-se à nossa rede colaborativa de monitoramento pluvial e proteja sua cidade com dados reais.
-            </p>
-          </div>
+          </h1>
 
-          <div className="relative z-10">
-            <p className="text-blue-200 text-xs mb-3">Já possui uma conta?</p>
-            <Link href="/login">
-              <button className="bg-white text-[#1447c4] font-bold text-xs py-2.5 px-6 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer">
-                Entrar agora
-              </button>
-            </Link>
+          <p className="text-slate-700 text-base sm:text-lg max-w-md font-medium leading-relaxed">
+            Monitore, previna e gerencie dados pluviais com precisão in tempo
+            real. Apoiando a gestão pública e a segurança do cidadão.
+          </p>
+
+          <div className="hidden md:flex items-center gap-4 text-xs text-[#1447c4] font-bold uppercase tracking-wider">
+            <span>• Monitoramento Inteligente</span>
+            <span>• Dados Precisos</span>
           </div>
         </div>
 
-        {/* LADO DIREITO — Card branco */}
-        <div className="flex-1 bg-white rounded-3xl flex flex-col justify-center px-8 py-10 md:px-10 relative overflow-hidden">
-
-          {/* Bolha no canto inferior direito do card */}
-          <div className="absolute bottom-[-60px] right-[-60px] w-[200px] h-[200px] rounded-full bg-[#0f2d7a] z-0" />
-
-          <div className="relative z-10">
-            {/* Logo mobile */}
-            <div className="flex md:hidden items-center gap-3 mb-8">
-              <img src="/PluviteIcon.jpg" alt="Logo" className="w-8 h-8 rounded-xl" draggable="false" />
-              <span className="text-[#1447c4] font-bold text-base">Pluvite</span>
+        {/* ── LADO DIREITO: CARD DO FORMULÁRIO DE CADASTRO MODIFICADO ── */}
+        <div className="flex justify-center md:justify-end w-full relative z-10">
+          <div className="w-full max-w-[450px] bg-white rounded-2xl shadow-2xl shadow-slate-900/60 border border-slate-200 p-6 sm:p-8 transition-all duration-300">
+            <div className="mb-6 text-center md:text-left">
+              <h2 className="text-2xl font-bold text-slate-800">
+                Crie sua conta
+              </h2>
+              <p className="text-sm text-black mt-1">
+                Preencha os campos abaixo para se cadastrar
+              </p>
             </div>
 
-            <h1 className="text-2xl font-extrabold text-[#0f172a] mb-1">Criar Conta</h1>
-            <p className="text-slate-400 text-xs mb-7">Preencha os campos para se cadastrar.</p>
-
-            {/* Botões sociais */}
-            <div className="flex flex-col gap-3 mb-5">
-              <button type="button" className="h-11 w-full bg-[#1877f2] rounded-xl text-white text-sm font-semibold hover:bg-[#1565d8] transition-all cursor-pointer">
-                Continuar com o Facebook
-              </button>
-              <button type="button" className="h-11 w-full bg-white border border-slate-200 rounded-xl text-slate-700 text-sm font-semibold hover:bg-slate-50 transition-all cursor-pointer shadow-sm">
-                Continuar com o Google
-              </button>
-            </div>
-
-            {/* Divisor */}
-            <div className="flex items-center gap-3 mb-5">
-              <div className="flex-1 h-px bg-slate-100" />
-              <span className="text-xs text-slate-400 font-semibold tracking-widest">OU</span>
-              <div className="flex-1 h-px bg-slate-100" />
-            </div>
-
-            {/* Formulário */}
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="text"
-                required
-                placeholder="Nome completo"
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all"
-              />
-              <input
-                type="email"
-                required
-                placeholder="E-mail institucional ou pessoal"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all"
-              />
+            {/* Formulário de Cadastro */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Campo: Nome Completo */}
               <div className="relative">
+                <input
+                  type="text"
+                  required
+                  disabled={carregando}
+                  placeholder="Nome completo"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="w-full bg-slate-50 text-sm text-black rounded-xl px-4 py-3 border border-slate-200 focus:border-blue-900 focus:bg-white outline-none placeholder:text-slate-500 disabled:opacity-60"
+                />
+              </div>
+
+              {/* E-mail */}
+              <div className="relative">
+                <input
+                  type="email"
+                  required
+                  disabled={carregando}
+                  placeholder="E-mail institucional ou pessoal"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-slate-50 text-sm text-black rounded-xl px-4 py-3 border border-slate-200 focus:border-blue-900 focus:bg-white outline-none placeholder:text-slate-500 disabled:opacity-60"
+                />
+              </div>
+
+              {/* Campo: Criar uma Senha */}
+              <div className="relative flex items-center">
                 <input
                   type={mostrarSenha ? "text" : "password"}
                   required
+                  disabled={carregando}
                   placeholder="Criar uma senha"
-                  value={formData.senha}
-                  onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                  className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all w-full"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="w-full bg-slate-50 text-sm text-black rounded-xl px-4 py-3 pr-12 border border-slate-200 focus:border-blue-900 focus:bg-white outline-none placeholder:text-slate-500 disabled:opacity-60"
                 />
-                <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1447c4] transition-colors">
+                <button
+                  type="button"
+                  disabled={carregando}
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                >
                   {mostrarSenha ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <div className="relative">
+
+              {/* Campo: Confirmar Senha */}
+              <div className="relative flex items-center">
                 <input
-                  type={mostrarConfirmar ? "text" : "password"}
+                  type={mostrarConfirmarSenha ? "text" : "password"}
                   required
+                  disabled={carregando}
                   placeholder="Confirmar senha"
-                  value={formData.confirmarSenha}
-                  onChange={(e) => setFormData({ ...formData, confirmarSenha: e.target.value })}
-                  className="h-11 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 pr-11 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1447c4] focus:ring-2 focus:ring-[#1447c4]/10 outline-none transition-all w-full"
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                  className="w-full bg-slate-50 text-sm text-black rounded-xl px-4 py-3 pr-12 border border-slate-200 focus:border-blue-900 focus:bg-white outline-none placeholder:text-slate-500 disabled:opacity-60"
                 />
-                <button type="button" onClick={() => setMostrarConfirmar(!mostrarConfirmar)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1447c4] transition-colors">
-                  {mostrarConfirmar ? <EyeOff size={16} /> : <Eye size={16} />}
+                <button
+                  type="button"
+                  disabled={carregando}
+                  onClick={() =>
+                    setMostrarConfirmarSenha(!mostrarConfirmarSenha)
+                  }
+                  className="absolute right-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                >
+                  {mostrarConfirmarSenha ? (
+                    <EyeOff size={16} />
+                  ) : (
+                    <Eye size={16} />
+                  )}
                 </button>
               </div>
+
+              {/* Botão Cadastrar */}
               <button
                 type="submit"
                 disabled={carregando}
-                className="h-11 bg-[#1447c4] rounded-xl text-white text-sm font-bold tracking-wide hover:bg-[#1e3a8a] transition-all duration-200 cursor-pointer active:scale-95 mt-1 shadow-lg shadow-blue-500/20 disabled:opacity-60"
+                className="w-full bg-[#0d1b54] hover:[#0d163b] active:bg-blue-800 text-white text-sm font-bold py-3 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10 flex items-center justify-center gap-2"
               >
-                {carregando ? "Cadastrando..." : "Criar Conta"}
+                {carregando ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  "Cadastrar"
+                )}
               </button>
             </form>
 
-            <p className="text-center text-xs text-slate-400 mt-5">
+            {/* Divisor Conectar-se com */}
+            <div className="flex items-center gap-3 my-4">
+              <hr className="flex-1 border-slate-200" />
+              <span className="text-[10px] text-slate-700 font-bold uppercase tracking-widest">
+                OU
+              </span>
+              <hr className="flex-1 border-slate-200" />
+            </div>
+
+            {/* Botões de Redes Sociais */}
+            <div className="space-y-2">
+              {/* Facebook */}
+              <button
+                type="button"
+                className="w-full bg-[#0f35a0] hover:bg-[#091f75] text-white text-[15px] font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-colors cursor-pointer shadow-sm"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+                Facebook
+              </button>
+
+              {/* Google */}
+              <button
+                type="button"
+                className="w-full mt-3 bg-zinc-200 hover:bg-slate-300 border border-slate-200 text-black text-[15px] font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-colors cursor-pointer shadow-sm"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                  />
+                </svg>
+                Google
+              </button>
+            </div>
+
+            {/* Rodapé do Card */}
+            <div className="text-center mt-5 text-[14px] text-slate-500">
               Já possui uma conta?{" "}
-              <Link href="/login" className="text-[#1447c4] font-semibold hover:underline">
-                Entrar agora
+              <Link
+                href="/login"
+                className="text-[#1447c4] font-bold hover:underline"
+              >
+                Entre
               </Link>
-            </p>
+            </div>
           </div>
         </div>
       </div>

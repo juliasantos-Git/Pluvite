@@ -13,7 +13,7 @@ import {
 
 const navItems = [
   { href: "/Mapa", icon: Map, label: "Mapa" },
-  { href: "/clima", icon: CloudSun, label: "Clima" },
+  { href: "/Clima2", icon: CloudSun, label: "Clima" },
   { href: "/rotas", icon: Navigation, label: "Rotas" },
   { href: "/perfil", icon: UserRound, label: "Perfil" },
 ];

@@ -1,77 +1,86 @@
 import React, { useState } from "react";
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TextInput, 
-  TouchableOpacity, 
-  Alert, 
-  ActivityIndicator, 
-  KeyboardAvoidingView, 
-  Platform, 
+import { supabase } from "../lib/supabase";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Image,
-  Dimensions
+  Dimensions,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
-const CIRCLE_SIZE = width * 1.6; 
+const CIRCLE_SIZE = width * 1.6;
 
-export default function Login() {
+export default function Cadastro() {
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !senha) {
+  const handleCadastro = async () => {
+    if (!nome || !email || !senha || !confirmarSenha) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      Alert.alert("Erro", "As senhas não coincidem!");
       return;
     }
 
     setCarregando(true);
 
     try {
-      const response = await fetch("http://192.168.0.108:3001/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: senha,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.tipo === "prefeitura") {
-          Alert.alert("Sucesso", "Login efetuado! Redirecionando para Dashboard Prefeitura...");
-        } else {
-          Alert.alert("Sucesso", "Login efetuado! Redirecionando para o Mapa...");
-        }
-      } else {
-        Alert.alert("Erro", "E-mail ou senha incorretos!");
-        setEmail("");
-        setSenha("");
+      if (error) {
+        Alert.alert("Erro", error.message);
+        return;
       }
+
+      const { error: erroPerfil } = await supabase.from("cidadao").insert({
+        auth_id: data.user?.id,
+        nome_completo: nome,
+        email,
+      });
+
+      if (erroPerfil) {
+        Alert.alert("Erro", "Erro ao salvar perfil: " + erroPerfil.message);
+        return;
+      }
+
+      Alert.alert("Sucesso", "Conta criada com sucesso!");
     } catch (error) {
-      console.error("Erro ao logar:", error);
-      Alert.alert("Erro", "Servidor fora do ar. Verifique se o terminal do Node está rodando!");
-      setEmail("");
-      setSenha("");
+      Alert.alert("Erro", "Tente novamente.");
     } finally {
       setCarregando(false);
     }
   };
 
-  const handleSocialLogin = (plataforma: string) => {
+  const handleSocialCadastro = (plataforma: string) => {
     Alert.alert("Login Social", `Conectando com o ${plataforma}...`);
   };
 
-
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Efeito Meio Círculo Perfeito no Topo */}
         <View style={styles.topWaveContainer}>
           <View style={styles.waveBackground} />
@@ -79,8 +88,8 @@ export default function Login() {
 
         {/* Logo Centralizada na linha do Meio Círculo */}
         <View style={styles.logoContainer}>
-          <Image 
-            source={require("../../assets/PluviteIcon.jpg")} 
+          <Image
+            source={require("../../assets/PluviteIcon.jpg")}
             style={styles.logoImage}
             resizeMode="cover"
           />
@@ -89,13 +98,23 @@ export default function Login() {
 
         {/* Formulário */}
         <View style={styles.form}>
-          
-          {/* Input Email */}
-          <Text style={styles.label}>E-mail institucional ou pessoal</Text>
+          {/* Input Nome */}
           <TextInput
             style={styles.input}
-            placeholder="nome@exemplo.com"
-            placeholderTextColor="#94a3b8"
+            placeholder="Nome completo"
+            placeholderTextColor="#64748b"
+            keyboardType="default"
+            autoCapitalize="words"
+            autoCorrect={false}
+            value={nome}
+            onChangeText={setNome}
+          />
+
+          {/* Input Email */}
+          <TextInput
+            style={styles.input}
+            placeholder="E-mail institucional ou pessoal"
+            placeholderTextColor="#64748b"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -104,35 +123,38 @@ export default function Login() {
           />
 
           {/* Input Senha */}
-          <Text style={styles.label}>Sua senha</Text>
           <TextInput
             style={styles.input}
-            placeholder="Digite sua senha"
-            placeholderTextColor="#94a3b8"
+            placeholder="Criar uma senha"
+            placeholderTextColor="#64748b"
             secureTextEntry={true}
             autoCapitalize="none"
             value={senha}
             onChangeText={setSenha}
           />
-
-          {/* Esqueci minha senha no Canto Esquerdo */}
-          <TouchableOpacity style={styles.forgotPasswordContainer}>
-            <Text style={styles.forgotPasswordText}>Esqueci a senha</Text>
-          </TouchableOpacity>
+          {/* Input Confirmar Senha */}
+          <TextInput
+            style={styles.input}
+            placeholder="Confirmar senha"
+            placeholderTextColor="#64748b"
+            secureTextEntry={true}
+            autoCapitalize="none"
+            value={confirmarSenha}
+            onChangeText={setConfirmarSenha}
+          />
 
           {/* Botão de Entrar */}
-          <TouchableOpacity 
-            style={styles.buttonPrimary} 
-            onPress={handleLogin}
+          <TouchableOpacity
+            style={styles.buttonPrimary}
+            onPress={handleCadastro}
             disabled={carregando}
           >
             {carregando ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonPrimaryText}>Entrar</Text>
+              <Text style={styles.buttonPrimaryText}>Cadastrar</Text>
             )}
           </TouchableOpacity>
-
         </View>
 
         {/* Divisor Moderno */}
@@ -144,43 +166,45 @@ export default function Login() {
 
         {/* Botões Sociais Ajustados para o Modelo Exato da Imagem */}
         <View style={styles.socialVerticalContainer}>
-          
           {/* Botão Facebook (Azul com ícone branco) */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.buttonSocialBase, styles.buttonFacebookStructure]}
-            onPress={() => handleSocialLogin("Facebook")}
+            onPress={() => handleSocialCadastro("Facebook")}
           >
-            <Image 
+            <Image
               source={{ uri: "https://img.icons8.com/color/48/facebook.png" }}
-              style={styles.socialIcon} 
+              style={styles.socialIcon}
             />
             <Text style={styles.textFacebook}>Continuar com o Facebook</Text>
           </TouchableOpacity>
 
           {/* Botão Google (Branco com borda cinza e ícone colorido) */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.buttonSocialBase, styles.buttonGoogleStructure]}
-            onPress={() => handleSocialLogin("Google")}
+            onPress={() => handleSocialCadastro("Google")}
           >
-            <Image 
-              source={{ uri: "https://img.icons8.com/color/48/google-logo.png" }}
-              style={styles.socialIcon} 
+            <Image
+              source={{
+                uri: "https://img.icons8.com/color/48/google-logo.png",
+              }}
+              style={styles.socialIcon}
             />
             <Text style={styles.textGoogle}>Continuar com o Google</Text>
           </TouchableOpacity>
-          
         </View>
 
         {/* Opção de Cadastro no Final da Tela */}
         <View style={styles.footerContainer}>
-            <TouchableOpacity onPress={() => Alert.alert("Em breve", "Tela de cadastro em construção!")}>
-                <Text style={styles.subtitle}>
-                    Não tem uma conta? <Text style={styles.linkText}>Cadastre-se</Text>
-                </Text>
-            </TouchableOpacity>
-          
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert("Em breve", "Tela de cadastro em construção!")
+            }
+          >
+            <Text style={styles.subtitle}>
+              Já possui uma conta? <Text style={styles.linkText}>Entre</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -205,16 +229,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   waveBackground: {
-    backgroundColor: "#1e3a8a", 
+    backgroundColor: "#1447c4",
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
-    borderRadius: CIRCLE_SIZE / 2, 
+    borderRadius: CIRCLE_SIZE / 2,
     position: "absolute",
-    top: -CIRCLE_SIZE + 180, 
+    top: -CIRCLE_SIZE + 180,
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 130, 
+    marginTop: 130,
     marginBottom: 40,
   },
   logoImage: {
@@ -232,17 +256,11 @@ const styles = StyleSheet.create({
   },
   form: {
     width: "100%",
-    paddingHorizontal: 22, 
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#475569",
-    marginBottom: 5,
+    paddingHorizontal: 22,
   },
   input: {
     width: "100%",
-    height: 54, 
+    height: 54,
     backgroundColor: "#f8fafc",
     borderWidth: 1,
     borderColor: "#e2e8f0",
@@ -250,12 +268,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 15,
     color: "#0f172a",
-    marginBottom: 14,
-  },
-  forgotPasswordContainer: {
-    alignSelf: "flex-start",
-    marginTop: -4,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   forgotPasswordText: {
     fontSize: 13,
@@ -297,16 +310,16 @@ const styles = StyleSheet.create({
   },
   socialVerticalContainer: {
     width: "100%",
-    paddingHorizontal: 22, 
-    gap: 15, 
+    paddingHorizontal: 22,
+    gap: 15,
   },
-  
+
   /* --- MUDANÇAS APENAS NOS BOTÕES SOCIAIS ABAIXO --- */
   buttonSocialBase: {
     width: "100%",
     height: 54,
     borderRadius: 12, // Bordas ligeiramente mais suaves para combinar com o padrão das marcas
-    flexDirection: "row", 
+    flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
   },
@@ -317,7 +330,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderColor: "#e2e8f0",
     borderWidth: 1.5,
-    marginBottom: 10,
   },
   socialIcon: {
     width: 32,

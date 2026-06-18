@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
-    "@supabase/supabase-js": "^2.106.1",
+    "@supabase/supabase-js": "^2.108.2",
     "@types/leaflet": "^1.9.21",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",

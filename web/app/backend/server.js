@@ -1,68 +1,68 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import bcrypt from "bcrypt";
 import { supabase } from "./supabase.js";
 
 dotenv.config();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// 1. ROTA: CADASTRAR CIDADÃO
+// 1. CADASTRAR CIDADÃO
 app.post("/cadastrar-cidadao", async (req, res) => {
   try {
-    const { nome, email, senha, cpf, telefone, cidade, pcd } = req.body;
-    const fontHash = await bcrypt.hash(senha, 10);
+    const { nome, email, senha } = req.body;
 
-    const { data, error } = await supabase
-      .from("cidadao")
-      .insert([{ nome_completo: nome, email, senha: fontHash, cpf, telefone, cidade, pcd }]);
+    // Supabase Auth cria e já criptografa a senha
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password: senha,
+      email_confirm: true,
+    });
 
     if (error) return res.status(400).json({ error: error.message });
-    res.status(201).json({ message: "Cidadão cadastrado com sucesso!", data });
+
+    // Salva nome e email na tabela cidadao
+    const { error: erroPerfil } = await supabase.from("cidadao").insert({
+      auth_id: data.user.id,
+      nome_completo: nome,
+      email,
+    });
+
+    if (erroPerfil) return res.status(400).json({ error: erroPerfil.message });
+
+    res.status(201).json({ message: "Cidadão cadastrado com sucesso!" });
   } catch (err) {
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 
-// 2. ROTA: CADASTRO PREFEITURA
-app.post("/cadastro-prefeitura", async (req, res) => {
-  try {
-    const { id_servidor, email, senha, cargo, re } = req.body;
-    const senhaHash = await bcrypt.hash(senha, 10);
-
-    const { data, error } = await supabase
-      .from("prefeitura")
-      .insert([{ id_servidor, email, senha: senhaHash, cargo, re }]);
-
-    if (error) return res.status(400).json({ error: error.message });
-    res.status(201).json({ message: "Servidor cadastrado com sucesso!", data });
-  } catch (err) {
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-});
-
-// 3. ROTA: LOGIN
+// 2. LOGIN
 app.post("/login", async (req, res) => {
   try {
     const { email, senha } = req.body;
-    const { data, error } = await supabase.from("cidadao").select("*").eq("email", email).single();
 
-    if (error || !data) return res.status(400).json({ error: "Usuário não encontrado" });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha,
+    });
 
-    const senhaCorreta = await bcrypt.compare(senha, data.senha);
-    if (!senhaCorreta) return res.status(400).json({ error: "Senha incorreta" });
+    if (error) return res.status(400).json({ error: "E-mail ou senha incorretos" });
 
-    res.status(200).json({ message: "Login realizado com sucesso!", usuario: data });
+    // Por enquanto todo login vai pra tela do cidadão
+    // (quando fizer a prefeitura, aqui vai checar a tabela prefeitura)
+    res.status(200).json({
+      message: "Login realizado com sucesso!",
+      tipo: "cidadao",
+      token: data.session.access_token,
+    });
   } catch (err) {
     res.status(500).json({ error: "Erro interno" });
   }
 });
 
-// 4. ROTA: BUSCA OS ALERTAS DO SUPABASE
+// 3. ALERTAS (mantido igual)
 app.get("/api/alertas", async (req, res) => {
   try {
     const { data, error } = await supabase.from("alertas_tempo_real").select("*");
@@ -73,25 +73,22 @@ app.get("/api/alertas", async (req, res) => {
   }
 });
 
-// 5. ROTA ATUALIZAR STATUS (Mudar de "Aguardando" para "Em Andamento" / "Concluído")
+// 4. ATUALIZAR STATUS (mantido igual)
 app.patch("/api/alertas/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
     const { status_atual } = req.body;
 
-    // Atualiza a coluna 'orientacao' do seu banco que está segurando o estado temporário de texto
     const { data, error } = await supabase
       .from("alertas_tempo_real")
       .update({ orientacao: status_atual })
       .eq("id", id);
 
     if (error) return res.status(400).json({ error: error.message });
-    return res.json({ message: "Status atualizado com sucesso!", data });
+    return res.json({ message: "Status atualizado!", data });
   } catch (err) {
     return res.status(500).json({ error: "Erro interno" });
   }
 });
 
-app.listen(3001, () => {
-  console.log("Servidor rodando perfeitamente na porta 3001");
-});
+app.listen(3001, () => console.log("Servidor rodando na porta 3001"));

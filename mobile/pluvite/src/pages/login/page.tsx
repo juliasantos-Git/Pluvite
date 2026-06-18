@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { supabase } from "../lib/supabase";
 import {
   StyleSheet,
   Text,
@@ -17,52 +18,41 @@ import {
 const { width } = Dimensions.get("window");
 const CIRCLE_SIZE = width * 1.6;
 
-export default function Cadastro() {
-  const [nome, setNome] = useState("");
+export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  const handleCadastro = async () => {
-    if (!nome || !email || !senha || !confirmarSenha) {
+  const handleLogin = async () => {
+    if (!email || !senha) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
-      return;
-    }
-
-    if (senha !== confirmarSenha) {
-      Alert.alert("Erro", "As senhas não coincidem!");
       return;
     }
 
     setCarregando(true);
 
     try {
-      const response = await fetch("http://192.168.0.108:3001/cadastro", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, email, senha }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: senha,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        Alert.alert("Sucesso", "Conta criada com sucesso!");
-      } else {
-        Alert.alert("Erro", data.mensagem || "Erro ao cadastrar!");
+      if (error) {
+        Alert.alert("Erro", "E-mail ou senha incorretos!");
+        setSenha("");
+        return;
       }
+
+      Alert.alert("Sucesso", "Login efetuado!");
+      // Aqui você navega para o Mapa
     } catch (error) {
-      console.error("Erro ao cadastrar:", error);
-      Alert.alert(
-        "Erro",
-        "Servidor fora do ar. Verifique se o terminal do Node está rodando!",
-      );
+      Alert.alert("Erro", "Tente novamente.");
     } finally {
       setCarregando(false);
     }
   };
 
-  const handleSocialCadastro = (plataforma: string) => {
+  const handleSocialLogin = (plataforma: string) => {
     Alert.alert("Login Social", `Conectando com o ${plataforma}...`);
   };
 
@@ -92,23 +82,11 @@ export default function Cadastro() {
 
         {/* Formulário */}
         <View style={styles.form}>
-          {/* Input Nome */}
-          <TextInput
-            style={styles.input}
-            placeholder="Nome completo"
-            placeholderTextColor="#64748b"
-            keyboardType="default"
-            autoCapitalize="words"
-            autoCorrect={false}
-            value={nome}
-            onChangeText={setNome}
-          />
-
           {/* Input Email */}
           <TextInput
             style={styles.input}
             placeholder="E-mail institucional ou pessoal"
-            placeholderTextColor="#64748b"
+            placeholderTextColor="#94a3b8"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -119,34 +97,29 @@ export default function Cadastro() {
           {/* Input Senha */}
           <TextInput
             style={styles.input}
-            placeholder="Criar uma senha"
-            placeholderTextColor="#64748b"
+            placeholder="Sua senha"
+            placeholderTextColor="#94a3b8"
             secureTextEntry={true}
             autoCapitalize="none"
             value={senha}
             onChangeText={setSenha}
           />
-          {/* Input Confirmar Senha */}
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar senha"
-            placeholderTextColor="#64748b"
-            secureTextEntry={true}
-            autoCapitalize="none"
-            value={confirmarSenha}
-            onChangeText={setConfirmarSenha}
-          />
+
+          {/* Esqueci minha senha no Canto Esquerdo */}
+          <TouchableOpacity style={styles.forgotPasswordContainer}>
+            <Text style={styles.forgotPasswordText}>Esqueci a senha</Text>
+          </TouchableOpacity>
 
           {/* Botão de Entrar */}
           <TouchableOpacity
             style={styles.buttonPrimary}
-            onPress={handleCadastro}
+            onPress={handleLogin}
             disabled={carregando}
           >
             {carregando ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonPrimaryText}>Cadastrar</Text>
+              <Text style={styles.buttonPrimaryText}>Entrar</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -163,7 +136,7 @@ export default function Cadastro() {
           {/* Botão Facebook (Azul com ícone branco) */}
           <TouchableOpacity
             style={[styles.buttonSocialBase, styles.buttonFacebookStructure]}
-            onPress={() => handleSocialCadastro("Facebook")}
+            onPress={() => handleSocialLogin("Facebook")}
           >
             <Image
               source={{ uri: "https://img.icons8.com/color/48/facebook.png" }}
@@ -175,7 +148,7 @@ export default function Cadastro() {
           {/* Botão Google (Branco com borda cinza e ícone colorido) */}
           <TouchableOpacity
             style={[styles.buttonSocialBase, styles.buttonGoogleStructure]}
-            onPress={() => handleSocialCadastro("Google")}
+            onPress={() => handleSocialLogin("Google")}
           >
             <Image
               source={{
@@ -195,7 +168,8 @@ export default function Cadastro() {
             }
           >
             <Text style={styles.subtitle}>
-              Já possui uma conta? <Text style={styles.linkText}>Entre</Text>
+              Não tem uma conta?{" "}
+              <Text style={styles.linkText}>Cadastre-se</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -223,7 +197,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   waveBackground: {
-    backgroundColor: "#1e3a8a",
+    backgroundColor: "#1447c4",
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
@@ -252,6 +226,12 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 22,
   },
+  label: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#475569",
+    marginBottom: 5,
+  },
   input: {
     width: "100%",
     height: 54,
@@ -262,7 +242,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 15,
     color: "#0f172a",
-    marginBottom: 20,
+    marginBottom: 14,
+  },
+  forgotPasswordContainer: {
+    alignSelf: "flex-start",
+    marginTop: -4,
+    marginBottom: 30,
   },
   forgotPasswordText: {
     fontSize: 13,
@@ -324,6 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderColor: "#e2e8f0",
     borderWidth: 1.5,
+    marginBottom: 10,
   },
   socialIcon: {
     width: 32,
