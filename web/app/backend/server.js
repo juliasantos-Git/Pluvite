@@ -79,10 +79,16 @@ app.patch("/api/alertas/:id/status", async (req, res) => {
     const { id } = req.params;
     const { status_atual } = req.body;
 
+<<<<<<< HEAD
+=======
+    // ✅ ALTERAÇÃO: Remove o deslocamento do frontend para usar o ID correspondente na tabela "alertas_tempo_real"
+    const idRealdoBanco = parseInt(id) - 100;
+
+>>>>>>> 0b93366fb658994cb361f38de577136246cc380a
     const { data, error } = await supabase
       .from("alertas_tempo_real")
       .update({ orientacao: status_atual })
-      .eq("id", id);
+      .eq("id", idRealdoBanco);
 
     if (error) return res.status(400).json({ error: error.message });
     return res.json({ message: "Status atualizado!", data });
