@@ -6,7 +6,7 @@ import Sidebar from "./sidebar";
 
 export default function NavbarWrapper() {
   const pathname = usePathname();
-  const semNavbar = ["/login", "/cadastro-cidadao"];
+  const semNavbar = ["/login", "/cadastro-cidadao", "/redefinir-senha"];
   const comNavbar = ["/"];
 
   if (semNavbar.includes(pathname)) return null;
