@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "expo": "^56.0.12"
+  }
+}

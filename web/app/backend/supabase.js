@@ -3,19 +3,19 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Buscando os dados das variáveis de ambiente protegidas
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY; // USE A ANON KEY AQUI!
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // ← mudou aqui
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("ERRO: Variáveis de ambiente do Supabase não foram encontradas!");
+  console.error("ERRO: Variáveis de ambiente não encontradas!");
+  process.exit(1);
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    persistSession: false, // Evita o erro de múltiplas instâncias no ambiente Node.js
+    persistSession: false,
     autoRefreshToken: false,
   },
 });
 
-console.log("SUPABASE CONFIGURADO COM SUCESSO");
+console.log("Supabase configurado com sucesso");

@@ -2,17 +2,17 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { BarChart3, Layers, MessageSquare, ShieldAlert, Phone, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
 
   const navItems = [
-    { anchor: "painel", icon: BarChart3, label: "Chamados" },
-    { anchor: "recursos", icon: Layers, label: "Recursos" },
-    { anchor: "comunicacao", icon: MessageSquare, label: "Comunicação" },
-    { anchor: "riscos", icon: ShieldAlert, label: "Categorização" },
-    { anchor: "emergencia", icon: Phone, label: "Emergência" },
+    { anchor: "painel", label: "Chamados" },
+    { anchor: "recursos", label: "Recursos" },
+    { anchor: "comunicacao", label: "Comunicação" },
+    { anchor: "riscos", label: "Categorização" },
+    { anchor: "emergencia", label: "Emergência" },
   ];
 
   const handleAnchorClick = (anchor: string) => {
@@ -30,7 +30,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 pt-3 right-0 left-0 z-[10000] shadow-[0_2px_10px_rgba(0,0,0,0.15)] w-full pb-3 flex items-center justify-between"
-      style={{ backgroundColor: "#1b56cc" }}
+      style={{ backgroundColor: "#091c4b" }}
     >
       <Link href="/" className="flex items-center gap-3 ml-10 group">
         <img
@@ -44,14 +44,13 @@ export default function Navbar() {
       </Link>
 
       <div className="flex items-center gap-2 mr-10">
-        {navItems.map(({ anchor, icon: Icon, label }) => (
+        {navItems.map(({ anchor, label }) => (
           <button
             key={anchor}
             onClick={() => handleAnchorClick(anchor)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-150
+            className="px-4 py-2 rounded-xl font-medium transition-all duration-150
               text-white hover:bg-white/15 hover:text-whit cursor-pointer"
           >
-            <Icon size={20} />
             {label}
           </button>
         ))}
