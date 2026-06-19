@@ -2,50 +2,96 @@
 
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface MapaProps {
   bairrosDados: any;
   setLocalAberto: (nome: string) => void;
   cidadeSelecionada: string;
-  climaPorCidade: { [key: string]: any };
-  setClimaPorCidade: (fn: (anterior: any) => any) => void;
 }
 
 export default function MapaValeComponent({
   bairrosDados,
   setLocalAberto,
   cidadeSelecionada,
-  climaPorCidade,
-  setClimaPorCidade,
 }: MapaProps) {
-  const cidades = [
-    "Aparecida", "Arapeí", "Areias", "Bananal", "Caçapava", "Cachoeira Paulista",
-    "Campos do Jordão", "Canas", "Caraguatatuba", "Cruzeiro", "Cunha",
-    "Guararema", "Guaratinguetá", "Igaratá", "Ilhabela", "Jacareí",
-    "Jambeiro", "Lagoinha", "Lavrinhas", "Lorena", "Monteiro Lobato",
-    "Natividade da Serra", "Paraibuna", "Pindamonhangaba", "Piquete",
-    "Potim", "Queluz", "Redenção da Serra", "Roseira", "Santa Branca",
-    "Santo Antônio do Pinhal", "São Bento do Sapucaí", "São José do Barreiro",
-    "São José dos Campos", "São Luiz do Paraitinga", "São Sebastião",
-    "Silveiras", "Taubaté", "Tremembé", "Ubatuba",
-  ];
-
+  //Primeiro eu criei uma variavel climaPorCidade ela vai armazernar o clima das cidade depois o
+  // setClima ele atualiza os dados que vieram da API e o useState começa zerado sem nenhuma cidade.
+  // Quando o componente carrega, o useEffect executa o fetch que busca os dados da API. O effect ele ta carregando
+  // o próprio componente mapavalevomponent ou seja, quando o mapa aparecer na tela, ele já dispara o fetch pra buscar o clima.
+  const [climaPorCidade, setClimaPorCidade] = useState<{ [key: string]: any }>(
+    {},
+  );
   useEffect(() => {
-    Promise.all(
-      cidades.map(cidade =>
-        fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cidade)},BR&appid=aea3caae2787bef2039681102761e6d1&units=metric&lang=pt_br`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.cod !== "200") return;
-            setClimaPorCidade(anterior => ({
+    const cidades = [
+      "Aparecida",
+      "Areias",
+      "Bananal",
+      "Cacapava",
+      "Cachoeira+Paulista",
+      "Campos+do+Jordao",
+      "Canas",
+      "Caraguatatuba",
+      "Cruzeiro",
+      "Cunha",
+      "Guararema",
+      "Guaratingueta",
+      "Igarata",
+      "Ilhabela",
+      "Jacarei",
+      "Jambeiro",
+      "Lagoinha",
+      "Lavrinhas",
+      "Lorena",
+      "Monteiro+Lobato",
+      "Natividade+da+Serra",
+      "Paraibuna",
+      "Pindamonhangaba",
+      "Piquete",
+      "Potim",
+      "Queluz",
+      "Roseira",
+      "Santa+Branca",
+      "Santo+Antonio+do+Pinhal",
+      "Sao+Bento+Sapucai",
+      "Sao+Jose+do+Barreiro",
+      "Sao+Jose+dos+Campos",
+      "Sao Luiz do Paraitinga",
+      "Silveiras",
+      "Taubate",
+      "Tremembe",
+      "Ubatuba",
+    ];
+    const intervalo = setInterval(() => {
+      cidades.map((cidade) =>
+        fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?q=${cidade},BR&appid=aea3caae2787bef2039681102761e6d1&units=metric&lang=pt_br`,
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            const nomeSemPlus = cidade.replace(/\+/g, " ");
+            setClimaPorCidade((anterior) => ({
               ...anterior,
-              [cidade]: data,
+              [nomeSemPlus]: data,
             }));
-          })
-      )
-    );
+          }),
+      );
+    }, 3600000);
+
+    return () => clearInterval(intervalo);
   }, []);
+
+  const dadosFiltrados = {
+    ...bairrosDados,
+    features: bairrosDados.features.filter((feature: any) => {
+      if (!cidadeSelecionada) return true;
+      const nome =
+        feature.properties.NM_MUN ||
+        feature.properties.name ||
+        feature.properties.NM_MUNICIPIO;
+      return nome === cidadeSelecionada;
+    }),
+  };
 
   function obterCor(chuva: number) {
     if (chuva < 1) return "green";
@@ -60,24 +106,20 @@ export default function MapaValeComponent({
       key="mapa-vale"
       center={[-23.2, -45.2]}
       zoom={9}
-      className="h-full w-full fixed mt-7"
+      className="h-full w-full fixed"
     >
       <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
 
       <GeoJSON
-        data={bairrosDados as any}
+        data={dadosFiltrados as any}
         style={(feature) => {
-          const nomeGeoJSON =
+          const nome =
             feature?.properties?.NM_MUN ||
             feature?.properties?.name ||
             feature?.properties?.NM_MUNICIPIO;
 
-          const selecionada = cidadeSelecionada && nomeGeoJSON === cidadeSelecionada;
-
-          const lista = climaPorCidade[nomeGeoJSON]?.list?.slice(0, 8) ?? [];
-          const chuva = lista.length > 0
-            ? Math.max(...lista.map((item: any) => item?.rain?.["3h"] ?? 0))
-            : 0;
+          const selecionada = cidadeSelecionada && nome === cidadeSelecionada;
+          const chuva = climaPorCidade[nome]?.list?.[0]?.rain?.["3h"] ?? 0;
 
           return {
             color: selecionada ? "#ef4444" : "white",
