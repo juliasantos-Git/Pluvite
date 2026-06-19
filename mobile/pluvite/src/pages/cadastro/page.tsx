@@ -14,11 +14,16 @@ import {
   Image,
   Dimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../../App";
 
 const { width } = Dimensions.get("window");
 const CIRCLE_SIZE = width * 1.6;
 
-export default function Cadastro() {
+type Props = NativeStackScreenProps<RootStackParamList, "Cadastro">;
+
+export default function Cadastro({ navigation }: Props) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -60,7 +65,12 @@ export default function Cadastro() {
         return;
       }
 
-      Alert.alert("Sucesso", "Conta criada com sucesso!");
+      Alert.alert("Sucesso", "Conta criada com sucesso!", [
+        {
+          text: "OK",
+          onPress: () => navigation.navigate("Login"),
+        },
+      ]);
     } catch (error) {
       Alert.alert("Erro", "Tente novamente.");
     } finally {
@@ -73,13 +83,15 @@ export default function Cadastro() {
   };
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.container}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Efeito Meio Círculo Perfeito no Topo */}
         <View style={styles.topWaveContainer}>
@@ -172,7 +184,7 @@ export default function Cadastro() {
             onPress={() => handleSocialCadastro("Facebook")}
           >
             <Image
-              source={{ uri: "https://img.icons8.com/color/48/facebook.png" }}
+              source={{ uri: "https://img.icons8.com/ios-filled/50/ffffff/facebook-f.png" }}
               style={styles.socialIcon}
             />
             <Text style={styles.textFacebook}>Continuar com o Facebook</Text>
@@ -193,13 +205,9 @@ export default function Cadastro() {
           </TouchableOpacity>
         </View>
 
-        {/* Opção de Cadastro no Final da Tela */}
+        {/* Opção de Login no Final da Tela */}
         <View style={styles.footerContainer}>
-          <TouchableOpacity
-            onPress={() =>
-              Alert.alert("Em breve", "Tela de cadastro em construção!")
-            }
-          >
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
             <Text style={styles.subtitle}>
               Já possui uma conta? <Text style={styles.linkText}>Entre</Text>
             </Text>
@@ -207,10 +215,15 @@ export default function Cadastro() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
@@ -229,7 +242,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   waveBackground: {
-    backgroundColor: "#1447c4",
+    backgroundColor: "#0f35a0",
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
@@ -252,7 +265,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#1e2735",
     letterSpacing: 2.5,
-    marginTop: 4,
   },
   form: {
     width: "100%",
@@ -268,17 +280,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 15,
     color: "#0f172a",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   forgotPasswordText: {
     fontSize: 13,
-    color: "#1447c4",
+    color: "#0f35a0",
     fontWeight: "600",
   },
   buttonPrimary: {
     width: "100%",
     height: 54,
-    backgroundColor: "#1447c4",
+    backgroundColor: "#0d1b54",
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
@@ -313,30 +325,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     gap: 15,
   },
-
-  /* --- MUDANÇAS APENAS NOS BOTÕES SOCIAIS ABAIXO --- */
   buttonSocialBase: {
     width: "100%",
     height: 54,
-    borderRadius: 12, // Bordas ligeiramente mais suaves para combinar com o padrão das marcas
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
   },
   buttonFacebookStructure: {
-    backgroundColor: "#1877f2", // Azul oficial do Facebook
+    backgroundColor: "#0f35a0",
   },
   buttonGoogleStructure: {
-    backgroundColor: "#ffffff",
-    borderColor: "#e2e8f0",
+    backgroundColor: "#e4e4e7",
+    borderColor: "#d5dae0",
     borderWidth: 1.5,
+    marginBottom: 10,
   },
   socialIcon: {
     width: 32,
     height: 32,
     resizeMode: "contain",
     position: "absolute",
-    left: 20, // Mantém os ícones travados perfeitamente no canto esquerdo interno
+    left: 20,
   },
   textFacebook: {
     color: "#ffffff",
@@ -346,14 +357,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   textGoogle: {
-    color: "#5e6d82", // Tom cinza escuro para o texto do Google conforme a imagem
+    color: "#000000",
     fontSize: 15,
     fontWeight: "600",
     width: "100%",
     textAlign: "center",
   },
-  /* ------------------------------------------------ */
-
   footerContainer: {
     marginTop: 20,
     alignItems: "center",
