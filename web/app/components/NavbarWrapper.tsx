@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "./navbar";
-import Sidebar from "./sidebar";
+import Sidebar from "./navbar2";
 
 export default function NavbarWrapper() {
   const pathname = usePathname();

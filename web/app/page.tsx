@@ -29,6 +29,7 @@ import {
   HeartHandshake,
 } from "lucide-react";
 import { text } from "stream/consumers";
+import Navbar from "./components/navbar";
 
 // ─── Scroll util ──────────────────────────────────────────────────────────────
 const scrollTo = (id: string) => {
@@ -47,6 +48,7 @@ export default function Home() {
     <div className="fixed h-screen w-full overflow-y-auto bg-slate-50 pt-12 font-sans antialiased text-slate-800">
       <main>
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
+        <Navbar></Navbar>
         {/* Reduzido pt-24 para pt-12 e pb-28 para pb-20 para subir o conteúdo */}
         <section className="max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center gap-10">
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#ccddff] bg-[#eff5ff] text-slate-700 text-xs font-bold tracking-widest uppercase shadow-sm">
@@ -705,21 +707,38 @@ export default function Home() {
               Conheça o Nosso Aplicativo
             </h2>
             <p className="text-base text-slate-700 font-medium mt-3">
-              Uma experiência rápida e intuitiva feita para manter você informado e seguro a qualquer momento do dia.
+              Uma experiência rápida e intuitiva feita para manter você
+              informado e seguro a qualquer momento do dia.
             </p>
           </div>
 
           {/* Grid de Mockups - Intercalado começando pelo maior */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 justify-items-center items-start pt-4">
             {[
-              { src: "/app-login.png", title: "Acesso Rápido", desc: "Login simples e integração social" },
-              { src: "/app-cadastro.png", title: "Cadastro Seguro", desc: "Conta pessoal ou institucional" },
-              { src: "/app-clima.jpg", title: "Painel de Clima", desc: "Condições e alertas em tempo real" },
-              { src: "/app-contatos.jpg", title: "Canais de Ajuda", desc: "Disque emergência em um clique" },
+              {
+                src: "/app-login.png",
+                title: "Acesso Rápido",
+                desc: "Login simples e integração social",
+              },
+              {
+                src: "/app-cadastro.png",
+                title: "Cadastro Seguro",
+                desc: "Conta pessoal ou institucional",
+              },
+              {
+                src: "/app-clima.jpg",
+                title: "Painel de Clima",
+                desc: "Condições e alertas em tempo real",
+              },
+              {
+                src: "/app-contatos.jpg",
+                title: "Canais de Ajuda",
+                desc: "Disque emergência em um clique",
+              },
             ].map((mockup, index) => (
               /* md:odd:-translate-y-4 faz o 1º (index 0) e o 3º (index 2) ficarem mais altos */
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="flex flex-col items-center group max-w-[165px] transition-transform duration-300 md:odd:-translate-y-4"
               >
                 {/* Container compacto com pontas mais quadradinhas */}
