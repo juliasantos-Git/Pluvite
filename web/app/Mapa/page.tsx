@@ -31,7 +31,9 @@ export default function PluviteVale() {
   const [buscaCidade, setBuscaCidade] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [painelAberto, setPainelAberto] = useState(false);
-  const [climaPorCidade, setClimaPorCidade] = useState<{ [key: string]: any }>({});
+  const [climaPorCidade, setClimaPorCidade] = useState<{ [key: string]: any }>(
+    {},
+  );
 
   const [dadosAlerta, setDadosAlerta] = useState<{
     cidade: string;
@@ -81,12 +83,13 @@ export default function PluviteVale() {
   const umidade = climaCidadeAberta?.list?.[0]?.main?.humidity;
   const descricao = climaCidadeAberta?.list?.[0]?.weather?.[0]?.description;
   const chuvaLista = climaCidadeAberta?.list?.slice(0, 8) ?? [];
-  const chuvaMax = chuvaLista.length > 0
-    ? Math.max(...chuvaLista.map((item: any) => item?.rain?.["3h"] ?? 0))
-    : 0;
+  const chuvaMax =
+    chuvaLista.length > 0
+      ? Math.max(...chuvaLista.map((item: any) => item?.rain?.["3h"] ?? 0))
+      : 0;
 
   return (
-    <main className="h-screen w-full relative">
+    <main className="h-screen w-full relative  mt-10">
       {dadosBairros ? (
         <MapaSemSSR
           bairrosDados={dadosBairros}
@@ -104,14 +107,15 @@ export default function PluviteVale() {
       )}
 
       {dadosBairros && (
-        <div className="absolute top-10 left-20 z-[9999] w-72">
+        <div className="absolute top-15 left-35 w-72">
           <button
             onClick={() => setPainelAberto(!painelAberto)}
             className="w-full rounded-xl bg-white p-4 shadow-xl text-left border border-slate-200"
           >
             <h2 className="font-bold text-slate-800">Municípios Monitorados</h2>
             <p className="text-xs text-slate-500 mt-1 cursor-pointer">
-              Busque e selecione uma cidade
+              Busque e selecione uma cidade{" "}
+              <span className="text-red-500 font-bold">clique aqui</span>
             </p>
           </button>
 
@@ -154,11 +158,19 @@ export default function PluviteVale() {
                       feature.properties.name ||
                       feature.properties.NM_MUNICIPIO ||
                       "";
-                    return nome.toLowerCase().includes(buscaCidade.toLowerCase());
+                    return nome
+                      .toLowerCase()
+                      .includes(buscaCidade.toLowerCase());
                   })
                   .sort((a: any, b: any) => {
-                    const nomeA = a.properties.NM_MUN || a.properties.name || a.properties.NM_MUNICIPIO;
-                    const nomeB = b.properties.NM_MUN || b.properties.name || b.properties.NM_MUNICIPIO;
+                    const nomeA =
+                      a.properties.NM_MUN ||
+                      a.properties.name ||
+                      a.properties.NM_MUNICIPIO;
+                    const nomeB =
+                      b.properties.NM_MUN ||
+                      b.properties.name ||
+                      b.properties.NM_MUNICIPIO;
                     return nomeA.localeCompare(nomeB);
                   })
                   .map((feature: any, index: number) => {
@@ -175,7 +187,9 @@ export default function PluviteVale() {
                           setLocalAberto(nome);
                         }}
                         className={`flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-100 transition cursor-pointer ${
-                          cidadeSelecionada === nome ? "bg-red-50 text-red-600 font-semibold" : ""
+                          cidadeSelecionada === nome
+                            ? "bg-red-50 text-red-600 font-semibold"
+                            : ""
                         }`}
                       >
                         <div className="h-3 w-3 rounded-full bg-red-500" />
@@ -189,94 +203,156 @@ export default function PluviteVale() {
         </div>
       )}
 
-      {localAberto && (
-        <div className="fixed inset-0 left-0 z-[9999] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setLocalAberto(null)}
-          />
+      {/* CONTAINER FIXO DA DIREITA (Legenda + Card da Cidade alinhados) */}
+      <div className="absolute top-15 right-4 z-[9999] flex flex-col gap-3 w-[360px]">
+        {/* Card de Legenda Simplificado (Fica fixo no topo) */}
+        <div className="bg-white/95 p-3 rounded-xl shadow-md border border-slate-200 w-full">
+          <h4 className="text-xs font-bold text-slate-800 mb-2">
+            Nível de gravidade dos alertas de chuva:
+          </h4>
+          <div className="flex flex-row gap-4 justify-between">
+            {/* Verde */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="rounded-full bg-[#16a34a] border border-black inline-block shrink-0"
+                style={{ width: "14px", height: "14px" }}
+              ></span>
+              <span className="text-[11px] text-slate-700 font-medium">
+                Baixo
+              </span>
+            </div>
 
-          <div className="relative bg-white w-full max-w-2xl rounded-[1rem] p-8 shadow-2xl flex flex-col gap-6 pb-10">
+            {/* Laranja */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="rounded-full bg-[#ea580c] border border-black inline-block shrink-0"
+                style={{ width: "14px", height: "14px" }}
+              ></span>
+              <span className="text-[11px] text-slate-700 font-medium">
+                Médio
+              </span>
+            </div>
+
+            {/* Vermelho */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="rounded-full bg-[#dc2626] border border-black inline-block shrink-0"
+                style={{ width: "14px", height: "14px" }}
+              ></span>
+              <span className="text-[11px] text-slate-700 font-medium">
+                Alto
+              </span>
+            </div>
+
+            {/* Roxo */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className="rounded-full bg-[#7c3aed] border border-black inline-block shrink-0"
+                style={{ width: "14px", height: "14px" }}
+              ></span>
+              <span className="text-[11px] text-slate-700 font-medium">
+                Crítico
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card Informativo da Cidade (Aparece logo abaixo da legenda no fluxo correto) */}
+        {localAberto && (
+          <div className="relative bg-white w-full overflow-y-auto rounded-2xl p-5 shadow-2xl border border-slate-100 flex flex-col gap-4 pb-6 custom-scrollbar">
+            {/* Botão de fechar */}
             <button
               onClick={() => setLocalAberto(null)}
-              className="absolute top-6 right-6 text-zinc-400 hover:text-zinc-800 cursor-pointer"
+              className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-800 cursor-pointer text-sm"
             >
               ✕
             </button>
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
-                <CircleCheckBig className="text-green-500" size={25} />
+            {/* TÍTULO E SUBTÍTULO */}
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+                <CircleCheckBig className="text-green-500" size={20} />
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-slate-900">{localAberto}</h2>
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="px-3 py-1 rounded-md border border-zinc-300 text-zinc-600 font-bold text-sm tracking-wide bg-white">
+                <h2 className="text-xl font-bold text-slate-900 leading-tight">
+                  {localAberto}
+                </h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="px-2 py-0.5 rounded border border-zinc-200 text-zinc-500 font-bold text-[11px] tracking-wide bg-white">
                     Monitorado
                   </div>
-                  <div className="flex items-center gap-2 text-zinc-500">
-                    <Users size={18} />
-                    <p className="tracking-wide text-sm font-medium">Dados Regionais</p>
+                  <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                    <Users size={14} />
+                    <p className="font-medium">Dados Regionais</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* DADOS DO CLIMA — linha simples e discreta */}
+            {/* DADOS DO CLIMA */}
             {climaCidadeAberta ? (
-              <div className="flex flex-wrap items-center gap-6 text-sm text-slate-600 border-b border-slate-100 pb-4">
-                <span><strong>{temperaturaAtual}°C</strong></span>
-                <span><strong>{umidade}%</strong> umidade</span>
-                <span><strong>{chuvaMax.toFixed(1)} mm</strong> nas próximas 24h</span>
-                <span className="capitalize"> {descricao}</span>
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 border-b border-slate-100 pb-3 bg-slate-50 p-2.5 rounded-xl">
+                <span className="font-medium">
+                  🌡️ <strong>{temperaturaAtual}°C</strong>
+                </span>
+                <span className="font-medium">
+                  💧 <strong>{umidade}%</strong> umid.
+                </span>
+                <span className="col-span-2 text-[11px] text-slate-500 mt-0.5">
+                  🌧️ <strong>{chuvaMax.toFixed(1)} mm</strong> próx. 24h
+                </span>
+                <span className="col-span-2 capitalize text-[11px] text-blue-600 font-medium">
+                  ✨ {descricao}
+                </span>
               </div>
             ) : (
-              <p className="text-sm text-slate-400">Carregando dados do clima...</p>
+              <p className="text-xs text-slate-400">
+                Carregando dados do clima...
+              </p>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 w-full gap-3">
-              <div className="bg-red-50 border border-red-300 rounded-xl p-6 flex justify-between items-center text-red-700">
-                <div>
-                  <TriangleAlert className="mb-1" size={20} />
-                  <p className="text-sm">Críticos</p>
-                </div>
-                <div className="text-2xl font-bold">10</div>
+            {/* CARDS DE ALERTAS */}
+            <div className="grid grid-cols-3 w-full gap-2">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex flex-col items-center justify-center text-center text-red-700">
+                <TriangleAlert size={16} />
+                <p className="text-[10px] mt-0.5 font-medium">Críticos</p>
+                <div className="text-lg font-bold mt-0.5">10</div>
               </div>
-              <div className="bg-yellow-50 border border-yellow-600 rounded-xl p-6 flex justify-between items-center text-yellow-600">
-                <div>
-                  <CircleAlert className="mb-1" size={20} />
-                  <p className="text-sm">Médios</p>
-                </div>
-                <div className="text-2xl font-bold">20</div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex flex-col items-center justify-center text-center text-yellow-700">
+                <CircleAlert size={16} />
+                <p className="text-[10px] mt-0.5 font-medium">Médios</p>
+                <div className="text-lg font-bold mt-0.5">20</div>
               </div>
-              <div className="bg-green-100 border border-green-700 rounded-xl p-6 flex justify-between items-center text-green-700">
-                <div>
-                  <CircleCheck className="mb-1" size={20} />
-                  <p className="text-sm">Baixos</p>
-                </div>
-                <div className="text-2xl font-bold">40</div>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex flex-col items-center justify-center text-center text-green-700">
+                <CircleCheck size={16} />
+                <p className="text-[10px] mt-0.5 font-medium">Baixos</p>
+                <div className="text-lg font-bold mt-0.5">40</div>
               </div>
             </div>
 
-            <div className="p-3 w-full bg-green-100 border border-green-700 rounded-xl flex flex-col text-green-800">
-              <div className="flex items-center gap-2">
-                <CircleCheckBig size={22} />
-                <h1 className="font-bold text-xl tracking-wide">Situação tranquila</h1>
+            {/* BANNER SITUAÇÃO */}
+            <div className="p-3 w-full bg-green-50 border border-green-200 rounded-xl flex flex-col text-green-800 text-xs">
+              <div className="flex items-center gap-1.5">
+                <CircleCheckBig size={16} className="text-green-600" />
+                <h1 className="font-bold text-sm tracking-wide">
+                  Situação tranquila
+                </h1>
               </div>
-              <p className="tracking-wide mt-2">
+              <p className="mt-1 text-green-700/90 leading-normal">
                 Nenhum alerta crítico para {localAberto} no momento.
               </p>
             </div>
 
-            <Link href={`/feed?local=${localAberto}`} className="w-full">
-              <button className="bg-black w-full rounded-lg text-white flex items-center justify-center p-4 font-medium hover:bg-zinc-800 transition-all gap-2 cursor-pointer">
-                Ver todas as postagens de {localAberto}
-                <ArrowRight size={20} />
+            {/* BOTÃO DE AÇÃO */}
+            <Link href={`/feed?local=${localAberto}`} className="w-full mt-1">
+              <button className="bg-slate-900 w-full rounded-xl text-white flex items-center justify-center p-3 text-xs font-semibold hover:bg-slate-800 transition-all gap-1.5 cursor-pointer active:scale-[0.98]">
+                Ver postagens de {localAberto}
+                <ArrowRight size={14} />
               </button>
             </Link>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </main>
   );
 }
