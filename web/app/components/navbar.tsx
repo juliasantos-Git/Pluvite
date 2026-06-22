@@ -3,9 +3,12 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
+import { useState } from "react";
 
 export default function navbar() {
   const pathname = usePathname();
+  // Iniciando o estado vazio para nenhum botão começar marcado
+  const [activeAnchor, setActiveAnchor] = useState<string>(""); 
 
   const navItems = [
     { anchor: "painel", label: "Chamados" },
@@ -13,9 +16,12 @@ export default function navbar() {
     { anchor: "comunicacao", label: "Comunicação" },
     { anchor: "riscos", label: "Categorização" },
     { anchor: "emergencia", label: "Emergência" },
+    { anchor: "app", label: "Aplicativo" },
   ];
 
   const handleAnchorClick = (anchor: string) => {
+    setActiveAnchor(anchor); // Só marca o fundo após o clique
+
     const scrollContainer = document.querySelector(".overflow-y-auto");
     const el = document.getElementById(anchor);
     if (el && scrollContainer) {
@@ -45,27 +51,31 @@ export default function navbar() {
       </Link>
 
       <div className="flex items-center gap-2 mr-10">
-        {navItems.map(({ anchor, label }) => (
-          <button
-            key={anchor}
-            onClick={() => handleAnchorClick(anchor)}
-            className="px-4 py-2 rounded-xl font-medium transition-all duration-150
-              text-white hover:bg-white/15 hover:text-whit cursor-pointer"
-          >
-            {label}
-          </button>
-        ))}
+        {navItems.map(({ anchor, label }) => {
+          const isActive = activeAnchor === anchor;
+          
+          return (
+            <button
+              key={anchor}
+              onClick={() => handleAnchorClick(anchor)}
+              className={`px-4 py-2 rounded-xl font-medium transition-all duration-150 cursor-pointer text-white
+                ${isActive ? "bg-white/15 shadow-sm font-bold" : "hover:bg-white/10"}`}
+            >
+              {label}
+            </button>
+          );
+        })}
 
         <div className="w-[1px] h-6 bg-white/25 mx-3" />
 
         <Link
           href="/login"
-          className="flex items-center gap-2 text-white bg-white/15 border border-white/30
-            hover:bg-white/25 transition-all duration-150 px-5 py-2 rounded-xl font-semibold
-            tracking-wide active:scale-95"
+          className="flex items-center gap-2 bg-zinc-100 text-back hover:bg-zinc-200 
+            transition-all duration-150 px-5 py-2 rounded-xl font-bold
+            tracking-wide active:black shadow-md"
         >
-          <UserRound size={20} />
-          Entrar
+          <UserRound size={18} />
+          <span>Entrar</span>
         </Link>
       </div>
     </nav>
