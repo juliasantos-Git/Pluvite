@@ -42,6 +42,7 @@ export default function PluviteVale() {
     nome: string;
   } | null>(null);
 
+  // CARREGAMENTO DOS DADOS GEOGRÁFICOS DO MAPA
   useEffect(() => {
     fetch("/map.json")
       .then((res) => res.json())
@@ -49,6 +50,7 @@ export default function PluviteVale() {
       .catch((err) => console.error("Erro ao carregar o mapa JSON:", err));
   }, []);
 
+  // CONFIGURAÇÃO DO CANAL DE REALTIME DO SUPABASE
   useEffect(() => {
     const idCidadaoLogado = 1;
     const nomeCidadaoLogado = "Quezia";
@@ -78,6 +80,7 @@ export default function PluviteVale() {
     };
   }, []);
 
+  // TRATAMENTO E EXTRAÇÃO DOS DADOS DE CLIMA DA CIDADE SELECIONADA
   const climaCidadeAberta = localAberto ? climaPorCidade[localAberto] : null;
   const temperaturaAtual = climaCidadeAberta?.list?.[0]?.main?.temp?.toFixed(1);
   const umidade = climaCidadeAberta?.list?.[0]?.main?.humidity;
@@ -90,6 +93,7 @@ export default function PluviteVale() {
 
   return (
     <main className="h-screen w-full relative  mt-10">
+      {/* RENDERIZAÇÃO DO COMPONENTE DE MAPA */}
       {dadosBairros ? (
         <MapaSemSSR
           bairrosDados={dadosBairros}
@@ -106,6 +110,7 @@ export default function PluviteVale() {
         </div>
       )}
 
+      {/* PAINEL LATERAL ESQUERDO DE SELEÇÃO E BUSCA DE MUNICÍPIOS */}
       {dadosBairros && (
         <div className="absolute top-15 left-35 w-72">
           <button
@@ -114,7 +119,7 @@ export default function PluviteVale() {
           >
             <h2 className="font-bold text-slate-800">Municípios Monitorados</h2>
             <p className="text-xs text-slate-500 mt-1 cursor-pointer">
-              Busque e selecione uma cidade{" "}
+              Veja informações da sua cidade!{" "}
               <span className="text-red-500 font-bold">clique aqui</span>
             </p>
           </button>
@@ -124,7 +129,7 @@ export default function PluviteVale() {
               <div className="p-3">
                 <input
                   type="text"
-                  placeholder="Digite uma cidade..."
+                  placeholder="Digite sua cidade..."
                   value={buscaCidade}
                   onChange={(e) => setBuscaCidade(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none"
@@ -203,15 +208,14 @@ export default function PluviteVale() {
         </div>
       )}
 
-      {/* CONTAINER FIXO DA DIREITA (Legenda + Card da Cidade alinhados) */}
+      {/* CONTAINER LATERAL DIREITO FIXO */}
       <div className="absolute top-15 right-4 z-[9999] flex flex-col gap-3 w-[360px]">
-        {/* Card de Legenda Simplificado (Fica fixo no topo) */}
+        {/* BLOCO DE LEGENDA DOS NÍVEIS DE GRAVIDADE */}
         <div className="bg-white/95 p-3 rounded-xl shadow-md border border-slate-200 w-full">
           <h4 className="text-xs font-bold text-slate-800 mb-2">
             Nível de gravidade dos alertas de chuva:
           </h4>
           <div className="flex flex-row gap-4 justify-between">
-            {/* Verde */}
             <div className="flex items-center gap-1.5">
               <span
                 className="rounded-full bg-[#16a34a] border border-black inline-block shrink-0"
@@ -222,7 +226,6 @@ export default function PluviteVale() {
               </span>
             </div>
 
-            {/* Laranja */}
             <div className="flex items-center gap-1.5">
               <span
                 className="rounded-full bg-[#ea580c] border border-black inline-block shrink-0"
@@ -233,7 +236,6 @@ export default function PluviteVale() {
               </span>
             </div>
 
-            {/* Vermelho */}
             <div className="flex items-center gap-1.5">
               <span
                 className="rounded-full bg-[#dc2626] border border-black inline-block shrink-0"
@@ -244,7 +246,6 @@ export default function PluviteVale() {
               </span>
             </div>
 
-            {/* Roxo */}
             <div className="flex items-center gap-1.5">
               <span
                 className="rounded-full bg-[#7c3aed] border border-black inline-block shrink-0"
@@ -257,10 +258,9 @@ export default function PluviteVale() {
           </div>
         </div>
 
-        {/* Card Informativo da Cidade (Aparece logo abaixo da legenda no fluxo correto) */}
+        {/* BLOCO DE CARD INFORMATIVO DE DETALHES DA CIDADE SELECIONADA */}
         {localAberto && (
           <div className="relative bg-white w-full overflow-y-auto rounded-2xl p-5 shadow-2xl border border-slate-100 flex flex-col gap-4 pb-6 custom-scrollbar">
-            {/* Botão de fechar */}
             <button
               onClick={() => setLocalAberto(null)}
               className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-800 cursor-pointer text-sm"
@@ -268,7 +268,6 @@ export default function PluviteVale() {
               ✕
             </button>
 
-            {/* TÍTULO E SUBTÍTULO */}
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
                 <CircleCheckBig className="text-green-500" size={20} />
@@ -289,7 +288,6 @@ export default function PluviteVale() {
               </div>
             </div>
 
-            {/* DADOS DO CLIMA */}
             {climaCidadeAberta ? (
               <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 border-b border-slate-100 pb-3 bg-slate-50 p-2.5 rounded-xl">
                 <span className="font-medium">
@@ -311,7 +309,6 @@ export default function PluviteVale() {
               </p>
             )}
 
-            {/* CARDS DE ALERTAS */}
             <div className="grid grid-cols-3 w-full gap-2">
               <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex flex-col items-center justify-center text-center text-red-700">
                 <TriangleAlert size={16} />
@@ -330,7 +327,6 @@ export default function PluviteVale() {
               </div>
             </div>
 
-            {/* BANNER SITUAÇÃO */}
             <div className="p-3 w-full bg-green-50 border border-green-200 rounded-xl flex flex-col text-green-800 text-xs">
               <div className="flex items-center gap-1.5">
                 <CircleCheckBig size={16} className="text-green-600" />
@@ -343,7 +339,6 @@ export default function PluviteVale() {
               </p>
             </div>
 
-            {/* BOTÃO DE AÇÃO */}
             <Link href={`/feed?local=${localAberto}`} className="w-full mt-1">
               <button className="bg-slate-900 w-full rounded-xl text-white flex items-center justify-center p-3 text-xs font-semibold hover:bg-slate-800 transition-all gap-1.5 cursor-pointer active:scale-[0.98]">
                 Ver postagens de {localAberto}

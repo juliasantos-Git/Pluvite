@@ -31,7 +31,7 @@ import {
 import { text } from "stream/consumers";
 import Navbar from "./components/navbar";
 
-// ─── Scroll util ──────────────────────────────────────────────────────────────
+// ─── Scroll  ──────────────────────────────────────────────────────────────
 const scrollTo = (id: string) => {
   const scrollContainer = document.querySelector(".overflow-y-auto");
   const el = document.getElementById(id);
@@ -49,7 +49,6 @@ export default function Home() {
       <main>
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
         <Navbar></Navbar>
-        {/* Reduzido pt-24 para pt-12 e pb-28 para pb-20 para subir o conteúdo */}
         <section className="max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center gap-10">
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#ccddff] bg-[#eff5ff] text-slate-700 text-xs font-bold tracking-widest uppercase shadow-sm">
             <Activity size={13} className="text-[#2C4A6F]" />
@@ -120,7 +119,7 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Stats row */}
+              {/* LABELS DA VISÃO GERAL */}
               <div className="grid grid-cols-4 gap-4 mb-10">
                 {[
                   { label: "Chamados", value: "6", color: "text-[#e8000e]" },
@@ -142,7 +141,7 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Mini chart */}
+              {/* GRÁFICO DE OCORRÊNCIAS POR MUNICÍPIO */}
               <div>
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Ocorrências por Município
@@ -249,7 +248,6 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── COMUNICAÇÃO ───────────────────────────────────────────────────── */}
-        {/* Reduzido pt-24 para pt-10 para aproximar o conteúdo da linha divisória */}
         <section
           id="comunicacao"
           className="max-w-6xl mx-auto px-6 pt-10 pb-24"
@@ -266,7 +264,7 @@ export default function Home() {
             naturais.
           </p>
 
-          {/* 3 pilares */}
+          {/* 3 PILARES DA COMUNICAÇÃO */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-12">
             {[
               {
@@ -311,7 +309,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Fluxo de comunicação */}
+          {/* FLUXO DE COMUNICAÇÃO */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 mb-10 shadow-sm">
             <h3 className="text-base font-bold text-slate-900 mb-8">
               Fluxo de Comunicação
@@ -358,7 +356,6 @@ export default function Home() {
                   key={i}
                   className="flex flex-col items-center text-center gap-3 relative"
                 >
-                  {/* Fundo do ícone colorido adaptado */}
                   <div
                     className={`w-11 h-11 border border-slate-300 ${bgColor} rounded-xl flex items-center justify-center`}
                   >
@@ -381,7 +378,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Municípios */}
+          {/* MUNICÍPIOS */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 shadow-sm">
             <h3 className="text-base font-bold text-slate-900 mb-5">
               Principais Municípios Monitorados
@@ -409,7 +406,6 @@ export default function Home() {
                   key={cidade}
                   className="flex items-center gap-2 text-sm text-slate-800 py-1.5 font-bold animate-fade-in"
                 >
-                  {/* Ícone de Pin adaptado para a cor verde de zona segura da lista anterior */}
                   <MapPin size={11} className="text-[#00b277] flex-shrink-0" />
                   {cidade}
                 </div>
@@ -424,7 +420,6 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── CATEGORIZAÇÃO ─────────────────────────────────────────────────── */}
-        {/* Reduzido py-24 para pt-10 e pb-24 para subir os elementos em direção à linha */}
         <section id="riscos" className="max-w-6xl mx-auto px-6 pt-10 pb-24">
           <span className="text-sm font-bold text-[#2C4A6F] uppercase tracking-widest">
             Categorização
@@ -436,8 +431,6 @@ export default function Home() {
             O sistema analisa dados pluviométricos e relatos em tempo real para
             classificar cada região em quatro categorias.
           </p>
-
-          {/* 4 níveis - Ajustados para cores bem vivas e bordas completas no mesmo padrão */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
             {[
               {
@@ -486,7 +479,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Tipos de ocorrência */}
+          {/* TIPOS DE OCORRÊNCIA MONITORADOS */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 mb-14 shadow-sm">
             <h3 className="text-base font-bold text-slate-900 mb-8">
               Tipos de Ocorrência Monitorados
@@ -555,7 +548,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* ESTATÍSTICAS */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-10 border-t border-slate-300 text-center">
             {[
               { value: "39", label: "Municípios Monitorados" },
@@ -577,12 +570,9 @@ export default function Home() {
 
         {/* ── EMERGÊNCIA ────────────────────────────────────────────────────── */}
         <div id="emergencia" className="border-t border-slate-300" />
-
-        {/* Reduzido py-24 para pt-10 e pb-24 para subir os elementos em direção à linha */}
         <section className="max-w-6xl mx-auto px-6 pt-10 pb-24">
           <div className="flex items-start gap-5 mb-10">
             <div className="w-12 h-12 border border-slate-300 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-              {/* Ícone com vermelho de emergência bem vivo */}
               <Phone size={20} className="text-[#e8000e]" />
             </div>
             <div>
@@ -599,8 +589,6 @@ export default function Home() {
               </p>
             </div>
           </div>
-
-          {/* Números com bordas e cores bem vivas */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
             {[
               {
@@ -634,7 +622,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Instruções */}
+          {/* INSTRUÇÕES DE EMERGÊNCIA */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
               {
@@ -684,7 +672,6 @@ export default function Home() {
                       key={item}
                       className="text-sm text-slate-800 flex gap-2.5 font-bold"
                     >
-                      {/* Substituído o traço antigo por um "check" dinâmico com cor mais viva */}
                       <span className={`${bulletColor} mt-0.5`}>✓</span>
                       {item}
                     </li>
@@ -712,7 +699,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Grid de Mockups - Intercalado começando pelo maior */}
+          {/*CARDS DAS TELAS DO APP*/}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 justify-items-center items-start pt-4">
             {[
               {
@@ -736,12 +723,10 @@ export default function Home() {
                 desc: "Disque emergência em um clique",
               },
             ].map((mockup, index) => (
-              /* md:odd:-translate-y-4 faz o 1º (index 0) e o 3º (index 2) ficarem mais altos */
               <div
                 key={index}
                 className="flex flex-col items-center group max-w-[165px] transition-transform duration-300 md:odd:-translate-y-4"
               >
-                {/* Container compacto com pontas mais quadradinhas */}
                 <div className="relative rounded-xl p-1.5 bg-slate-900/5 ring-1 ring-slate-900/10 shadow-md w-full transition-transform duration-300 group-hover:scale-105">
                   <div className="overflow-hidden rounded-lg bg-white aspect-[9/19]">
                     <img
@@ -765,11 +750,8 @@ export default function Home() {
         {/* ── FOOTER ────────────────────────────────────────────────────────── */}
         <footer className="border-t border-slate-700 bg-[#091c4b] px-6 py-12 text-white shadow-inner">
           <div className="max-w-4xl mx-auto">
-            {/* Chamada do App Horizontal */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-              {/* Lado Esquerdo: Imagem da Logo Direta e Chamada */}
               <div className="flex items-center gap-4 text-left">
-                {/* Removido o bg-white que causava a borda estranha */}
                 <img
                   src="/PluviteIcon.jpg"
                   alt="Logo Pluvite"
@@ -785,7 +767,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Lado Direito: Botões no Modelo Original (Grandes/Completos) */}
+              {/* LADO DIREITO FOOTER*/}
               <div className="flex flex-wrap items-center gap-4">
                 <button className="flex items-center gap-3 bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer shadow-md">
                   <span className="opacity-80">Disponível no</span>
@@ -802,10 +784,10 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Linha Divisória */}
+            {/*LINHA DIVISÓRIA*/}
             <div className="border-t border-white/10 my-6" />
 
-            {/* Créditos Institucionais */}
+            {/* CRÉDITOS INSTITUCIONAIS */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
               <p>
                 © 2026 Pluvite · Centro Paula Souza (FATEC) · Fins acadêmicos
@@ -820,7 +802,7 @@ export default function Home() {
         </footer>
       </main>
 
-      {/* Scroll to top */}
+      {/*SCROLL PARA O TOPO*/}
       <button
         onClick={() => {
           document

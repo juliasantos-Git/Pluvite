@@ -20,7 +20,6 @@ export default function PerfilCidadao() {
     "pessoais" | "endereco" | null
   >(null);
 
-  // Estado único para os dados do perfil
   const [perfil, setPerfil] = useState({
     nome_completo: "",
     email: "",
@@ -34,6 +33,7 @@ export default function PerfilCidadao() {
     avatar_url: "/PluviteIcon.jpg",
   });
 
+  // CARREGAMENTO DOS DADOS DO USUÁRIO DO SUPABASE
   useEffect(() => {
     async function carregarPerfil() {
       const {
@@ -57,35 +57,52 @@ export default function PerfilCidadao() {
     carregarPerfil();
   }, []);
 
+  // MANIPULAÇÃO DE ENTRADA DOS FORMULÁRIOS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPerfil((prev) => ({ ...prev, [name]: value }));
   };
 
+  // PROCESSAMENTO DE UPLOAD E ATUALIZAÇÃO DA FOTO DE PERFIL
   const handleTrocarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
 
     try {
-      // Cria uma URL temporária para mostrar a foto na tela na mesma hora
-      const urlProvisoria = URL.createObjectURL(file);
-      setPerfil((prev) => ({ ...prev, avatar_url: urlProvisoria }));
-
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (user) {
-        // Atualiza o banco de dados com a nova URL
-        await supabase
-          .from("cidadao")
-          .update({ avatar_url: urlProvisoria })
-          .eq("auth_id", user.id);
-      }
-    } catch (error) {
+      if (!user) return;
+
+      const urlProvisoria = URL.createObjectURL(file);
+      setPerfil((prev) => ({ ...prev, avatar_url: urlProvisoria }));
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+      await supabase
+        .from("cidadao")
+        .update({ avatar_url: publicUrl })
+        .eq("auth_id", user.id);
+
+      setPerfil((prev) => ({ ...prev, avatar_url: publicUrl }));
+    } catch (error: any) {
       console.error("Erro ao salvar a foto:", error);
+      alert("Erro ao enviar a imagem: " + error.message);
     }
   };
 
+  // ENVIO DOS DADOS ATUALIZADOS PARA O BANCO DE DADOS
   const salvarDados = async (bloco: "pessoais" | "endereco") => {
     setCarregando(true);
     try {
@@ -119,7 +136,7 @@ export default function PerfilCidadao() {
 
   return (
     <main className="w-full mt-20 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-y-auto">
-      {/* Elementos visuais mantidos... */}
+      {/* ELEMENTOS VISUAIS DE FUNDO */}
       <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#1447f2]/10 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#1447c4]/8 rounded-full pointer-events-none" />
       <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#1447c4]/5 rounded-full blur-xl pointer-events-none" />
@@ -130,20 +147,18 @@ export default function PerfilCidadao() {
       <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#1447c4]/3 rounded-full blur-md pointer-events-none" />
 
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* CABEÇALHO */}
+        {/* TÍTULO PRINCIPAL */}
         <div className="border-b border-slate-200/60 pb-4">
           <h1 className="text-2xl font-bold text-[#091f75] tracking-tight">
             Meu Perfil
           </h1>
         </div>
 
-        {/* GRID DO PAINEL */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* COLUNA ESQUERDA: FOTO E COMPACTAÇÃO DE CONTEÚDO */}
+          {/* CARTÃO LATERAL DE EXIBIÇÃO DE AVATAR E INFOS RÁPIDAS */}
           <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center justify-between min-h-[455px]">
             <div className="w-full flex flex-col items-center text-center space-y-4">
               <div className="relative mt-2">
-                {/* AVATAR COM DISPARADOR DE IMAGEM */}
                 <div className="relative mt-2">
                   <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-slate-50 shadow-inner overflow-hidden flex items-center justify-center text-[#091f75] text-4xl font-black select-none">
                     {perfil.avatar_url &&
@@ -160,13 +175,12 @@ export default function PerfilCidadao() {
                     )}
                   </div>
 
-                  {/* Botão do Lápis para trocar a foto */}
                   <label className="absolute bottom-0 right-1 bg-[#091f75] hover:bg-[#051450] text-white p-2 rounded-full shadow-md cursor-pointer transition-all border border-white flex items-center justify-center active:scale-90">
                     <Pencil size={12} />
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleTrocarFoto} // Certifique-se de manter a função handleTrocarFoto no seu escopo
+                      onChange={handleTrocarFoto}
                       className="hidden"
                     />
                   </label>
@@ -185,7 +199,6 @@ export default function PerfilCidadao() {
               </span>
             </div>
 
-            {/* FIM DO ESPAÇO VAZIO: Widgets de status direto no card da foto */}
             <div className="w-full space-y-2.5 pt-4 mt-6 border-t border-slate-100">
               <div className="flex items-center justify-between text-xs text-slate-500 px-1">
                 <span className="font-medium">Alertas em tempo real</span>
@@ -197,9 +210,8 @@ export default function PerfilCidadao() {
             </div>
           </div>
 
-          {/* COLUNA DIREITA: BLOCOS DE DADOS COM LÁPIS INDIVIDUAL */}
           <div className="lg:col-span-8 space-y-6">
-            {/* INFORMAÇÕES PESSOAIS */}
+            {/* FORMULÁRIO DE DADOS DE IDENTIFICAÇÃO PESSOAL */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm relative">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xs font-bold text-[#091f75] uppercase tracking-wider flex items-center gap-2">
@@ -287,7 +299,7 @@ export default function PerfilCidadao() {
               </div>
             </div>
 
-            {/* ENDEREÇO & ACESSIBILIDADE */}
+            {/* FORMULÁRIO DE LOCALIZAÇÃO E CONDIÇÕES ESPECIAIS */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xs font-bold text-[#091f75] uppercase tracking-wider flex items-center gap-2">
