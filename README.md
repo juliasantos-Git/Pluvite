@@ -16,8 +16,8 @@ Facilitar a comunicação entre população e prefeitura durante situações de 
 ### 🌐 Executando a Plataforma Web
 
 1. Abra o terminal na pasta raiz do repositório e navegue até a pasta `web`:
-   ```bash
-   cd web
+ ```bash
+ cd web
 
 ```
 
@@ -112,7 +112,7 @@ Instale o aplicativo **Expo Go** no seu celular (Android ou iOS) e use a câmera
 * **Upload de fotos tiradas na hora** para comprovar o incidente.
 
 
-* Relato de:
+Relatos de:
 * Alagamentos
 * Buracos em vias públicas
 * Deslizamentos
@@ -132,7 +132,7 @@ Instale o aplicativo **Expo Go** no seu celular (Android ou iOS) e use a câmera
 * Visualização das ocorrências reportadas
 * Gestão de alertas
 * Acompanhamento de indicadores
-* Alteração de status das ocorrências:
+  Alteração de status das ocorrências:
 * Pendente
 * Em andamento
 * Resolvido
