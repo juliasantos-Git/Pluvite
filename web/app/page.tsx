@@ -685,7 +685,7 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── APP ────────────────────────────────────── */}
-        <section className="max-w-5xl mx-auto px-6 pt-10 pb-24">
+        <section id="app" className="max-w-5xl mx-auto px-6 pt-10 pb-24">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-sm font-bold text-[#0d43af] uppercase tracking-widest">
               Interface Mobile
@@ -809,9 +809,9 @@ export default function Home() {
             .querySelector(".overflow-y-auto")
             ?.scrollTo({ top: 0, behavior: "smooth" });
         }}
-        className="fixed bottom-6 right-6 z-50 w-11 h-11 bg-[#0d43af] hover:bg-[#0c2b6b] text-white rounded-xl flex items-center justify-center transition-colors shadow-md"
+        className="fixed bottom-6 right-6 z-50 w-11 h-11 cursor-pointer bg-[#0d43af] hover:bg-[#0c2b6b] text-white rounded-full flex items-center justify-center transition-colors shadow-md"
       >
-        <ArrowUp size={17} />
+        <ArrowUp size={20} />
       </button>
     </div>
   );
