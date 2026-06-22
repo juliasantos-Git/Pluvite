@@ -31,7 +31,6 @@ export default function RedefinirSenha() {
     setCarregando(true);
 
     try {
-      // O Supabase identifica o usuário automaticamente pelo token no link do e-mail
       const { error } = await supabase.auth.updateUser({
         password: senha,
       });
@@ -40,7 +39,6 @@ export default function RedefinirSenha() {
 
       setSucesso(true);
       
-      // Redireciona para o login após 3 segundos
       setTimeout(() => {
         router.push("/login");
       }, 3000);
@@ -55,28 +53,47 @@ export default function RedefinirSenha() {
   return (
     <main className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 font-sans antialiased relative overflow-hidden">
       
-      {/* Mesmos elementos visuais de fundo da tela de login */}
+      {/* Elementos visuais de fundo */}
       <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#0f35a0]/10 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#0f35a0]/8 rounded-full pointer-events-none" />
       <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#0f35a0]/5 rounded-full blur-xl pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#0f35a0]/5 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#0f35a0]/8 rounded-full blur-sm pointer-events-none" />
 
-      <div className="w-full max-w-[450px] relative z-10">
-        <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/60 border border-slate-200 p-8">
-          
-          {/* Logo/Icon */}
-          <div className="flex justify-center mb-6">
-            <img
-              src="/PluviteIcon.jpg"
-              alt="Pluvite Icon"
-              className="w-16 h-16 rounded-2xl object-cover shadow-lg"
-            />
-          </div>
+      {/* Container de Grid - Duas colunas em telas médias/grandes */}
+      <div className="w-full max-w-[1000px] grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center relative z-10">
+        
+        {/* LADO ESQUERDO: TEXTOS INFORMATIVOS */}
+        <div className="text-slate-900 space-y-6 text-center md:text-left flex flex-col items-center md:items-start">
+          <h1 className="text-5xl uppercase lg:text-6xl font-black tracking-tight leading-tight text-black">
+            Plataforma
+            <div className="flex flex-row items-center justify-center md:justify-start">
+              <img
+                src="/pluvite-xl.png"
+                alt="Pluvite"
+                className="w-15 h-15 -ml-3 mt-2 -mr-2 rounded-xl select-none object-cover"
+                draggable="false"
+              />
+              luvite
+            </div>
+          </h1>
 
+          <p className="text-slate-700 text-base sm:text-lg max-w-md font-medium leading-relaxed">
+            Monitore, previna e gerencie dados pluviais com precisão em tempo
+            real. Apoiando a gestão pública e a segurança do cidadão.
+          </p>
+
+          <div className="hidden md:flex items-center gap-4 text-xs text-[#0f35a0] font-bold uppercase tracking-wider">
+            <span>• Monitoramento Inteligente</span>
+            <span>• Dados Precisos</span>
+          </div>
+        </div>
+
+        {/* LADO DIREITO: CARD DE REDEFINIÇÃO */}
+        <div className="w-full max-w-[450px] mx-auto bg-white rounded-2xl shadow-2xl shadow-slate-900/60 border border-slate-200 p-8">
           {!sucesso ? (
             <>
-              <div className="mb-8 text-center">
+              <div className="mb-8 text-center md:text-left">
                 <h2 className="text-2xl font-bold text-slate-800">
                   Nova Senha
                 </h2>
@@ -154,6 +171,7 @@ export default function RedefinirSenha() {
             </Link>
           </div>
         </div>
+
       </div>
     </main>
   );
