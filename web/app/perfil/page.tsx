@@ -29,7 +29,7 @@ export default function PerfilCidadao() {
     cep: "",
     pcd: false,
     tipo_deficiencia: "Nenhuma",
-    avatar_url: "/PluviteIcon.jpg",
+    avatar_url: "/perfil.png",
   });
 
   // CARREGAMENTO DOS DADOS DO USUÁRIO DO SUPABASE
@@ -38,8 +38,16 @@ export default function PerfilCidadao() {
 
     async function carregarPerfil(authUser: any) {
       try {
+        // 1. Identifica o nome vindo de qualquer provedor (E-mail/Senha, Google, Facebook)
         const nomeDoCadastro =
-          authUser.user_metadata?.nome_completo || "Usuário";
+          authUser.user_metadata?.nome_completo ||
+          authUser.user_metadata?.full_name ||
+          authUser.user_metadata?.name ||
+          "Usuário";
+
+        // 2. Identifica se existe uma foto vinda do Google/Facebook
+        const fotoDoProvedor =
+          authUser.user_metadata?.avatar_url || "/PluviteIcon.jpg";
         const emailDoCadastro = authUser.email || "";
 
         if (ativo) {
@@ -47,6 +55,7 @@ export default function PerfilCidadao() {
             ...prev,
             email: emailDoCadastro,
             nome_completo: nomeDoCadastro,
+            avatar_url: fotoDoProvedor, // Define a foto padrão como a do Google (se houver)
           }));
         }
 
@@ -71,7 +80,8 @@ export default function PerfilCidadao() {
             bairro: data.bairro || "",
             cep: data.cep || "",
             pcd: data.pcd ?? false,
-            avatar_url: data.avatar_url || "/PluviteIcon.jpg",
+            // Se já tiver foto no seu banco local (tabela cidadao), usa ela, senão mantém a do provedor
+            avatar_url: data.avatar_url || fotoDoProvedor,
             tipo_deficiencia: data.tipo_deficiencia || "Nenhuma",
           }));
         }
