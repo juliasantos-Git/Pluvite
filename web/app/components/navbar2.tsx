@@ -11,6 +11,7 @@ export default function Navbar2() {
   const [avatarUrl, setAvatarUrl] = useState<string>("/PluviteIcon.jpg");
   const [nome, setNome] = useState<string>("");
 
+  // CONTROLE DE SESSÃO E CARREGAMENTO DE DADOS DO USUÁRIO
   useEffect(() => {
     async function carregarDadosNavbar() {
       const {
@@ -32,7 +33,7 @@ export default function Navbar2() {
 
     carregarDadosNavbar();
 
-    // Recarrega se houver alteração de autenticação/perfil
+    // ESCUTA DE ALTERAÇÕES NO STATUS DE AUTENTICAÇÃO
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         carregarDadosNavbar();
@@ -44,6 +45,7 @@ export default function Navbar2() {
     };
   }, []);
 
+  // CONFIGURAÇÃO DOS ITENS DE NAVEGAÇÃO
   const navItems = [
     { href: "/Mapa", label: "Mapa", icon: <Map size={18} /> },
     { href: "/Clima2", label: "Clima", icon: <CloudSun size={18} /> },
@@ -55,7 +57,7 @@ export default function Navbar2() {
       className="fixed top-0 pt-3 right-0 left-0 z-[10000] shadow-[0_2px_10px_rgba(0,0,0,0.15)] w-full pb-3 flex items-center justify-between"
       style={{ backgroundColor: "#091c4b" }}
     >
-      {/* O Logo serve como o botão Home oficial do seu site */}
+      {/* LOGOTIPO E LINK HOME */}
       <Link href="/" className="flex items-center gap-3 ml-10 group">
         <img
           src="/PluviteIcon.jpg"
@@ -67,8 +69,8 @@ export default function Navbar2() {
         </span>
       </Link>
 
+      {/* LINKS DE NAVEGAÇÃO PRINCIPAL */}
       <div className="flex items-center gap-2 mr-10">
-        {/* Agora renderiza como <Link> para mudar de página de verdade */}
         {navItems.map(({ href, label, icon }) => (
           <Link
             key={href}
@@ -81,15 +83,14 @@ export default function Navbar2() {
           </Link>
         ))}
 
+        {/* DIVISOR VISUAL */}
         <div className="w-[1px] h-6 bg-white/25 mx-3" />
 
+        {/* BOTÃO E AVATAR DO PERFIL */}
         <Link
           href="/perfil"
-          className="flex items-center gap-2 text-white
-            hover:bg-white/25 transition-all duration-150 px-5 py-2 rounded-xl font-semibold
-            tracking-wide active:scale-95"
+          className="flex items-center gap-2 text-white hover:bg-white/25 transition-all duration-150 px-5 py-2 rounded-xl font-semibold tracking-wide active:scale-95"
         >
-          {/* Renderização da Foto Redonda ou Fallback para Inicial */}
           <div className="w-6 h-6 rounded-full bg-white/20 border border-white/40 overflow-hidden flex items-center justify-center text-white text-xs font-bold select-none shrink-0">
             {avatarUrl && avatarUrl !== "/PluviteIcon.jpg" ? (
               <img

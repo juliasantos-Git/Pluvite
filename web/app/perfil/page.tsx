@@ -14,6 +14,7 @@ import {
 
 export default function PerfilCidadao() {
   const [carregando, setCarregando] = useState(false);
+  const [carregandoFoto, setCarregandoFoto] = useState(false);
   const [editandoBloco, setEditandoBloco] = useState<
     "pessoais" | "endereco" | null
   >(null);
@@ -188,7 +189,15 @@ export default function PerfilCidadao() {
   };
 
   return (
-    <main className="w-full mt-20 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-y-auto relative">
+    <main className="w-full mt-15 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-hiden relative">
+      {/* Elementos visuais de fundo */}
+      <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#0f35a0]/8 rounded-full pointer-events-none" />
+      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#0f35a0]/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#0f35a0]/3 rounded-full blur-md pointer-events-none" />
+      <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#0f35a0]/8 rounded-full blur-sm pointer-events-none" />
+      <div className="absolute top-8 right-5 w-16 h-16 bg-[#0f35a0]/6 rounded-full pointer-events-none z-0" />
+      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#0f35a0]/3 rounded-full blur-md pointer-events-none" />
+
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         <div className="border-b border-slate-200/60 pb-4">
           <h1 className="text-2xl font-bold text-[#091f75] tracking-tight">
@@ -247,7 +256,7 @@ export default function PerfilCidadao() {
               <div className="flex items-center justify-between text-xs text-slate-500 px-1">
                 <span className="font-medium">Alertas em tempo real</span>
                 <div className="flex items-center gap-1.5 font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>{" "}
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Ativos
                 </div>
               </div>
