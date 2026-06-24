@@ -21,76 +21,61 @@ const CORES_PRIORIDADE: Record<string, string> = {
   'Zona Segura': '#0a9667',
 };
 
-const chamadosIniciais = [
-  {
-    id: 'mock-1',
-    tipo: 'Alagamento',
-    prioridade: 'Alerta Máximo',
-    bairro: 'Cecap',
-    municipio: 'Taubaté',
-    usuario: 'Maria Silva',
-    endereco: 'Av. Charles Schnneider, 1500',
-    tempo: 'há 15 min',
-    descricao: 'Alagamento grave, água ultrapassando 50cm',
-    statusAtual: 'Aguardando'
-  },
-  {
-    id: 'mock-2',
-    tipo: 'Enchente',
-    prioridade: 'Alerta Máximo',
-    bairro: 'Esplanada Santa Terezinha',
-    municipio: 'Taubaté',
-    usuario: 'Carlos Eduardo',
-    endereco: 'Praça Santa Terezinha, 45',
-    tempo: 'há 5 horas',
-    descricao: 'Rio transbordando próximo às residências',
-    statusAtual: 'Aguardando'
-  }
-];
-
 export default function PainelAdministrativo() {
   const [municipioFiltro, setMunicipioFiltro] = useState('Todos os Municípios');
   const [prioridadeFiltro, setPrioridadeFiltro] = useState('Todas as Prioridades');
-  const [chamados, setChamados] = useState<any[]>(chamadosIniciais);
+  const [chamados, setChamados] = useState<any[]>([]);
   const [historicoLogs, setHistoricoLogs] = useState<any[]>([]);
+
+  const calcularTempo = (criadoEm: string) => {
+    if (!criadoEm) return 'Agora mesmo';
+    const diffMin = Math.floor((Date.now() - new Date(criadoEm).getTime()) / 60000);
+    if (diffMin < 1) return 'Agora mesmo';
+    if (diffMin < 60) return `há ${diffMin} min`;
+    const diffHoras = Math.floor(diffMin / 60);
+    return `há ${diffHoras} ${diffHoras === 1 ? 'hora' : 'horas'}`;
+  };
 
   const buscarDadosBanco = async () => {
     try {
-      // Carrega Alertas
       const resposta = await fetch('http://localhost:3001/api/alertas');
       if (resposta.ok) {
         const alertasReais = await resposta.json();
-        if (alertasReais && Array.isArray(alertasReais)) {
+        if (Array.isArray(alertasReais)) {
           const alertasFormatados = alertasReais.map((alerta: any) => {
-            const statusSalvo = alerta.orientacao;
-            const statusValidos = ['Aguardando', 'Visualizado', 'Em Andamento', 'Concluído'];
-            const possuiStatusDefinido = statusValidos.includes(statusSalvo);
+            let statusBruto = alerta.statusatual || alerta.statusAtual || 'Aguardando';
+            let statusTratado = 'Aguardando';
+
+            if (statusBruto.toLowerCase() === 'visualizado') statusTratado = 'Visualizado';
+            if (statusBruto.toLowerCase() === 'em andamento') statusTratado = 'Em Andamento';
+            if (statusBruto.toLowerCase() === 'concluído' || statusBruto.toLowerCase() === 'concluido') statusTratado = 'Concluído';
+
+            const bairroDetectado = alerta.bairro || alerta.cidadao?.bairro || 'Geral';
 
             return {
-              id: alerta.id, // Preserva o UUID vindo do Supabase intacto
-              tipo: alerta.condicao || 'Alerta Meteorológico',
-              prioridade: Number(alerta.temperatura) > 35 ? 'Alerta Máximo' : 'Estado de Alerta',
-              bairro: alerta.tipo_risco || 'Região Monitorada',
-              municipio: alerta.cidade_alerta || 'Taubaté',
-              usuario: 'Monitoramento Civil',
-              endereco: 'Área Operacional',
-              tempo: 'Agora mesmo',
-              descricao: possuiStatusDefinido ? 'Condição de risco climático identificada via satélite.' : (alerta.orientacao || 'Sem orientações adicionais.'),
-              statusAtual: possuiStatusDefinido ? statusSalvo : 'Aguardando'
+              id: alerta.id,
+              tipo: alerta.tipo,
+              prioridade: alerta.prioridade,
+              bairro: bairroDetectado,
+              municipio: alerta.municipio,
+              usuario: alerta.usuario || alerta.cidadao?.nome_completo || 'Cidadão',
+              endereco: alerta.endereco,
+              tempo: calcularTempo(alerta.criado_em),
+              descricao: alerta.descricao,
+              statusAtual: statusTratado
             };
           });
-          setChamados([...chamadosIniciais, ...alertasFormatados]);
+          setChamados(alertasFormatados);
         }
       }
 
-      // Carrega Histórico
       const resHistorico = await fetch('http://localhost:3001/api/historico');
       if (resHistorico.ok) {
         const dadosLogs = await resHistorico.json();
         setHistoricoLogs(dadosLogs);
       }
     } catch (e) {
-      console.log("Conectando ao servidor Express...");
+      console.log("Erro ao buscar dados:", e);
     }
   };
 
@@ -100,21 +85,16 @@ export default function PainelAdministrativo() {
     return () => clearInterval(idIntervalo);
   }, []);
 
-  const sincronizarStatusBanco = async (id: string | number, novoStatus: string, logMsg: string, corLog: string) => {
-    if (String(id).startsWith('mock-')) return;
-
+  const sincronizarStatusBanco = async (id: string, novoStatus: string, logMsg: string, corLog: string) => {
     try {
-      // 1. Atualiza Status do Alerta
       await fetch(`http://localhost:3001/api/alertas/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status_atual: novoStatus })
       });
 
-      // Encontra a info da cidade correspondente para salvar no histórico
       const alvo = chamados.find(c => c.id === id);
 
-      // 2. Registra no Histórico de Ações
       await fetch('http://localhost:3001/api/historico', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -126,23 +106,23 @@ export default function PainelAdministrativo() {
         })
       });
 
-      buscarDadosBanco(); // Atualiza a lista completa e histórico simultaneamente
+      buscarDadosBanco();
     } catch (err) {
-      console.error("Erro na sincronização remota:", err);
+      console.error("Erro na sincronização:", err);
     }
   };
 
-  const handleMarcarComoVisto = (id: string | number) => {
+  const handleMarcarComoVisto = (id: string) => {
     setChamados(prev => prev.map(c => c.id === id ? { ...c, statusAtual: 'Visualizado' } : c));
     sincronizarStatusBanco(id, 'Visualizado', 'Comando operacional visualizou o risco iminente.', 'text-blue-500');
   };
 
-  const handleDespacharEquipe = (id: string | number) => {
+  const handleDespacharEquipe = (id: string) => {
     setChamados(prev => prev.map(c => c.id === id ? { ...c, statusAtual: 'Em Andamento' } : c));
     sincronizarStatusBanco(id, 'Em Andamento', 'Equipes de mitigação de crise foram enviadas.', 'text-amber-500');
   };
 
-  const handleMarcarConcluido = (id: string | number) => {
+  const handleMarcarConcluido = (id: string) => {
     setChamados(prev => prev.map(c => c.id === id ? { ...c, statusAtual: 'Concluído' } : c));
     sincronizarStatusBanco(id, 'Concluído', 'Ocorrência controlada e vias públicas limpas.', 'text-emerald-500');
   };
@@ -196,13 +176,12 @@ export default function PainelAdministrativo() {
 
   return (
     <div className="h-screen overflow-y-auto overflow-x-hidden w-[calc(100vw-64px)] bg-slate-50 p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
-
       <div className="pt-8 mb-8">
         <h1 className="text-4xl font-black text-slate-900 tracking-tight">Painel Administrativo</h1>
         <p className="text-slate-500 text-sm font-medium mt-1">Gerencie ocorrências e despache equipes em tempo real</p>
       </div>
 
-      {/* CARDS METRICOS */}
+      {/* Grid de Cards de Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-blue-600 rounded-2xl p-6 text-white flex flex-col justify-between h-40 shadow-sm">
           <Layers className="w-7 h-7 opacity-90" />
@@ -222,9 +201,9 @@ export default function PainelAdministrativo() {
         </div>
       </div>
 
-      {/* GRAFICOS */}
+      {/* Seção de Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h3 className="font-bold text-slate-800 text-base mb-6">Ocorrências por Município</h3>
           <div className="h-64 w-full">
             {metricas.dadosBarras.length === 0 ? (
@@ -244,7 +223,7 @@ export default function PainelAdministrativo() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <h3 className="font-bold text-slate-800 text-base mb-4">Status dos Chamados (%)</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 items-center h-full gap-4">
             <div className="space-y-4 text-xs hidden sm:block">
@@ -268,8 +247,8 @@ export default function PainelAdministrativo() {
         </div>
       </div>
 
-      {/* PAINEL DO HISTÓRICO ADICIONADO VISUALMENTE */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mb-8">
+      {/* Histórico de Ações Operacionais */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8">
         <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
           <History className="w-5 h-5 text-slate-500" />
           <h3 className="font-bold text-slate-800 text-base">Histórico de Ações Operacionais</h3>
@@ -281,13 +260,13 @@ export default function PainelAdministrativo() {
             historicoLogs.map((log) => (
               <div key={log.id} className="flex justify-between items-center text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div className="flex items-center gap-3">
-                  <span className={`font-black uppercase tracking-wider ${log.cor_acao || 'text-blue-500'}`}>● REGISTRO</span>
+                  <span className={`font-black uppercase tracking-wider ${log.cor_acao || 'text-blue-500'}`}>• REGISTRO</span>
                   <span className="text-slate-400 font-bold">({log.cidade})</span>
                   <p className="text-slate-600 font-semibold">{log.acao}</p>
                 </div>
                 <div className="flex items-center gap-1 text-slate-400 font-bold shrink-0">
                   <Clock size={12} />
-                  <span>{new Date(log.criado_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span>{log.criado_at ? new Date(log.criado_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
                 </div>
               </div>
             ))
@@ -295,7 +274,7 @@ export default function PainelAdministrativo() {
         </div>
       </div>
 
-      {/* SELETORES DE FILTRO */}
+      {/* Filtros de Seleção */}
       <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200 mb-6">
         <div className="flex-1 max-w-xs relative">
           <select value={municipioFiltro} onChange={(e) => setMunicipioFiltro(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer">
@@ -316,57 +295,88 @@ export default function PainelAdministrativo() {
         </div>
       </div>
 
-      {/* LISTAGEM */}
+      {/* Lista Dinâmica de Ocorrências */}
       <div className="space-y-4">
         {chamadosFiltrados.length === 0 ? (
           <div className="bg-white rounded-2xl p-10 border border-slate-200 text-center text-slate-400 text-xs font-semibold">Nenhuma ocorrência encontrada para esta combinação de filtros.</div>
         ) : (
           chamadosFiltrados.map((chamado) => (
-            <div key={chamado.id} className="bg-white rounded-2xl p-5 md:p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div key={chamado.id} className="flex flex-col md:flex-row bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm justify-between items-start md:items-center gap-6">
+
+              {/* Lado Esquerdo: Identificação e Textos */}
               <div className="flex-1 space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="p-1.5 rounded-lg text-white shadow-sm" style={{ backgroundColor: CORES_PRIORIDADE[chamado.prioridade] || '#94a3b8' }}><AlertTriangle size={15} /></div>
+                  <div className="p-1.5 rounded-lg text-white shadow-sm" style={{ backgroundColor: CORES_PRIORIDADE[chamado.prioridade] || '#94a3b8' }}>
+                    <AlertTriangle size={15} />
+                  </div>
                   <h4 className="font-black text-slate-900 text-sm md:text-base">{chamado.tipo}</h4>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: CORES_PRIORIDADE[chamado.prioridade] || '#94a3b8' }}>{chamado.prioridade}</span>
-                  <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">{chamado.bairro}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: CORES_PRIORIDADE[chamado.prioridade] || '#94a3b8' }}>
+                    {chamado.prioridade}
+                  </span>
+
+                  {/* MODIFICAÇÃO SELECIONADA: Exibe agora o município dinâmico recebido do banco de dados */}
+                  <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {chamado.municipio}
+                  </span>
                 </div>
+
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 font-semibold items-center">
                   <span>👤 {chamado.usuario}</span>
-                  <span>📍 {chamado.endereco} ({chamado.municipio})</span>
+
+                  {/* MODIFICAÇÃO SELECIONADA: Removido o '(municipio)' daqui para não repetir com a tag superior */}
+                  <span>📍 {chamado.endereco}</span>
+
                   <span>🕒 {chamado.tempo}</span>
                 </div>
                 <p className="text-slate-600 text-xs md:text-sm font-medium pt-1">{chamado.descricao}</p>
               </div>
 
-              {/* BOTOES DE AÇÃO */}
+              {/* Lado Direito: Botões Operacionais e Status */}
               <div className="flex flex-col items-stretch md:items-end gap-2 shrink-0 w-full md:w-auto min-w-[170px]">
                 {chamado.statusAtual === 'Aguardando' && (
                   <div className="flex flex-col gap-2 w-full">
-                    <button onClick={() => handleMarcarComoVisto(chamado.id)} className="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm">Marcar como Visto</button>
-                    <button onClick={() => handleDespacharEquipe(chamado.id)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"><Navigation size={12} className="fill-white" /> Despachar Equipe</button>
+                    <button onClick={() => handleMarcarComoVisto(chamado.id)} className="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm">
+                      Marcar como Visto
+                    </button>
+                    <button onClick={() => handleDespacharEquipe(chamado.id)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all">
+                      <Navigation size={12} className="fill-white" /> Despachar Equipe
+                    </button>
                   </div>
                 )}
+
                 {chamado.statusAtual === 'Visualizado' && (
                   <div className="flex flex-col gap-2 w-full">
-                    <span className="bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center"><Eye size={12} /> Visualizado</span>
-                    <button onClick={() => handleDespacharEquipe(chamado.id)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"><Navigation size={12} className="fill-white" /> Despachar Equipe</button>
+                    <span className="bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
+                      <Eye size={12} /> Visualizado
+                    </span>
+                    <button onClick={() => handleDespacharEquipe(chamado.id)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all">
+                      <Navigation size={12} className="fill-white" /> Despachar Equipe
+                    </button>
                   </div>
                 )}
+
                 {chamado.statusAtual === 'Em Andamento' && (
                   <div className="flex flex-col gap-2 w-full">
-                    <span className="bg-amber-50 text-amber-600 border border-amber-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center"><Wrench size={12} /> Em Andamento</span>
-                    <button onClick={() => handleMarcarConcluido(chamado.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"><CheckCircle size={12} /> Marcar Concluído</button>
+                    <span className="bg-amber-50 text-amber-600 border border-amber-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
+                      <Wrench size={12} /> Em Andamento
+                    </span>
+                    <button onClick={() => handleMarcarConcluido(chamado.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all">
+                      <CheckCircle size={12} /> Marcar Concluído
+                    </button>
                   </div>
                 )}
+
                 {chamado.statusAtual === 'Concluído' && (
-                  <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-1 w-full text-center border border-emerald-200">✓ Finalizado</span>
+                  <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-1 w-full text-center border border-emerald-200">
+                    ✓ Finalizado
+                  </span>
                 )}
               </div>
+
             </div>
           ))
         )}
       </div>
-
     </div>
   );
 }
