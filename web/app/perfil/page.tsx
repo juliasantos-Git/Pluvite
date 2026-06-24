@@ -14,12 +14,10 @@ import {
 
 export default function PerfilCidadao() {
   const [carregando, setCarregando] = useState(false);
-  const [carregandoFoto, setCarregandoFoto] = useState(false);
   const [editandoBloco, setEditandoBloco] = useState<
     "pessoais" | "endereco" | null
   >(null);
 
-  // Estado único para os dados do perfil
   const [perfil, setPerfil] = useState({
     nome_completo: "",
     email: "",
@@ -33,41 +31,54 @@ export default function PerfilCidadao() {
     avatar_url: "/PluviteIcon.jpg",
   });
 
+  // CARREGAMENTO DOS DADOS DO USUÁRIO DO SUPABASE
   useEffect(() => {
     async function carregarPerfil() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
+
       setPerfil((prev) => ({ ...prev, email: user.email || "" }));
 
       const { data, error } = await supabase
         .from("cidadao")
         .select("*")
-        .eq("auth_id", user.id)
-        .single();
+        .eq("auth_id", user.id);
 
-      if (data && !error)
+      // Como filtramos por id, pegamos o primeiro item encontrado se existir
+      if (data && data.length > 0 && !error) {
+        const registro = data[0];
         setPerfil((prev) => ({
           ...prev,
-          ...data,
-          tipo_deficiencia: data.tipo_deficiencia || "Nenhuma",
-          avatar_url: data.avatar_url || "/PluviteIcon.jpg",
+          nome_completo: registro.nome_completo || "",
+          telefone: registro.telefone || "",
+          data_nascimento: registro.data_nascimento || "",
+          cidade: registro.cidade || "",
+          bairro: registro.bairro || "",
+          cep: registro.cep || "",
+          pcd: registro.pcd ?? false,
+          avatar_url: registro.avatar_url || "/PluviteIcon.jpg",
+          tipo_deficiencia: registro.tipo_deficiencia || "Nenhuma",
         }));
+      }
     }
     carregarPerfil();
   }, []);
 
+  // CONTROLE DOS INPUTS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPerfil((prev) => ({ ...prev, [name]: value }));
+    setPerfil((prev) => ({ ...prev, [name]: value || "" }));
   };
 
+  // PROCESSAMENTO DE UPLOAD E ATUALIZAÇÃO DA FOTO DE PERFIL
   const handleTrocarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
 
-    setCarregandoFoto(true);
+    const urlProvisoria = URL.createObjectURL(file);
+    setPerfil((prev) => ({ ...prev, avatar_url: urlProvisoria }));
 
     try {
       const {
@@ -75,39 +86,51 @@ export default function PerfilCidadao() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Define um nome único para o arquivo usando o ID do usuário e timestamp
       const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
-      // 2. Faz o upload do arquivo para o bucket público 'fotos-perfil'
+      // Upload para o Storage
       const { error: uploadError } = await supabase.storage
-        .from("fotos-perfil")
-        .upload(filePath, file, { upsert: true });
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // 3. Pega a URL pública definitiva gerada pelo Supabase
+      // Pegar URL Pública
       const {
         data: { publicUrl },
-      } = supabase.storage.from("fotos-perfil").getPublicUrl(filePath);
+      } = supabase.storage.from("avatars").getPublicUrl(fileName);
 
-      // 4. Atualiza o estado visual instantaneamente com o link real da nuvem
-      setPerfil((prev) => ({ ...prev, avatar_url: publicUrl }));
-
-      // 5. Salva o link definitivo no banco de dados na tabela cidadao
-      await supabase
+      // Verifica se a linha do usuário já existe
+      const { data: existente } = await supabase
         .from("cidadao")
-        .update({ avatar_url: publicUrl })
+        .select("auth_id")
         .eq("auth_id", user.id);
+
+      if (existente && existente.length > 0) {
+        // Se já existe, atualiza
+        const { error: updateError } = await supabase
+          .from("cidadao")
+          .update({ avatar_url: publicUrl })
+          .eq("auth_id", user.id);
+        if (updateError) throw updateError;
+      } else {
+        // Se não existe, cria a linha do zero
+        const { error: insertError } = await supabase
+          .from("cidadao")
+          .insert({ auth_id: user.id, avatar_url: publicUrl });
+        if (insertError) throw insertError;
+      }
+
+      setPerfil((prev) => ({ ...prev, avatar_url: publicUrl }));
+      alert("Foto de perfil salva com sucesso!");
     } catch (error: any) {
       console.error("Erro ao salvar a foto:", error);
-      alert("Erro ao enviar imagem: " + error.message);
-    } finally {
-      setCarregandoFoto(false);
+      alert("Erro ao enviar a imagem: " + error.message);
     }
   };
 
+  // ENVIO DOS DADOS ATUALIZADOS PARA O BANCO DE DADOS
   const salvarDados = async (bloco: "pessoais" | "endereco") => {
     setCarregando(true);
     try {
@@ -116,22 +139,41 @@ export default function PerfilCidadao() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      // Objeto com os campos para salvar
+      const dadosParaSalvar = {
+        nome_completo: perfil.nome_completo,
+        telefone: perfil.telefone,
+        data_nascimento: perfil.data_nascimento,
+        cidade: perfil.cidade,
+        bairro: perfil.bairro,
+        cep: perfil.cep,
+        pcd: perfil.pcd,
+        tipo_deficiencia: perfil.pcd ? perfil.tipo_deficiencia : "Nenhuma",
+      };
+
+      // Verifica se a linha do usuário já existe
+      const { data: existente } = await supabase
         .from("cidadao")
-        .update({
-          nome_completo: perfil.nome_completo,
-          telefone: perfil.telefone,
-          data_nascimento: perfil.data_nascimento,
-          cidade: perfil.cidade,
-          bairro: perfil.bairro,
-          cep: perfil.cep,
-          pcd: perfil.pcd,
-          tipo_deficiencia: perfil.pcd ? perfil.tipo_deficiencia : "Nenhuma",
-        })
+        .select("auth_id")
         .eq("auth_id", user.id);
 
-      if (error) throw error;
+      if (existente && existente.length > 0) {
+        // Se já existe, atualiza os dados
+        const { error } = await supabase
+          .from("cidadao")
+          .update(dadosParaSalvar)
+          .eq("auth_id", user.id);
+        if (error) throw error;
+      } else {
+        // Se não existe, insere criando a nova linha vinculada ao usuário logado
+        const { error } = await supabase
+          .from("cidadao")
+          .insert({ auth_id: user.id, ...dadosParaSalvar });
+        if (error) throw error;
+      }
+
       setEditandoBloco(null);
+      alert("Dados salvos com sucesso!");
     } catch (err: any) {
       alert("Erro ao salvar: " + err.message);
     } finally {
@@ -140,37 +182,31 @@ export default function PerfilCidadao() {
   };
 
   return (
-    <main className="w-full mt-20 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-y-auto relative">
-      {/* Elementos visuais */}
+    <main className="w-full mt-17 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-hidden relative">
+      {/* ELEMENTOS VISUAIS */}
       <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#1447f2]/10 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#1447c4]/8 rounded-full pointer-events-none" />
       <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#1447c4]/5 rounded-full blur-xl pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#1447c4]/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute top-10 right-[560px] w-32 h-32 bg-[#1447c4]/5 rounded-full pointer-events-none" />
       <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#1447c4]/8 rounded-full blur-sm pointer-events-none" />
+      <div className="absolute top-8 right-5 w-16 h-16 bg-[#1447f2]/6 rounded-full pointer-events-none z-0" />
+      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#1447c4]/3 rounded-full blur-md pointer-events-none" />
 
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-        {/* CABEÇALHO */}
         <div className="border-b border-slate-200/60 pb-4">
           <h1 className="text-2xl font-bold text-[#091f75] tracking-tight">
             Meu Perfil
           </h1>
         </div>
 
-        {/* GRID DO PAINEL */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* COLUNA ESQUERDA: FOTO */}
+          {/* CARTÃO LATERAL DE EXIBIÇÃO DE AVATAR */}
           <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center justify-between min-h-[455px]">
             <div className="w-full flex flex-col items-center text-center space-y-4">
               <div className="relative mt-2">
-                <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-slate-50 shadow-inner overflow-hidden flex items-center justify-center text-[#091f75] text-4xl font-black select-none relative">
-                  {carregandoFoto ? (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Loader2 size={24} className="animate-spin text-white" />
-                    </div>
-                  ) : null}
-
-                  {perfil.avatar_url &&
-                  perfil.avatar_url !== "/PluviteIcon.jpg" ? (
+                <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-slate-50 shadow-inner overflow-hidden flex items-center justify-center text-[#091f75] text-4xl font-black select-none">
+                  {perfil.avatar_url ? (
                     <img
                       src={perfil.avatar_url}
                       alt="Avatar"
@@ -183,17 +219,19 @@ export default function PerfilCidadao() {
                   )}
                 </div>
 
-                {/* Botão do Lápis para trocar a foto */}
-                <label className="absolute bottom-0 right-1 bg-[#091f75] hover:bg-[#051450] text-white p-2 rounded-full shadow-md cursor-pointer transition-all border border-white flex items-center justify-center active:scale-90">
+                <label
+                  htmlFor="input-avatar"
+                  className="absolute bottom-0 right-1 bg-[#091f75] hover:bg-[#051450] text-white p-2 rounded-full shadow-md cursor-pointer transition-all border border-white flex items-center justify-center active:scale-90 z-20"
+                >
                   <Pencil size={12} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={carregandoFoto}
-                    onChange={handleTrocarFoto}
-                    className="hidden"
-                  />
                 </label>
+                <input
+                  id="input-avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleTrocarFoto}
+                  className="hidden"
+                />
               </div>
 
               <div className="space-y-0.5 max-w-full px-2">
@@ -209,53 +247,53 @@ export default function PerfilCidadao() {
               </span>
             </div>
 
-            {/* Widgets de status */}
             <div className="w-full space-y-2.5 pt-4 mt-6 border-t border-slate-100">
               <div className="flex items-center justify-between text-xs text-slate-500 px-1">
                 <span className="font-medium">Alertas em tempo real</span>
                 <div className="flex items-center gap-1.5 font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>{" "}
                   Ativos
                 </div>
               </div>
             </div>
           </div>
 
-          {/* COLUNA DIREITA: BLOCOS DE DADOS */}
+          {/* FORMULÁRIOS DA DIREITA */}
           <div className="lg:col-span-8 space-y-6">
-            {/* INFORMAÇÕES PESSOAIS */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm relative">
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xs font-bold text-[#091f75] uppercase tracking-wider flex items-center gap-2">
                   <User size={14} /> Informações Pessoais
                 </h3>
-                {editandoBloco === "pessoais" ? (
-                  <div className="flex gap-1">
+                <div className="flex gap-1">
+                  {editandoBloco === "pessoais" ? (
+                    <>
+                      <button
+                        onClick={() => setEditandoBloco(null)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        <X size={15} />
+                      </button>
+                      <button
+                        onClick={() => salvarDados("pessoais")}
+                        className="p-1.5 text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                      >
+                        {carregando ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Save size={15} />
+                        )}
+                      </button>
+                    </>
+                  ) : (
                     <button
-                      onClick={() => setEditandoBloco(null)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                      onClick={() => setEditandoBloco("pessoais")}
+                      className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
                     >
-                      <X size={15} />
+                      <Pencil size={14} />
                     </button>
-                    <button
-                      onClick={() => salvarDados("pessoais")}
-                      className="p-1.5 text-emerald-600 hover:text-emerald-700 rounded-lg cursor-pointer"
-                    >
-                      {carregando ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Save size={15} />
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditandoBloco("pessoais")}
-                    className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -311,39 +349,40 @@ export default function PerfilCidadao() {
               </div>
             </div>
 
-            {/* ENDEREÇO & ACESSIBILIDADE */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xs font-bold text-[#091f75] uppercase tracking-wider flex items-center gap-2">
                   <MapPin size={14} /> Endereço & Acessibilidade
                 </h3>
-                {editandoBloco === "endereco" ? (
-                  <div className="flex gap-1">
+                <div className="flex gap-1">
+                  {editandoBloco === "endereco" ? (
+                    <>
+                      <button
+                        onClick={() => setEditandoBloco(null)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        <X size={15} />
+                      </button>
+                      <button
+                        onClick={() => salvarDados("endereco")}
+                        className="p-1.5 text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                      >
+                        {carregando ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Save size={15} />
+                        )}
+                      </button>
+                    </>
+                  ) : (
                     <button
-                      onClick={() => setEditandoBloco(null)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                      onClick={() => setEditandoBloco("endereco")}
+                      className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
                     >
-                      <X size={15} />
+                      <Pencil size={14} />
                     </button>
-                    <button
-                      onClick={() => salvarDados("endereco")}
-                      className="p-1.5 text-emerald-600 hover:text-emerald-700 rounded-lg cursor-pointer"
-                    >
-                      {carregando ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Save size={15} />
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditandoBloco("endereco")}
-                    className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-3.5">
@@ -402,7 +441,7 @@ export default function PerfilCidadao() {
                           type="text"
                           name="tipo_deficiencia"
                           placeholder="Qual deficiência?"
-                          value={perfil.tipo_deficiencia}
+                          value={perfil.tipo_deficiencia || ""}
                           onChange={handleChange}
                           className="flex-1 bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1 border border-slate-200 outline-none"
                         />
