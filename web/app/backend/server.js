@@ -50,6 +50,8 @@ app.post("/login", async (req, res) => {
 
     if (error) return res.status(400).json({ error: "E-mail ou senha incorretos" });
 
+    // Por enquanto todo login vai pra tela do cidadão
+    // (quando fizer a prefeitura, aqui vai checar a tabela prefeitura)
     res.status(200).json({
       message: "Login realizado com sucesso!",
       tipo: "cidadao",
@@ -60,7 +62,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// 3. ALERTAS
+// 3. ALERTAS (mantido igual)
 app.get("/api/alertas", async (req, res) => {
   try {
     const { data, error } = await supabase.from("alertas_tempo_real").select("*");
@@ -71,56 +73,28 @@ app.get("/api/alertas", async (req, res) => {
   }
 });
 
-// 4. ATUALIZAR STATUS (Tratando ID como String/UUID de forma correta)
+// 4. ATUALIZAR STATUS (mantido igual)
 app.patch("/api/alertas/:id/status", async (req, res) => {
   try {
-    const { id } = req.params; // Mantido como string (UUID)
+    const { id } = req.params;
     const { status_atual } = req.body;
 
+<<<<<<< HEAD
+=======
+    // ✅ ALTERAÇÃO: Remove o deslocamento do frontend para usar o ID correspondente na tabela "alertas_tempo_real"
+    const idRealdoBanco = parseInt(id) - 100;
+
+>>>>>>> 0b93366fb658994cb361f38de577136246cc380a
     const { data, error } = await supabase
       .from("alertas_tempo_real")
       .update({ orientacao: status_atual })
-      .eq("id", id);
+      .eq("id", idRealdoBanco);
 
     if (error) return res.status(400).json({ error: error.message });
-    return res.json({ message: "Status atualizado com sucesso!", data });
-  } catch (err) {
-    return res.status(500).json({ error: "Erro interno do servidor" });
-  }
-});
-
-// 5. OBTER HISTÓRICO DE LOGS
-app.get("/api/historico", async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("historico_acoes")
-      .select("*")
-      .order("criado_at", { ascending: false });
-
-    if (error) return res.status(500).json([]);
-    return res.json(data || []);
-  } catch (err) {
-    return res.status(500).json([]);
-  }
-});
-
-// 6. ADICIONAR REGISTRO NO HISTÓRICO
-app.post("/api/historico", async (req, res) => {
-  try {
-    const { alertaId, cidade, acao, corAcao } = req.body;
-
-    const { data, error } = await supabase.from("historico_acoes").insert({
-      alerta_id: alertaId, // UUID ou ID numérico compatível
-      cidade,
-      acao,
-      cor_acao: corAcao,
-    });
-
-    if (error) return res.status(400).json({ error: error.message });
-    return res.status(201).json({ message: "Ação salva no histórico!", data });
+    return res.json({ message: "Status atualizado!", data });
   } catch (err) {
     return res.status(500).json({ error: "Erro interno" });
   }
 });
 
-app.listen(3001, () => console.log("Servidor operacional na porta 3001"));
+app.listen(3001, () => console.log("Servidor rodando na porta 3001"));

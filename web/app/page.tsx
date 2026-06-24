@@ -5,30 +5,24 @@ import {
   Rss,
   CloudSun,
   Compass,
-  ArrowRight,
   ShieldCheck,
-  Building2,
   BellRing,
-  Activity,
-  BarChart3,
-  Phone,
-  ArrowUp,
-  Users,
+  Building2,
+  CloudRain,
   AlertTriangle,
+  Wind,
+  TrendingUp,
+  Home as HomeIcon,
+  Smartphone,
+  CloudLightning,
+  PhoneCall,
+  Activity,
+  Users,
   Database,
   Siren,
   Navigation,
-  CloudRain,
-  Wind,
-  Eye,
-  TrendingUp,
-  MapPin,
-  CloudLightning,
-  Smartphone,
-  PhoneCall,
-  CornerUpLeft,
+  ArrowRight,
 } from "lucide-react";
-import { SiJira } from "react-icons/si";
 
 // ─── Scroll util ──────────────────────────────────────────────────────────────
 const scrollTo = (id: string) => {
@@ -77,7 +71,13 @@ export default function Home() {
             <Link href="/cadastro-cidadao">
               <button className="bg-[#0d43af] hover:bg-[#0c2b6b] text-white font-bold text-base px-9 py-4 rounded-lg transition-colors flex items-center gap-2 cursor-pointer shadow-md">
                 Iniciar sessão
-                <ArrowRight size={18} />
+                <img
+                  src="/seta-pro-lado.png"
+                  alt="Seguir"
+                  width={18}
+                  height={18}
+                  style={{ filter: "brightness(0) invert(1)" }}
+                />
               </button>
             </Link>
             <button
@@ -111,7 +111,7 @@ export default function Home() {
             <div className="lg:col-span-2 border border-[#ccddff] bg-white rounded-2xl p-8 shadow-md">
               <div className="flex items-center justify-between border-b border-slate-200 pb-5 mb-8">
                 <div className="flex items-center gap-2.5">
-                  <BarChart3 size={18} className="text-[#2C4A6F]" />
+                  <img src="/grafico.png" alt="Painel" width={18} height={18} />
                   <span className="text-base font-bold text-slate-900">
                     Visão Geral do Painel
                   </span>
@@ -419,7 +419,13 @@ export default function Home() {
                   className="flex items-center gap-2 text-sm text-slate-800 py-1.5 font-bold animate-fade-in"
                 >
                   {/* Ícone de Pin adaptado para a cor verde de zona segura da lista anterior */}
-                  <MapPin size={11} className="text-[#00b277] flex-shrink-0" />
+                  <img
+                    src="/localizacao-vermelha.png"
+                    alt="Local"
+                    width={11}
+                    height={11}
+                    className="flex-shrink-0"
+                  />
                   {cidade}
                 </div>
               ))}
@@ -485,7 +491,10 @@ export default function Home() {
           </div>
 
           {/* Impactos Monitorados */}
-          <div id="riscos" className="border border-slate-200 bg-white rounded-2xl p-8 mb-14 shadow-sm select-none">
+          <div
+            id="riscos"
+            className="border border-slate-200 bg-white rounded-2xl p-8 mb-14 shadow-sm select-none"
+          >
             <h3 className="text-base font-bold text-slate-900 mb-8">
               Cenários e Impactos Monitorados
             </h3>
@@ -495,42 +504,42 @@ export default function Home() {
                   icon: CloudRain,
                   titulo: "Inundações Urbanas",
                   desc: "Monitoramento do nível de rios, córregos e vias urbanas historicamente propensas a alagamentos.",
-                  iconColor: "text-[#2563eb]", // Azul
+                  iconColor: "text-[#2563eb]",
                   borderColor: "hover:border-[#2563eb]",
                 },
                 {
                   icon: AlertTriangle,
                   titulo: "Movimentação de Massa",
                   desc: "Análise de encostas instáveis, saturação do solo e riscos de deslizamentos de terra.",
-                  iconColor: "text-[#e8000e]", // Vermelho
+                  iconColor: "text-[#e8000e]",
                   borderColor: "hover:border-[#e8000e]",
                 },
                 {
                   icon: Wind,
                   titulo: "Vendavais e Granizo",
                   desc: "Rastreamento de tempestades severas, rajadas de vento e queda de granizo na região.",
-                  iconColor: "text-[#e47c00]", // Laranja
+                  iconColor: "text-[#e47c00]",
                   borderColor: "hover:border-[#e47c00]",
                 },
                 {
                   icon: TrendingUp,
                   titulo: "Dinâmica Costeira",
                   desc: "Alerta para ressacas extremas, maré alta e avanço do mar nos municípios do Litoral Norte.",
-                  iconColor: "text-[#06b6d4]", // Ciano
+                  iconColor: "text-[#06b6d4]",
                   borderColor: "hover:border-[#06b6d4]",
                 },
                 {
                   icon: AlertTriangle,
                   titulo: "Danos à Infraestrutura",
                   desc: "Mapeamento de vias bloqueadas, quedas de fiação, pontes interditadas e avarias estruturais.",
-                  iconColor: "text-[#7c3aed]", // Roxo
+                  iconColor: "text-[#7c3aed]",
                   borderColor: "hover:border-[#7c3aed]",
                 },
                 {
-                  icon: Home, // Ícone de casa/comunidade (importar do lucide-react)
+                  icon: HomeIcon,
                   titulo: "Isolamento de Áreas",
                   desc: "Identificação de rotas de acesso bloqueadas que possam isolar bairros periféricos ou rurais.",
-                  iconColor: "text-emerald-600", // Verde para destacar a segurança das comunidades
+                  iconColor: "text-emerald-600",
                   borderColor: "hover:border-emerald-600",
                 },
               ].map(({ icon: Icon, titulo, desc, iconColor, borderColor }) => (
@@ -581,7 +590,7 @@ export default function Home() {
           <div className="flex items-start gap-5 mb-10">
             <div className="w-12 h-12 border border-slate-300 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
               {/* Ícone com vermelho de emergência bem vivo */}
-              <Phone size={20} className="text-[#e8000e]" />
+              <img src="/telefone.png" alt="Telefone" width={20} height={20} />
             </div>
             <div>
               <span className="text-sm font-bold text-[#e8000e] uppercase tracking-widest">
@@ -634,7 +643,7 @@ export default function Home() {
             {[
               {
                 title: "Em caso de enchente",
-                bulletColor: "text-[#2563eb]",
+                bulletColor: "text-[#00b277]",
                 items: [
                   "Desligue a energia elétrica",
                   "Suba para locais altos imediatamente",
@@ -654,7 +663,7 @@ export default function Home() {
               },
               {
                 title: "Kit de emergência",
-                bulletColor: "text-[#00b277]",
+                bulletColor: "text-[#2563eb]",
                 items: [
                   "Documentos em saco plástico",
                   "Água e alimentos não perecíveis",
@@ -785,15 +794,17 @@ export default function Home() {
                     className="w-full h-full object-cover flex-shrink-0"
                   />
                 </div>
-                <div className="flex items-center gap-2 max-w-[240px]">
-                  <CornerUpLeft
-                    className="text-[#091c4b] transform -rotate-45 flex-shrink-0"
-                    size={32}
-                    strokeWidth={2.5}
-                  />
+                <div className="flex flex-col items-start gap-2 max-w-[240px]">
                   <p className="text-sm font-bold text-slate-700 leading-snug">
                     Ou escaneie o QR Code para fazer o download direto
                   </p>
+                  <img
+                    src="/seta-pra-esquerda.png"
+                    alt="Seta"
+                    width={32}
+                    height={32}
+                    className="transform -rotate-45 flex-shrink-0"
+                  />
                 </div>
               </div>
             </div>
@@ -854,7 +865,12 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-slate-400 font-medium">
               {/* Localização Focada */}
               <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
-                <MapPin size={13} className="text-[#e8000e]" />
+                <img
+                  src="/localizacao.png"
+                  alt="Local"
+                  width={13}
+                  height={13}
+                />
                 <span className="text-sm">
                   Vale do Paraíba e Litoral Norte, SP
                 </span>
@@ -868,47 +884,37 @@ export default function Home() {
                 className="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-5 py-3 rounded-xl border border-white/10 transition-all duration-200 shadow-sm"
                 title="Acessar código-fonte no GitHub"
               >
-                {/* SVG aumentado para w-5 h-5 */}
-                <svg
-                  className="w-5 h-5 fill-current"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-                </svg>
+                {/* Ícone substituído por imagem - w-5 h-5 = 20x20px */}
+                <img
+                  src="/github.png"
+                  alt="GitHub"
+                  className="w-5 h-5"
+                  style={{ filter: "brightness(0) invert(1)" }}
+                />
                 {/* Texto aumentado para text-sm */}
                 <span className="font-extrabold text-sm tracking-wider">
                   GitHub
-                </span>
-              </a>
-
-              {/* Link do Kanban no Jira */}
-              <a
-                href="https://projetolntegrador.atlassian.net/jira/software/projects/SCRUM/boards/1"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-[#0052CC]/10 hover:bg-[#0052CC]/20 text-white hover:text-white px-5 py-3 rounded-xl border border-[#0052CC]/30 transition-all duration-200 shadow-sm"
-                title="Acessar quadro Kanban no Jira"
-              >
-                <SiJira className="w-5 h-5" strokeWidth={2.5} />
-                <span className="font-extrabold text-sm tracking-wider">
-                  Jira
                 </span>
               </a>
             </div>
           </div>
         </footer>
       </main>
+
       {/* ── BOTÃO SCROLL TO TOP (REDONDO) ────────────────────────── */}
       <button
         onClick={() => scrollTo("hero")} // Ou adicione o ID do topo da sua página (ex: "home" ou "hero")
-        className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group"
+        className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group cursor-pointer"
         title="Voltar ao topo"
       >
-        {/* Ícone de seta para cima (ArrowUp do lucide-react) */}
-        <ArrowUp
-          size={20}
+        {/* Ícone de seta para cima substituído por imagem, forçado para branco via filtro CSS */}
+        <img
+          src="/seta-pra-cima.png"
+          alt="Voltar ao topo"
+          width={20}
+          height={20}
           className="transition-transform duration-300 group-hover:scale-110"
+          style={{ filter: "brightness(0) invert(1)" }}
         />
       </button>
     </div>

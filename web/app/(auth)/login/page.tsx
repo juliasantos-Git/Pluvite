@@ -20,7 +20,7 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password: senha,
       });
@@ -33,6 +33,7 @@ export default function Login() {
 
       router.push("/Mapa");
     } catch (error) {
+      console.error("Erro inesperado no login:", error);
       alert("Erro inesperado. Tente novamente.");
     } finally {
       setCarregando(false);
@@ -58,7 +59,7 @@ export default function Login() {
     }
   };
 
-  // ── NOVA FUNÇÃO: RECUPERAÇÃO DE SENHA ──
+  // RECUPERAÇÃO DE SENHA
   const handleResetPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
 
@@ -70,7 +71,6 @@ export default function Login() {
     setCarregando(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        // Redireciona o usuário para a sua tela futura de redefinição
         redirectTo: `${window.location.origin}/redefinir-senha`,
       });
 
@@ -181,7 +181,6 @@ export default function Login() {
                   </button>
                 </div>
                 <div className="pt-0.5 text-left ml-1">
-                  {/* Transformado em botão acionável que consome o e-mail digitado */}
                   <button
                     type="button"
                     disabled={carregando}

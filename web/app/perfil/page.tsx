@@ -8,8 +8,6 @@ import {
   MapPin,
   Save,
   Loader2,
-  AlertTriangle,
-  CheckCircle2,
   Pencil,
   X,
 } from "lucide-react";
@@ -20,7 +18,6 @@ export default function PerfilCidadao() {
     "pessoais" | "endereco" | null
   >(null);
 
-  // Estado único para os dados do perfil
   const [perfil, setPerfil] = useState({
     nome_completo: "",
     email: "",
@@ -34,58 +31,123 @@ export default function PerfilCidadao() {
     avatar_url: "/PluviteIcon.jpg",
   });
 
+  // CARREGAMENTO DOS DADOS DO USUÁRIO DO SUPABASE
   useEffect(() => {
-    async function carregarPerfil() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      setPerfil((prev) => ({ ...prev, email: user.email || "" }));
+    let ativo = true;
 
-      const { data, error } = await supabase
-        .from("cidadao")
-        .select("*")
-        .eq("auth_id", user.id)
-        .single();
-      if (data && !error)
-        setPerfil((prev) => ({
-          ...prev,
-          ...data,
-          tipo_deficiencia: data.tipo_deficiencia || "Nenhuma",
-        }));
+    async function carregarPerfil(authUser: any) {
+      try {
+        const nomeDoCadastro =
+          authUser.user_metadata?.nome_completo || "Usuário";
+        const emailDoCadastro = authUser.email || "";
+
+        if (ativo) {
+          setPerfil((prev) => ({
+            ...prev,
+            email: emailDoCadastro,
+            nome_completo: nomeDoCadastro,
+          }));
+        }
+
+        const { data, error } = await supabase
+          .from("cidadao")
+          .select("*")
+          .eq("auth_id", authUser.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Erro ao buscar perfil:", error);
+          return;
+        }
+
+        if (data && ativo) {
+          setPerfil((prev) => ({
+            ...prev,
+            nome_completo: data.nome_completo || nomeDoCadastro,
+            telefone: data.telefone || "",
+            data_nascimento: data.data_nascimento || "",
+            cidade: data.cidade || "",
+            bairro: data.bairro || "",
+            cep: data.cep || "",
+            pcd: data.pcd ?? false,
+            avatar_url: data.avatar_url || "/PluviteIcon.jpg",
+            tipo_deficiencia: data.tipo_deficiencia || "Nenhuma",
+          }));
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados do perfil:", err);
+      }
     }
-    carregarPerfil();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) carregarPerfil(session.user);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) carregarPerfil(session.user);
+      },
+    );
+
+    return () => {
+      ativo = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
+  // CONTROLE DOS INPUTS
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPerfil((prev) => ({ ...prev, [name]: value }));
+    setPerfil((prev) => ({ ...prev, [name]: value || "" }));
   };
 
+  // PROCESSAMENTO DE UPLOAD E ATUALIZAÇÃO DA FOTO DE PERFIL
   const handleTrocarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
 
-    try {
-      // Cria uma URL temporária para mostrar a foto na tela na mesma hora
-      const urlProvisoria = URL.createObjectURL(file);
-      setPerfil((prev) => ({ ...prev, avatar_url: urlProvisoria }));
+    const urlProvisoria = URL.createObjectURL(file);
+    setPerfil((prev) => ({ ...prev, avatar_url: urlProvisoria }));
 
+    try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (user) {
-        // Atualiza o banco de dados com a nova URL
-        await supabase
-          .from("cidadao")
-          .update({ avatar_url: urlProvisoria })
-          .eq("auth_id", user.id);
-      }
-    } catch (error) {
+      if (!user) return;
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+      // "email" precisa ir junto pq a coluna é NOT NULL no banco
+      const { error: upsertError } = await supabase.from("cidadao").upsert(
+        {
+          auth_id: user.id,
+          email: user.email,
+          avatar_url: publicUrl,
+          nome_completo: perfil.nome_completo || "Usuário",
+        },
+        { onConflict: "auth_id" },
+      );
+
+      setPerfil((prev) => ({ ...prev, avatar_url: publicUrl }));
+      alert("Foto de perfil salva com sucesso!");
+    } catch (error: any) {
       console.error("Erro ao salvar a foto:", error);
+      alert("Erro ao enviar a imagem: " + error.message);
     }
   };
 
+  // ENVIO DOS DADOS ATUALIZADOS PARA O BANCO DE DADOS
   const salvarDados = async (bloco: "pessoais" | "endereco") => {
     setCarregando(true);
     try {
@@ -94,23 +156,31 @@ export default function PerfilCidadao() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
+      const dadosParaSalvar = {
+        auth_id: user.id,
+        email: user.email, // NOT NULL no banco — precisa ir sempre
+        nome_completo: perfil.nome_completo || null,
+        telefone: perfil.telefone || null,
+        data_nascimento: perfil.data_nascimento ? perfil.data_nascimento : null,
+        cidade: perfil.cidade || null,
+        bairro: perfil.bairro || null,
+        cep: perfil.cep || null,
+        pcd: perfil.pcd,
+        tipo_deficiencia: perfil.pcd
+          ? perfil.tipo_deficiencia || "Nenhuma"
+          : "Nenhuma",
+      };
+
       const { error } = await supabase
         .from("cidadao")
-        .update({
-          nome_completo: perfil.nome_completo,
-          telefone: perfil.telefone,
-          data_nascimento: perfil.data_nascimento,
-          cidade: perfil.cidade,
-          bairro: perfil.bairro,
-          cep: perfil.cep,
-          pcd: perfil.pcd,
-          tipo_deficiencia: perfil.pcd ? perfil.tipo_deficiencia : "Nenhuma",
-        })
-        .eq("auth_id", user.id);
+        .upsert(dadosParaSalvar, { onConflict: "auth_id" });
 
       if (error) throw error;
+
       setEditandoBloco(null);
+      alert("Dados salvos com sucesso!");
     } catch (err: any) {
+      console.error("Erro ao salvar dados no Supabase:", err);
       alert("Erro ao salvar: " + err.message);
     } finally {
       setCarregando(false);
@@ -118,60 +188,48 @@ export default function PerfilCidadao() {
   };
 
   return (
-    <main className="w-full mt-20 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-y-auto">
-      {/* Elementos visuais mantidos... */}
-      <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#1447f2]/10 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#1447c4]/8 rounded-full pointer-events-none" />
-      <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#1447c4]/5 rounded-full blur-xl pointer-events-none" />
-      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#1447c4]/5 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute top-10 right-[560px] w-32 h-32 bg-[#1447c4]/5 rounded-full pointer-events-none" />
-      <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#1447c4]/8 rounded-full blur-sm pointer-events-none" />
-      <div className="absolute top-8 right-5 w-16 h-16 bg-[#1447f2]/6 rounded-full pointer-events-none z-0" />
-      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#1447c4]/3 rounded-full blur-md pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* CABEÇALHO */}
+    <main className="w-full mt-20 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-y-auto relative">
+      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         <div className="border-b border-slate-200/60 pb-4">
           <h1 className="text-2xl font-bold text-[#091f75] tracking-tight">
             Meu Perfil
           </h1>
         </div>
 
-        {/* GRID DO PAINEL */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* COLUNA ESQUERDA: FOTO E COMPACTAÇÃO DE CONTEÚDO */}
+          {/* CARTÃO LATERAL DE EXIBIÇÃO DE AVATAR */}
           <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center justify-between min-h-[455px]">
             <div className="w-full flex flex-col items-center text-center space-y-4">
               <div className="relative mt-2">
-                {/* AVATAR COM DISPARADOR DE IMAGEM */}
-                <div className="relative mt-2">
-                  <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-slate-50 shadow-inner overflow-hidden flex items-center justify-center text-[#091f75] text-4xl font-black select-none">
-                    {perfil.avatar_url &&
-                    perfil.avatar_url !== "/PluviteIcon.jpg" ? (
-                      <img
-                        src={perfil.avatar_url}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : perfil.nome_completo ? (
-                      perfil.nome_completo.charAt(0).toUpperCase()
-                    ) : (
-                      "P"
-                    )}
-                  </div>
-
-                  {/* Botão do Lápis para trocar a foto */}
-                  <label className="absolute bottom-0 right-1 bg-[#091f75] hover:bg-[#051450] text-white p-2 rounded-full shadow-md cursor-pointer transition-all border border-white flex items-center justify-center active:scale-90">
-                    <Pencil size={12} />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleTrocarFoto} // Certifique-se de manter a função handleTrocarFoto no seu escopo
-                      className="hidden"
+                <div className="w-32 h-32 rounded-full bg-slate-100 border-4 border-slate-50 shadow-inner overflow-hidden flex items-center justify-center text-[#091f75] text-4xl font-black select-none">
+                  {perfil.avatar_url ? (
+                    <img
+                      src={perfil.avatar_url}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
                     />
-                  </label>
+                  ) : perfil.nome_completo ? (
+                    perfil.nome_completo.charAt(0).toUpperCase()
+                  ) : (
+                    "P"
+                  )}
                 </div>
+
+                <label
+                  htmlFor="input-avatar"
+                  className="absolute bottom-0 right-1 bg-[#091f75] hover:bg-[#051450] text-white p-2 rounded-full shadow-md cursor-pointer transition-all border border-white flex items-center justify-center active:scale-90 z-20"
+                >
+                  <Pencil size={12} />
+                </label>
+                <input
+                  id="input-avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleTrocarFoto}
+                  className="hidden"
+                />
               </div>
+
               <div className="space-y-0.5 max-w-full px-2">
                 <h2 className="text-lg font-bold text-slate-800 tracking-tight truncate">
                   {perfil.nome_completo || "Usuário"}
@@ -185,7 +243,6 @@ export default function PerfilCidadao() {
               </span>
             </div>
 
-            {/* FIM DO ESPAÇO VAZIO: Widgets de status direto no card da foto */}
             <div className="w-full space-y-2.5 pt-4 mt-6 border-t border-slate-100">
               <div className="flex items-center justify-between text-xs text-slate-500 px-1">
                 <span className="font-medium">Alertas em tempo real</span>
@@ -197,41 +254,42 @@ export default function PerfilCidadao() {
             </div>
           </div>
 
-          {/* COLUNA DIREITA: BLOCOS DE DADOS COM LÁPIS INDIVIDUAL */}
+          {/* FORMULÁRIOS DA DIREITA */}
           <div className="lg:col-span-8 space-y-6">
-            {/* INFORMAÇÕES PESSOAIS */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm relative">
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xs font-bold text-[#091f75] uppercase tracking-wider flex items-center gap-2">
                   <User size={14} /> Informações Pessoais
                 </h3>
-                {editandoBloco === "pessoais" ? (
-                  <div className="flex gap-1">
+                <div className="flex gap-1">
+                  {editandoBloco === "pessoais" ? (
+                    <>
+                      <button
+                        onClick={() => setEditandoBloco(null)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        <X size={15} />
+                      </button>
+                      <button
+                        onClick={() => salvarDados("pessoais")}
+                        className="p-1.5 text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                      >
+                        {carregando ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Save size={15} />
+                        )}
+                      </button>
+                    </>
+                  ) : (
                     <button
-                      onClick={() => setEditandoBloco(null)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                      onClick={() => setEditandoBloco("pessoais")}
+                      className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
                     >
-                      <X size={15} />
+                      <Pencil size={14} />
                     </button>
-                    <button
-                      onClick={() => salvarDados("pessoais")}
-                      className="p-1.5 text-emerald-600 hover:text-emerald-700 rounded-lg cursor-pointer"
-                    >
-                      {carregando ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Save size={15} />
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditandoBloco("pessoais")}
-                    className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -265,7 +323,7 @@ export default function PerfilCidadao() {
                         type={f.type}
                         name={f.name}
                         placeholder={f.placeholder}
-                        value={(perfil as any)[f.name]}
+                        value={(perfil as any)[f.name] || ""}
                         onChange={handleChange}
                         className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1 border border-slate-200 outline-none mt-1"
                       />
@@ -287,39 +345,40 @@ export default function PerfilCidadao() {
               </div>
             </div>
 
-            {/* ENDEREÇO & ACESSIBILIDADE */}
             <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xs font-bold text-[#091f75] uppercase tracking-wider flex items-center gap-2">
                   <MapPin size={14} /> Endereço & Acessibilidade
                 </h3>
-                {editandoBloco === "endereco" ? (
-                  <div className="flex gap-1">
+                <div className="flex gap-1">
+                  {editandoBloco === "endereco" ? (
+                    <>
+                      <button
+                        onClick={() => setEditandoBloco(null)}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        <X size={15} />
+                      </button>
+                      <button
+                        onClick={() => salvarDados("endereco")}
+                        className="p-1.5 text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                      >
+                        {carregando ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Save size={15} />
+                        )}
+                      </button>
+                    </>
+                  ) : (
                     <button
-                      onClick={() => setEditandoBloco(null)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                      onClick={() => setEditandoBloco("endereco")}
+                      className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
                     >
-                      <X size={15} />
+                      <Pencil size={14} />
                     </button>
-                    <button
-                      onClick={() => salvarDados("endereco")}
-                      className="p-1.5 text-emerald-600 hover:text-emerald-700 rounded-lg cursor-pointer"
-                    >
-                      {carregando ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Save size={15} />
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setEditandoBloco("endereco")}
-                    className="p-1.5 text-slate-400 hover:text-[#091f75] rounded-lg hover:bg-slate-50 transition-all cursor-pointer"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 mb-3.5">
@@ -339,7 +398,7 @@ export default function PerfilCidadao() {
                       <input
                         type="text"
                         name={f.name}
-                        value={(perfil as any)[f.name]}
+                        value={(perfil as any)[f.name] || ""}
                         onChange={handleChange}
                         className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1 border border-slate-200 outline-none mt-1"
                       />
@@ -378,7 +437,7 @@ export default function PerfilCidadao() {
                           type="text"
                           name="tipo_deficiencia"
                           placeholder="Qual deficiência?"
-                          value={perfil.tipo_deficiencia}
+                          value={perfil.tipo_deficiencia || ""}
                           onChange={handleChange}
                           className="flex-1 bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1 border border-slate-200 outline-none"
                         />
