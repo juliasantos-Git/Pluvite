@@ -1,7 +1,6 @@
-/* PÁGINA ONDE VÃO FICAR OS CÓDIGOS DO CSS*/
+﻿/* PÁGINA ONDE VÃO FICAR OS CÓDIGOS DO CSS*/
 
-@import "tailwindcss";
-
+@import "tailwindcss" source("../");
 
 @keyframes float {
   0% { transform: translateY(0px) translateX(0px); opacity: 0; }

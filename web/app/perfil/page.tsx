@@ -28,42 +28,81 @@ export default function PerfilCidadao() {
     cep: "",
     pcd: false,
     tipo_deficiencia: "Nenhuma",
-    avatar_url: "/PluviteIcon.jpg",
+    avatar_url: "/perfil.png",
   });
 
   // CARREGAMENTO DOS DADOS DO USUÁRIO DO SUPABASE
   useEffect(() => {
-    async function carregarPerfil() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+    let ativo = true;
 
-      setPerfil((prev) => ({ ...prev, email: user.email || "" }));
+    async function carregarPerfil(authUser: any) {
+      try {
+        // 1. Identifica o nome vindo de qualquer provedor (E-mail/Senha, Google, Facebook)
+        const nomeDoCadastro =
+          authUser.user_metadata?.nome_completo ||
+          authUser.user_metadata?.full_name ||
+          authUser.user_metadata?.name ||
+          "Usuário";
 
-      const { data, error } = await supabase
-        .from("cidadao")
-        .select("*")
-        .eq("auth_id", user.id);
+        // 2. Identifica se existe uma foto vinda do Google/Facebook
+        const fotoDoProvedor =
+          authUser.user_metadata?.avatar_url || "/PluviteIcon.jpg";
+        const emailDoCadastro = authUser.email || "";
 
-      // Como filtramos por id, pegamos o primeiro item encontrado se existir
-      if (data && data.length > 0 && !error) {
-        const registro = data[0];
-        setPerfil((prev) => ({
-          ...prev,
-          nome_completo: registro.nome_completo || "",
-          telefone: registro.telefone || "",
-          data_nascimento: registro.data_nascimento || "",
-          cidade: registro.cidade || "",
-          bairro: registro.bairro || "",
-          cep: registro.cep || "",
-          pcd: registro.pcd ?? false,
-          avatar_url: registro.avatar_url || "/PluviteIcon.jpg",
-          tipo_deficiencia: registro.tipo_deficiencia || "Nenhuma",
-        }));
+        if (ativo) {
+          setPerfil((prev) => ({
+            ...prev,
+            email: emailDoCadastro,
+            nome_completo: nomeDoCadastro,
+            avatar_url: fotoDoProvedor, // Define a foto padrão como a do Google (se houver)
+          }));
+        }
+
+        const { data, error } = await supabase
+          .from("cidadao")
+          .select("*")
+          .eq("auth_id", authUser.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Erro ao buscar perfil:", error);
+          return;
+        }
+
+        if (data && ativo) {
+          setPerfil((prev) => ({
+            ...prev,
+            nome_completo: data.nome_completo || nomeDoCadastro,
+            telefone: data.telefone || "",
+            data_nascimento: data.data_nascimento || "",
+            cidade: data.cidade || "",
+            bairro: data.bairro || "",
+            cep: data.cep || "",
+            pcd: data.pcd ?? false,
+            // Se já tiver foto no seu banco local (tabela cidadao), usa ela, senão mantém a do provedor
+            avatar_url: data.avatar_url || fotoDoProvedor,
+            tipo_deficiencia: data.tipo_deficiencia || "Nenhuma",
+          }));
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados do perfil:", err);
       }
     }
-    carregarPerfil();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) carregarPerfil(session.user);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) carregarPerfil(session.user);
+      },
+    );
+
+    return () => {
+      ativo = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   // CONTROLE DOS INPUTS
@@ -87,40 +126,28 @@ export default function PerfilCidadao() {
       if (!user) return;
 
       const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
 
-      // Upload para o Storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Pegar URL Pública
       const {
         data: { publicUrl },
       } = supabase.storage.from("avatars").getPublicUrl(fileName);
 
-      // Verifica se a linha do usuário já existe
-      const { data: existente } = await supabase
-        .from("cidadao")
-        .select("auth_id")
-        .eq("auth_id", user.id);
-
-      if (existente && existente.length > 0) {
-        // Se já existe, atualiza
-        const { error: updateError } = await supabase
-          .from("cidadao")
-          .update({ avatar_url: publicUrl })
-          .eq("auth_id", user.id);
-        if (updateError) throw updateError;
-      } else {
-        // Se não existe, cria a linha do zero
-        const { error: insertError } = await supabase
-          .from("cidadao")
-          .insert({ auth_id: user.id, avatar_url: publicUrl });
-        if (insertError) throw insertError;
-      }
+      // "email" precisa ir junto pq a coluna é NOT NULL no banco
+      const { error: upsertError } = await supabase.from("cidadao").upsert(
+        {
+          auth_id: user.id,
+          email: user.email,
+          avatar_url: publicUrl,
+          nome_completo: perfil.nome_completo || "Usuário",
+        },
+        { onConflict: "auth_id" },
+      );
 
       setPerfil((prev) => ({ ...prev, avatar_url: publicUrl }));
       alert("Foto de perfil salva com sucesso!");
@@ -139,42 +166,31 @@ export default function PerfilCidadao() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Objeto com os campos para salvar
       const dadosParaSalvar = {
-        nome_completo: perfil.nome_completo,
-        telefone: perfil.telefone,
-        data_nascimento: perfil.data_nascimento,
-        cidade: perfil.cidade,
-        bairro: perfil.bairro,
-        cep: perfil.cep,
+        auth_id: user.id,
+        email: user.email, // NOT NULL no banco — precisa ir sempre
+        nome_completo: perfil.nome_completo || null,
+        telefone: perfil.telefone || null,
+        data_nascimento: perfil.data_nascimento ? perfil.data_nascimento : null,
+        cidade: perfil.cidade || null,
+        bairro: perfil.bairro || null,
+        cep: perfil.cep || null,
         pcd: perfil.pcd,
-        tipo_deficiencia: perfil.pcd ? perfil.tipo_deficiencia : "Nenhuma",
+        tipo_deficiencia: perfil.pcd
+          ? perfil.tipo_deficiencia || "Nenhuma"
+          : "Nenhuma",
       };
 
-      // Verifica se a linha do usuário já existe
-      const { data: existente } = await supabase
+      const { error } = await supabase
         .from("cidadao")
-        .select("auth_id")
-        .eq("auth_id", user.id);
+        .upsert(dadosParaSalvar, { onConflict: "auth_id" });
 
-      if (existente && existente.length > 0) {
-        // Se já existe, atualiza os dados
-        const { error } = await supabase
-          .from("cidadao")
-          .update(dadosParaSalvar)
-          .eq("auth_id", user.id);
-        if (error) throw error;
-      } else {
-        // Se não existe, insere criando a nova linha vinculada ao usuário logado
-        const { error } = await supabase
-          .from("cidadao")
-          .insert({ auth_id: user.id, ...dadosParaSalvar });
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       setEditandoBloco(null);
       alert("Dados salvos com sucesso!");
     } catch (err: any) {
+      console.error("Erro ao salvar dados no Supabase:", err);
       alert("Erro ao salvar: " + err.message);
     } finally {
       setCarregando(false);
@@ -182,16 +198,14 @@ export default function PerfilCidadao() {
   };
 
   return (
-    <main className="w-full mt-17 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-hidden relative">
-      {/* ELEMENTOS VISUAIS */}
-      <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#1447f2]/10 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#1447c4]/8 rounded-full pointer-events-none" />
-      <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#1447c4]/5 rounded-full blur-xl pointer-events-none" />
-      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#1447c4]/5 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute top-10 right-[560px] w-32 h-32 bg-[#1447c4]/5 rounded-full pointer-events-none" />
-      <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#1447c4]/8 rounded-full blur-sm pointer-events-none" />
-      <div className="absolute top-8 right-5 w-16 h-16 bg-[#1447f2]/6 rounded-full pointer-events-none z-0" />
-      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#1447c4]/3 rounded-full blur-md pointer-events-none" />
+    <main className="w-full mt-15 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 h-[calc(100vh-68px)] overflow-hiden relative">
+      {/* Elementos visuais de fundo */}
+      <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#0f35a0]/8 rounded-full pointer-events-none" />
+      <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#0f35a0]/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#0f35a0]/3 rounded-full blur-md pointer-events-none" />
+      <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#0f35a0]/8 rounded-full blur-sm pointer-events-none" />
+      <div className="absolute top-8 right-5 w-16 h-16 bg-[#0f35a0]/6 rounded-full pointer-events-none z-0" />
+      <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#0f35a0]/3 rounded-full blur-md pointer-events-none" />
 
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         <div className="border-b border-slate-200/60 pb-4">
@@ -426,12 +440,14 @@ export default function PerfilCidadao() {
                         <input
                           type="checkbox"
                           checked={perfil.pcd}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const checked = e.target.checked;
                             setPerfil((prev) => ({
                               ...prev,
-                              pcd: e.target.checked,
-                            }))
-                          }
+                              pcd: checked,
+                              tipo_deficiencia: checked ? "" : "Nenhuma",
+                            }));
+                          }}
                           className="accent-[#091f75]"
                         />
                         Possuo Deficiência

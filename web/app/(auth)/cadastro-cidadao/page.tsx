@@ -31,9 +31,12 @@ export default function CadastroCidadao() {
     setCarregando(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
+      // Cria a conta de autenticação enviando o nome nos metadados.
+      // O trigger handle_new_user() no banco já cria a linha em "cidadao" automaticamente.
+      const { error } = await supabase.auth.signUp({
+        email,
         password: senha,
+        options: { data: { nome_completo: nome } },
       });
 
       if (error) {
@@ -41,27 +44,7 @@ export default function CadastroCidadao() {
         return;
       }
 
-      const { error: erroPerfil } = await supabase.from("cidadao").insert({
-        auth_id: data.user?.id,
-        nome_completo: nome,
-        email: email,
-      });
-
-      if (erroPerfil) {
-        alert("Erro ao salvar perfil: " + erroPerfil.message);
-        return;
-      }
-
       alert("Cadastro realizado com sucesso!");
-
-      // SALVA TODOS OS DADOS NO LOCALSTORAGE PARA O PERFIL LER INSTANTANEAMENTE
-      const dadosProvisorios = { nome, email };
-      localStorage.setItem(
-        "pluvite_cadastro_provisorio",
-        JSON.stringify(dadosProvisorios),
-      );
-
-      // REDIRECIONA DIRETO PARA O PERFIL (Sem passar pelo login)
       router.push("/perfil");
     } catch (error) {
       console.error("Erro inesperado no cadastro:", error);
@@ -71,14 +54,14 @@ export default function CadastroCidadao() {
     }
   };
 
-  // ── NOVA FUNÇÃO: CADASTRO/LOGIN SOCIAL AUTOMÁTICO ──
+  // Cadastro/Login Social via OAuth
   const handleSocialLogin = async (provedor: "google" | "facebook") => {
     setCarregando(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
         options: {
-          redirectTo: `${window.location.origin}/Mapa`, // Vai direto para o mapa logado
+          redirectTo: `${window.location.origin}/Mapa`,
         },
       });
 
@@ -91,7 +74,7 @@ export default function CadastroCidadao() {
 
   return (
     <main className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 sm:p-8 md:p-12 font-sans antialiased relative overflow-hidden">
-      {/* Elementos visuais mantidos... */}
+      {/* Elementos Visuais de Fundo */}
       <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#1447f2]/10 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#1447c4]/8 rounded-full pointer-events-none" />
       <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#1447c4]/5 rounded-full blur-xl pointer-events-none" />
@@ -102,7 +85,7 @@ export default function CadastroCidadao() {
       <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#1447c4]/3 rounded-full blur-md pointer-events-none" />
 
       <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center relative z-10">
-        {/* TEXTOS INFORMATIVOS */}
+        {/* Textos Informativos Laterais */}
         <div className="text-slate-900 space-y-6 pr-0 md:pr-8 text-center md:text-left flex flex-col items-center md:items-start">
           <h1 className="text-5xl uppercase lg:text-6xl font-black tracking-tight leading-tight text-black">
             Plataforma
@@ -118,7 +101,7 @@ export default function CadastroCidadao() {
           </h1>
 
           <p className="text-slate-700 text-base sm:text-lg max-w-md font-medium leading-relaxed">
-            Monitore, previna e gerencie dados pluviais com precisão in tempo
+            Monitore, previna e gerencie dados pluviais com precisão em tempo
             real. Apoiando a gestão pública e a segurança do cidadão.
           </p>
 
@@ -128,7 +111,7 @@ export default function CadastroCidadao() {
           </div>
         </div>
 
-        {/* LADO DIREITO: CARD DO FORMULÁRIO DE CADASTRO */}
+        {/* Card do Formulário */}
         <div className="flex justify-center md:justify-end w-full relative z-10">
           <div className="w-full max-w-[450px] bg-white rounded-2xl shadow-2xl shadow-slate-900/60 border border-slate-200 p-6 sm:p-8 transition-all duration-300">
             <Link href="/">
@@ -148,7 +131,7 @@ export default function CadastroCidadao() {
               </p>
             </div>
 
-            {/* Formulário de Cadastro */}
+            {/* Formulário */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
                 <input
@@ -242,9 +225,8 @@ export default function CadastroCidadao() {
               <hr className="flex-1 border-slate-200" />
             </div>
 
-            {/* Botões de Redes Sociais */}
+            {/* Login Social */}
             <div className="space-y-2">
-              {/* ADICIONADO CLICK E DISABLED NO FACEBOOK */}
               <button
                 type="button"
                 disabled={carregando}
@@ -257,7 +239,6 @@ export default function CadastroCidadao() {
                 Facebook
               </button>
 
-              {/* ADICIONADO CLICK E DISABLED NO GOOGLE */}
               <button
                 type="button"
                 disabled={carregando}
@@ -286,7 +267,7 @@ export default function CadastroCidadao() {
               </button>
             </div>
 
-            {/* Rodapé do Card */}
+            {/* Rodapé */}
             <div className="text-center mt-5 text-[14px] text-slate-500">
               Já possui uma conta?{" "}
               <Link

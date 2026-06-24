@@ -14,17 +14,33 @@ export default function Navbar2() {
   // CONTROLE DE SESSÃO E CARREGAMENTO DE DADOS DO USUÁRIO
   useEffect(() => {
     async function carregarDadosNavbar() {
+      // Usamos getUser para garantir a segurança dos dados da sessão atual
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
 
+      // 1. Pega os dados direto do provedor de login (Google, Facebook ou Cadastro)
+      const nomeDoProvedor = 
+        user.user_metadata?.nome_completo || 
+        user.user_metadata?.full_name || 
+        user.user_metadata?.name || 
+        "";
+
+      const fotoDoProvedor = user.user_metadata?.avatar_url || "/PluviteIcon.jpg";
+
+      // Define os estados iniciais baseados no Google/Sessão
+      if (nomeDoProvedor) setNome(nomeDoProvedor);
+      if (fotoDoProvedor) setAvatarUrl(fotoDoProvedor);
+
+      // 2. Tenta buscar dados customizados do banco de dados (tabela cidadao)
       const { data, error } = await supabase
         .from("cidadao")
         .select("avatar_url, nome_completo")
         .eq("auth_id", user.id)
-        .single();
+        .maybeSingle(); // Usar maybeSingle evita estourar erros caso o registro não exista ainda
 
+      // Se encontrar dados salvos localmente, eles substituem os do Google (caso o usuário tenha editado o perfil)
       if (data && !error) {
         if (data.avatar_url) setAvatarUrl(data.avatar_url);
         if (data.nome_completo) setNome(data.nome_completo);

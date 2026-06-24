@@ -1,37 +1,30 @@
 "use client";
-
 import Link from "next/link";
 import {
   Map,
   Rss,
   CloudSun,
   Compass,
-  ArrowRight,
   ShieldCheck,
-  Building2,
   BellRing,
-  Activity,
-  BarChart3,
-  Phone,
-  ArrowUp,
-  Users,
+  Building2,
+  CloudRain,
   AlertTriangle,
+  Wind,
+  TrendingUp,
+  Home as HomeIcon,
+  Smartphone,
+  CloudLightning,
+  PhoneCall,
+  Activity,
+  Users,
   Database,
   Siren,
   Navigation,
-  CloudRain,
-  Wind,
-  Eye,
-  TrendingUp,
-  MapPin,
-  Mail,
-  BookOpen,
-  HeartHandshake,
+  ArrowRight,
 } from "lucide-react";
-import { text } from "stream/consumers";
-import Navbar from "./components/navbar";
 
-// ─── Scroll  ──────────────────────────────────────────────────────────────
+// ─── Scroll util ──────────────────────────────────────────────────────────────
 const scrollTo = (id: string) => {
   const scrollContainer = document.querySelector(".overflow-y-auto");
   const el = document.getElementById(id);
@@ -48,8 +41,11 @@ export default function Home() {
     <div className="fixed h-screen w-full overflow-y-auto bg-slate-50 pt-12 font-sans antialiased text-slate-800">
       <main>
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
-        <Navbar></Navbar>
-        <section className="max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center gap-10">
+        {/* Reduzido pt-24 para pt-12 e pb-28 para pb-20 para subir o conteúdo */}
+        <section
+          id="hero"
+          className="max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center gap-10"
+        >
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#ccddff] bg-[#eff5ff] text-slate-700 text-xs font-bold tracking-widest uppercase shadow-sm">
             <Activity size={13} className="text-[#2C4A6F]" />
             Monitoramento do Vale do Paraíba e Litoral Norte
@@ -75,7 +71,13 @@ export default function Home() {
             <Link href="/cadastro-cidadao">
               <button className="bg-[#0d43af] hover:bg-[#0c2b6b] text-white font-bold text-base px-9 py-4 rounded-lg transition-colors flex items-center gap-2 cursor-pointer shadow-md">
                 Iniciar sessão
-                <ArrowRight size={18} />
+                <img
+                  src="/seta-pro-lado.png"
+                  alt="Seguir"
+                  width={18}
+                  height={18}
+                  style={{ filter: "brightness(0) invert(1)" }}
+                />
               </button>
             </Link>
             <button
@@ -109,7 +111,7 @@ export default function Home() {
             <div className="lg:col-span-2 border border-[#ccddff] bg-white rounded-2xl p-8 shadow-md">
               <div className="flex items-center justify-between border-b border-slate-200 pb-5 mb-8">
                 <div className="flex items-center gap-2.5">
-                  <BarChart3 size={18} className="text-[#2C4A6F]" />
+                  <img src="/grafico.png" alt="Painel" width={18} height={18} />
                   <span className="text-base font-bold text-slate-900">
                     Visão Geral do Painel
                   </span>
@@ -119,29 +121,45 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* LABELS DA VISÃO GERAL */}
-              <div className="grid grid-cols-4 gap-4 mb-10">
+              {/* Stats row - Agora com bordas coloridas de acordo com o status */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
                 {[
-                  { label: "Chamados", value: "6", color: "text-[#e8000e]" },
-                  { label: "Críticos", value: "3", color: "text-[#1e0972]" },
-                  { label: "Andamento", value: "2", color: "text-[#cd7206]" },
-                  { label: "Concluídos", value: "0", color: "text-[#006b26]" },
+                  {
+                    label: "Chamados",
+                    value: "6",
+                    bg: "bg-[#e8000e]",
+                  },
+                  {
+                    label: "Críticos",
+                    value: "3",
+                    bg: "bg-[#1e0972]",
+                  },
+                  {
+                    label: "Andamento",
+                    value: "2",
+                    bg: "bg-[#f18200]",
+                  },
+                  {
+                    label: "Concluídos",
+                    value: "0",
+                    bg: "bg-[#006b26]",
+                  },
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="border border-slate-200 bg-slate-50 rounded-xl p-4 text-center"
+                    className={`${s.bg} rounded-xl p-4 text-center shadow-sm`}
                   >
-                    <p className={`text-3xl font-extrabold ${s.color}`}>
+                    <p className="text-3xl font-extrabold text-white">
                       {s.value}
                     </p>
-                    <p className="text-xs text-slate-600 font-bold mt-2">
+                    <p className="text-xs text-white/85 font-bold mt-2">
                       {s.label}
                     </p>
                   </div>
                 ))}
               </div>
 
-              {/* GRÁFICO DE OCORRÊNCIAS POR MUNICÍPIO */}
+              {/* Mini chart */}
               <div>
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Ocorrências por Município
@@ -248,6 +266,7 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── COMUNICAÇÃO ───────────────────────────────────────────────────── */}
+        {/* Reduzido pt-24 para pt-10 para aproximar o conteúdo da linha divisória */}
         <section
           id="comunicacao"
           className="max-w-6xl mx-auto px-6 pt-10 pb-24"
@@ -264,44 +283,36 @@ export default function Home() {
             naturais.
           </p>
 
-          {/* 3 PILARES DA COMUNICAÇÃO */}
+          {/* 3 pilares */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-12">
             {[
               {
                 icon: ShieldCheck,
                 title: "Prevenção Direta",
                 desc: "Evita acidentes estruturais e logísticos graves.",
-                borderColor: "border-[#006b26]",
-                iconColor: "text-[#006b26]",
+                bg: "bg-[#006b26]",
               },
               {
                 icon: BellRing,
                 title: "Alertas em Tempo Real",
                 desc: "Notificações críticas para a população.",
-                borderColor: "border-[#e8000e]",
-                iconColor: "text-[#e8000e]",
+                bg: "bg-[#e8000e]",
               },
               {
                 icon: Building2,
                 title: "Integração Municipal",
                 desc: "Respostas rápidas das defesas civis.",
-                borderColor: "border-[#e47c00]",
-                iconColor: "text-[#e47c00]",
+                bg: "bg-[#e47c00]",
               },
-            ].map(({ icon: Icon, title, desc, borderColor, iconColor }) => (
+            ].map(({ icon: Icon, title, desc, bg }) => (
               <div
                 key={title}
-                className={`border-2 ${borderColor} bg-white rounded-2xl p-6 flex gap-5 shadow-sm`}
+                className={`${bg} rounded-2xl p-6 flex gap-5 shadow-md`}
               >
-                <Icon
-                  size={22}
-                  className={`${iconColor} flex-shrink-0 mt-0.5`}
-                />
+                <Icon size={22} className="text-white flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-slate-900 text-base">
-                    {title}
-                  </h4>
-                  <p className="text-sm text-slate-700 font-medium mt-1.5">
+                  <h4 className="font-bold text-white text-base">{title}</h4>
+                  <p className="text-sm text-white/85 font-medium mt-1.5">
                     {desc}
                   </p>
                 </div>
@@ -309,7 +320,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* FLUXO DE COMUNICAÇÃO */}
+          {/* Fluxo de comunicação */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 mb-10 shadow-sm">
             <h3 className="text-base font-bold text-slate-900 mb-8">
               Fluxo de Comunicação
@@ -326,7 +337,7 @@ export default function Home() {
                 {
                   icon: Database,
                   titulo: "Sistema processa",
-                  desc: "IA classifica risco e urgência",
+                  desc: "Riscos classificados por urgência",
                   color: "text-[#2C4A6F]",
                   bgColor: "bg-slate-100",
                 },
@@ -347,7 +358,7 @@ export default function Home() {
                 {
                   icon: Navigation,
                   titulo: "Equipe despachada",
-                  desc: "Resposta no local em minutos",
+                  desc: "Resposta rápida para o local",
                   color: "text-[#00b277]",
                   bgColor: "bg-[#d7fff2]/30",
                 },
@@ -356,6 +367,7 @@ export default function Home() {
                   key={i}
                   className="flex flex-col items-center text-center gap-3 relative"
                 >
+                  {/* Fundo do ícone colorido adaptado */}
                   <div
                     className={`w-11 h-11 border border-slate-300 ${bgColor} rounded-xl flex items-center justify-center`}
                   >
@@ -378,7 +390,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* MUNICÍPIOS */}
+          {/* Municípios */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 shadow-sm">
             <h3 className="text-base font-bold text-slate-900 mb-5">
               Principais Municípios Monitorados
@@ -406,7 +418,14 @@ export default function Home() {
                   key={cidade}
                   className="flex items-center gap-2 text-sm text-slate-800 py-1.5 font-bold animate-fade-in"
                 >
-                  <MapPin size={11} className="text-[#00b277] flex-shrink-0" />
+                  {/* Ícone de Pin adaptado para a cor verde de zona segura da lista anterior */}
+                  <img
+                    src="/localizacao-vermelha.png"
+                    alt="Local"
+                    width={11}
+                    height={11}
+                    className="flex-shrink-0"
+                  />
                   {cidade}
                 </div>
               ))}
@@ -420,6 +439,7 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── CATEGORIZAÇÃO ─────────────────────────────────────────────────── */}
+        {/* Reduzido py-24 para pt-10 e pb-24 para subir os elementos em direção à linha */}
         <section id="riscos" className="max-w-6xl mx-auto px-6 pt-10 pb-24">
           <span className="text-sm font-bold text-[#2C4A6F] uppercase tracking-widest">
             Categorização
@@ -431,102 +451,96 @@ export default function Home() {
             O sistema analisa dados pluviométricos e relatos em tempo real para
             classificar cada região em quatro categorias.
           </p>
+
+          {/* 4 níveis - Ajustados para cores bem vivas e bordas completas no mesmo padrão */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
             {[
               {
-                dot: "bg-[#7c3aed]", // Roxo bem vivo
-                border: "border-[#7c3aed]",
+                bg: "bg-[#7c3aed]", // Roxo bem vivo
                 title: "Alerta Máximo",
                 desc: "Inundações iminentes ou deslizamentos detectados.",
-                color: "text-[#7c3aed]",
               },
               {
-                dot: "bg-[#e8000e]", // Vermelho bem vivo
-                border: "border-[#e8000e]",
+                bg: "bg-[#e8000e]", // Vermelho bem vivo
                 title: "Estado de Alerta",
                 desc: "Índice de chuva crítico acumulado.",
-                color: "text-[#e8000e]",
               },
               {
-                dot: "bg-[#e47c00]", // Laranja bem vivo
-                border: "border-[#e47c00]",
+                bg: "bg-[#e47c00]", // Laranja bem vivo
                 title: "Atenção Crítica",
                 desc: "Previsão de tempestades severas na região.",
-                color: "text-[#e47c00]",
               },
               {
-                dot: "bg-[#00b277]", // Verde bem vivo
-                border: "border-[#00b277]",
+                bg: "bg-[#008d17]", // Verde bem vivo
                 title: "Zona Segura",
                 desc: "Condições estáveis e normais.",
-                color: "text-[#00b277]",
               },
-            ].map(({ dot, border, title, desc, color }) => (
-              <div
-                key={title}
-                className={`border-2 ${border} bg-white p-6 rounded-2xl shadow-sm`}
-              >
+            ].map(({ bg, title, desc }) => (
+              <div key={title} className={`${bg} p-6 rounded-2xl shadow-md`}>
                 <div className="flex items-center gap-2.5 mb-4">
-                  <span className={`w-2.5 h-2.5 rounded-full ${dot}`} />
-                  <h3 className={`font-extrabold text-base ${color}`}>
+                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                  <h3 className="font-extrabold text-base text-white">
                     {title}
                   </h3>
                 </div>
-                <p className="text-sm text-slate-800 leading-relaxed font-bold">
+                <p className="text-sm text-white/90 leading-relaxed font-bold">
                   {desc}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* TIPOS DE OCORRÊNCIA MONITORADOS */}
-          <div className="border border-slate-200 bg-white rounded-2xl p-8 mb-14 shadow-sm">
+          {/* Impactos Monitorados */}
+          <div
+            id="riscos"
+            className="border border-slate-200 bg-white rounded-2xl p-8 mb-14 shadow-sm select-none"
+          >
             <h3 className="text-base font-bold text-slate-900 mb-8">
-              Tipos de Ocorrência Monitorados
+              Cenários e Impactos Monitorados
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[
                 {
                   icon: CloudRain,
-                  titulo: "Enchentes e Inundações",
-                  desc: "Monitoramento do nível de rios, córregos e áreas historicamente alagáveis com alertas preditivos.",
-                  iconColor: "text-[#2563eb]", // Azul
+                  titulo: "Inundações Urbanas",
+                  desc: "Monitoramento do nível de rios, córregos e vias urbanas historicamente propensas a alagamentos.",
+                  iconColor: "text-[#2563eb]",
                   borderColor: "hover:border-[#2563eb]",
                 },
                 {
                   icon: AlertTriangle,
-                  titulo: "Deslizamentos",
-                  desc: "Análise de encostas instáveis, saturação do solo e histórico de movimentações de terra na região.",
-                  iconColor: "text-[#e8000e]", // Vermelho
+                  titulo: "Movimentação de Massa",
+                  desc: "Análise de encostas instáveis, saturação do solo e riscos de deslizamentos de terra.",
+                  iconColor: "text-[#e8000e]",
                   borderColor: "hover:border-[#e8000e]",
                 },
                 {
                   icon: Wind,
-                  titulo: "Ventos Fortes e Tempestades",
-                  desc: "Rastreamento de frentes frias, rajadas de vento e eventos de granizo que afetam a infraestrutura.",
-                  iconColor: "text-[#e47c00]", // Laranja
+                  titulo: "Vendavais e Granizo",
+                  desc: "Rastreamento de tempestades severas, rajadas de vento e queda de granizo na região.",
+                  iconColor: "text-[#e47c00]",
                   borderColor: "hover:border-[#e47c00]",
                 },
                 {
                   icon: TrendingUp,
-                  titulo: "Elevação do Nível do Mar",
-                  desc: "Alerta para ressacas, maré alta e avanço do mar em municípios do Litoral Norte paulista.",
-                  iconColor: "text-[#06b6d4]", // Ciano
+                  titulo: "Dinâmica Costeira",
+                  desc: "Alerta para ressacas extremas, maré alta e avanço do mar nos municípios do Litoral Norte.",
+                  iconColor: "text-[#06b6d4]",
                   borderColor: "hover:border-[#06b6d4]",
                 },
                 {
                   icon: AlertTriangle,
-                  titulo: "Infraestrutura Danificada",
-                  desc: "Registro de pontes interditadas, rodovias bloqueadas, quedas de energia e danos estruturais.",
-                  iconColor: "text-[#7c3aed]", // Roxo
+                  titulo: "Danos à Infraestrutura",
+                  desc: "Mapeamento de vias bloqueadas, quedas de fiação, pontes interditadas e avarias estruturais.",
+                  iconColor: "text-[#7c3aed]",
                   borderColor: "hover:border-[#7c3aed]",
                 },
                 {
-                  icon: Eye,
-                  titulo: "Visibilidade Crítica",
-                  desc: "Monitoramento de neblina densa e baixa visibilidade em rodovias de serra e vias críticas.",
-                  iconColor: "text-[#64748b]", // Slate/Cinza
-                  borderColor: "hover:border-[#64748b]",
+                  icon: HomeIcon,
+                  titulo: "Isolamento de Áreas",
+                  desc: "Identificação de rotas de acesso bloqueadas que possam isolar bairros periféricos ou rurais.",
+                  iconColor: "text-emerald-600",
+                  borderColor: "hover:border-emerald-600",
                 },
               ].map(({ icon: Icon, titulo, desc, iconColor, borderColor }) => (
                 <div
@@ -548,7 +562,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ESTATÍSTICAS */}
+          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-10 border-t border-slate-300 text-center">
             {[
               { value: "39", label: "Municípios Monitorados" },
@@ -570,10 +584,13 @@ export default function Home() {
 
         {/* ── EMERGÊNCIA ────────────────────────────────────────────────────── */}
         <div id="emergencia" className="border-t border-slate-300" />
+
+        {/* Reduzido py-24 para pt-10 e pb-24 para subir os elementos em direção à linha */}
         <section className="max-w-6xl mx-auto px-6 pt-10 pb-24">
           <div className="flex items-start gap-5 mb-10">
             <div className="w-12 h-12 border border-slate-300 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-              <Phone size={20} className="text-[#e8000e]" />
+              {/* Ícone com vermelho de emergência bem vivo */}
+              <img src="/telefone.png" alt="Telefone" width={20} height={20} />
             </div>
             <div>
               <span className="text-sm font-bold text-[#e8000e] uppercase tracking-widest">
@@ -589,45 +606,44 @@ export default function Home() {
               </p>
             </div>
           </div>
+
+          {/* Números com bordas e cores bem vivas */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
             {[
               {
                 label: "Defesa Civil",
                 numero: "199",
-                color: "text-[#00b277]",
-                border: "border-[#00b277]",
+                bg: "bg-[#00b277]",
               }, // Verde vivo
               {
                 label: "Bombeiros",
                 numero: "193",
-                color: "text-[#e8000e]",
-                border: "border-[#e8000e]",
+                bg: "bg-[#e8000e]",
               }, // Vermelho vivo
               {
                 label: "SAMU",
                 numero: "192",
-                color: "text-[#2563eb]",
-                border: "border-[#2563eb]",
+                bg: "bg-[#2563eb]",
               }, // Azul vivo
-            ].map(({ label, numero, color, border }) => (
+            ].map(({ label, numero, bg }) => (
               <div
                 key={label}
-                className={`border-2 ${border} bg-white rounded-2xl p-7 text-center shadow-md`}
+                className={`${bg} rounded-2xl p-7 text-center shadow-lg`}
               >
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-3">
                   {label}
                 </p>
-                <p className={`text-5xl font-black ${color}`}>{numero}</p>
+                <p className="text-5xl font-black text-white">{numero}</p>
               </div>
             ))}
           </div>
 
-          {/* INSTRUÇÕES DE EMERGÊNCIA */}
+          {/* Instruções */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
               {
                 title: "Em caso de enchente",
-                bulletColor: "text-[#2563eb]",
+                bulletColor: "text-[#00b277]",
                 items: [
                   "Desligue a energia elétrica",
                   "Suba para locais altos imediatamente",
@@ -647,7 +663,7 @@ export default function Home() {
               },
               {
                 title: "Kit de emergência",
-                bulletColor: "text-[#00b277]",
+                bulletColor: "text-[#2563eb]",
                 items: [
                   "Documentos em saco plástico",
                   "Água e alimentos não perecíveis",
@@ -672,6 +688,7 @@ export default function Home() {
                       key={item}
                       className="text-sm text-slate-800 flex gap-2.5 font-bold"
                     >
+                      {/* Substituído o traço antigo por um "check" dinâmico com cor mais viva */}
                       <span className={`${bulletColor} mt-0.5`}>✓</span>
                       {item}
                     </li>
@@ -685,133 +702,220 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── APP ────────────────────────────────────── */}
-        <section id="app" className="max-w-5xl mx-auto px-6 pt-10 pb-24">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-sm font-bold text-[#0d43af] uppercase tracking-widest">
-              Interface Mobile
-            </span>
-            <h2 className="text-4xl font-extrabold text-slate-950 mt-2">
-              Conheça o Nosso Aplicativo
-            </h2>
-            <p className="text-base text-slate-700 font-medium mt-3">
-              Uma experiência rápida e intuitiva feita para manter você
-              informado e seguro a qualquer momento do dia.
-            </p>
-          </div>
+        {/* Alterado de mb-16 para mb-32 para criar um gap amplo e limpo até o footer */}
+        <section
+          id="app"
+          className="max-w-6xl mx-auto px-6 py-12 bg-gradient-to-b from-transparent to-slate-50/50 rounded-3xl mb-17"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Bloco de Textos, Recursos e Downloads */}
+            <div className="lg:col-span-7 flex flex-col justify-start w-full">
+              <span className="text-sm font-bold text-[#0d43af] uppercase tracking-widest bg-[#0d43af]/10 px-3 py-1.5 rounded-full w-fit">
+                Tecnologia na sua Mão
+              </span>
+              <h2 className="text-4xl md:text-5xl font-extrabold text-slate-950 mt-4 leading-tight">
+                Conheça o Nosso <br /> Aplicativo Móvel
+              </h2>
+              <p className="text-base text-slate-700 font-medium mt-4 w-full">
+                Uma experiência rápida, moderna e intuitiva feita para manter
+                você e sua comunidade informados e seguros a qualquer momento do
+                dia.
+              </p>
 
-          {/*CARDS DAS TELAS DO APP*/}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 justify-items-center items-start pt-4">
-            {[
-              {
-                src: "/app-login.png",
-                title: "Acesso Rápido",
-                desc: "Login simples e integração social",
-              },
-              {
-                src: "/app-cadastro.png",
-                title: "Cadastro Seguro",
-                desc: "Conta pessoal ou institucional",
-              },
-              {
-                src: "/app-clima.jpg",
-                title: "Painel de Clima",
-                desc: "Condições e alertas em tempo real",
-              },
-              {
-                src: "/app-contatos.jpg",
-                title: "Canais de Ajuda",
-                desc: "Disque emergência em um clique",
-              },
-            ].map((mockup, index) => (
-              <div
-                key={index}
-                className="flex flex-col items-center group max-w-[165px] transition-transform duration-300 md:odd:-translate-y-4"
-              >
-                <div className="relative rounded-xl p-1.5 bg-slate-900/5 ring-1 ring-slate-900/10 shadow-md w-full transition-transform duration-300 group-hover:scale-105">
-                  <div className="overflow-hidden rounded-lg bg-white aspect-[9/19]">
-                    <img
-                      src={mockup.src}
-                      alt={mockup.title}
-                      className="w-full h-full object-cover"
-                    />
+              {/* Lista de Recursos Detalhados */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 w-full">
+                {[
+                  {
+                    icon: <Smartphone className="text-[#0d43af]" size={22} />,
+                    title: "Acesso Rápido",
+                    desc: "Autenticação simples integrada às suas redes sociais favoritas para um login imediato.",
+                  },
+                  {
+                    icon: (
+                      <ShieldCheck className="text-emerald-600" size={22} />
+                    ),
+                    title: "Cadastro Seguro",
+                    desc: "Ambiente protegido para criação de perfis pessoais ou credenciais institucionais validadas.",
+                  },
+                  {
+                    icon: (
+                      <CloudLightning className="text-amber-500" size={22} />
+                    ),
+                    title: "Painel de Clima",
+                    desc: "Acompanhe as condições meteorológicas locais e receba alertas críticos em tempo real.",
+                  },
+                  {
+                    icon: <PhoneCall className="text-rose-600" size={22} />,
+                    title: "Canais de Ajuda",
+                    desc: "Acione a central de emergência e canais de socorro diretamente com apenas um clique.",
+                  },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-4 p-4 rounded-xl border border-slate-200/60 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-slate-300 w-full"
+                  >
+                    <div className="p-2.5 bg-slate-50 rounded-lg h-fit flex items-center justify-center flex-shrink-0">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">
+                        {item.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <h4 className="text-sm font-bold text-slate-950 mt-4 text-center leading-tight">
-                  {mockup.title}
-                </h4>
-                <p className="text-[11px] text-slate-600 font-medium text-center mt-1 px-1 leading-normal">
-                  {mockup.desc}
-                </p>
+                ))}
               </div>
-            ))}
+
+              {/* Botões de Download */}
+              <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-slate-300 w-full">
+                <button className="flex items-center gap-3 bg-[#0f35a0] hover:bg-[#091f75] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-md active:scale-95">
+                  <span className="font-medium">Disponível no</span>
+                  <span className="font-black text-sm border-l border-white/20 pl-3">
+                    Google Play
+                  </span>
+                </button>
+                <button className="flex items-center gap-3 text-slate-950 bg-zinc hover:bg-zinc-100 border border-zinc-300 shadow-sm px-5 py-2.5 rounded-xl font-bold text-xs transition-colors cursor-pointer active:scale-95">
+                  <span className="font-medium">Baixar para</span>
+                  <span className="font-black text-sm border-l border-slate-300 pl-3">
+                    iOS App Store
+                  </span>
+                </button>
+              </div>
+
+              {/* QR Code */}
+              <div className="mt-6 flex items-center gap-5 select-none">
+                <div className="w-[200px] h-[200px] bg-white border border-zinc-200 shadow-[1px_1px_5px_0px_rgba(9,28,75,0.2)] rounded-xl overflow-hidden flex-shrink-0">
+                  <img
+                    src="/qrcode-pluvite.png"
+                    alt="QRCode"
+                    className="w-full h-full object-cover flex-shrink-0"
+                  />
+                </div>
+                <div className="flex flex-col items-start gap-2 max-w-[240px]">
+                  <p className="text-sm font-bold text-slate-700 leading-snug">
+                    Ou escaneie o QR Code para fazer o download direto
+                  </p>
+                  <img
+                    src="/seta-pra-esquerda.png"
+                    alt="Seta"
+                    width={32}
+                    height={32}
+                    className="transform -rotate-45 flex-shrink-0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Exibição dos Mockups */}
+            <div className="lg:col-span-5 flex justify-center items-center relative w-full">
+              <div className="absolute w-80 h-80 bg-[#0d43af]/5 rounded-full blur-3xl -z-10" />
+
+              <div className="grid grid-cols-2 gap-x-8 gap-y-12 max-w-[380px] w-full">
+                {[
+                  { src: "/app-login.png", pos: "" },
+                  { src: "/app-cadastro.png", pos: "translate-y-6" },
+                  { src: "/app-clima.jpg", pos: "-translate-y-4" },
+                  { src: "/app-contatos.jpg", pos: "translate-y-2" },
+                ].map((img, idx) => (
+                  <div
+                    key={idx}
+                    className={`relative rounded-sm p-1 bg-white ring-1 ring-slate-200 shadow-xl transition-all duration-300 transform ${img.pos}`}
+                  >
+                    <div className="overflow-hidden rounded-sm bg-slate-100 aspect-[9/19]">
+                      <img
+                        src={img.src}
+                        alt="App Screen"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
         {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-        <footer className="border-t border-slate-700 bg-[#091c4b] px-6 py-12 text-white shadow-inner">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-              <div className="flex items-center gap-4 text-left">
+        <footer className="border-t border-slate-800 bg-[#091c4b] px-6 py-8 text-white shadow-inner select-none">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Lado Esquerdo: Identidade Visual Expandida e Contexto Acadêmico */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 text-center md:text-left text-xs text-slate-400 font-medium">
+              <div className="flex items-center gap-3">
+                {/* Logo aumentada para w-12 h-12 */}
                 <img
                   src="/PluviteIcon.jpg"
                   alt="Logo Pluvite"
                   className="w-12 h-12 rounded-xl object-cover shadow-md flex-shrink-0"
                 />
-                <div>
-                  <h3 className="text-xl font-black tracking-tight">
-                    Baixe o App Pluvite
-                  </h3>
-                  <p className="text-xs text-slate-300 font-medium">
-                    Alertas de risco em tempo real no seu bolso.
-                  </p>
-                </div>
+                {/* Nome Pluvite aumentado para text-2xl */}
+                <span className="font-black text-white text-2xl tracking-tight">
+                  Pluvite
+                </span>
               </div>
-
-              {/* LADO DIREITO FOOTER*/}
-              <div className="flex flex-wrap items-center gap-4">
-                <button className="flex items-center gap-3 bg-white text-slate-950 px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-slate-100 transition-colors cursor-pointer shadow-md">
-                  <span className="opacity-80">Disponível no</span>
-                  <span className="font-black text-sm border-l border-slate-300 pl-3">
-                    Google Play
-                  </span>
-                </button>
-                <button className="flex items-center gap-3 bg-white/10 text-white border border-white/20 px-5 py-2.5 rounded-xl font-bold text-xs hover:bg-white/20 transition-colors cursor-pointer shadow-md backdrop-blur-sm">
-                  <span className="opacity-80">Baixar para</span>
-                  <span className="font-black text-sm border-l border-white/20 pl-3">
-                    iOS App Store
-                  </span>
-                </button>
-              </div>
+              <span className="hidden sm:inline text-white/20">•</span>
+              <p>© 2026 Centro Paula Souza (FATEC)</p>
+              <span className="hidden sm:inline text-white/20">•</span>
+              <p className="italic opacity-80">Projeto Acadêmico</p>
             </div>
 
-            {/*LINHA DIVISÓRIA*/}
-            <div className="border-t border-white/10 my-6" />
-
-            {/* CRÉDITOS INSTITUCIONAIS */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium">
-              <p>
-                © 2026 Pluvite · Centro Paula Souza (FATEC) · Fins acadêmicos
-              </p>
-
-              <div className="flex items-center gap-1.5 text-slate-300 font-bold">
-                <MapPin size={12} className="text-[#e8000e]" />
-                <span>Vale do Paraíba e Litoral Norte, SP</span>
+            {/* Lado Direito: Localização e Código Aberto (GitHub Ampliado) */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-slate-400 font-medium">
+              {/* Localização Focada */}
+              <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                <img
+                  src="/localizacao.png"
+                  alt="Local"
+                  width={13}
+                  height={13}
+                />
+                <span className="text-sm">
+                  Vale do Paraíba e Litoral Norte, SP
+                </span>
               </div>
+
+              {/* Link do Repositório do GitHub - Versão Ampliada */}
+              <a
+                href="https://github.com/juliasantos-Git/Pluvite"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-5 py-3 rounded-xl border border-white/10 transition-all duration-200 shadow-sm"
+                title="Acessar código-fonte no GitHub"
+              >
+                {/* Ícone substituído por imagem - w-5 h-5 = 20x20px */}
+                <img
+                  src="/github.png"
+                  alt="GitHub"
+                  className="w-5 h-5"
+                  style={{ filter: "brightness(0) invert(1)" }}
+                />
+                {/* Texto aumentado para text-sm */}
+                <span className="font-extrabold text-sm tracking-wider">
+                  GitHub
+                </span>
+              </a>
             </div>
           </div>
         </footer>
       </main>
 
-      {/*SCROLL PARA O TOPO*/}
+      {/* ── BOTÃO SCROLL TO TOP (REDONDO) ────────────────────────── */}
       <button
-        onClick={() => {
-          document
-            .querySelector(".overflow-y-auto")
-            ?.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-        className="fixed bottom-6 right-6 z-50 w-11 h-11 cursor-pointer bg-[#0d43af] hover:bg-[#0c2b6b] text-white rounded-full flex items-center justify-center transition-colors shadow-md"
+        onClick={() => scrollTo("hero")} // Ou adicione o ID do topo da sua página (ex: "home" ou "hero")
+        className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group cursor-pointer"
+        title="Voltar ao topo"
       >
-        <ArrowUp size={20} />
+        {/* Ícone de seta para cima substituído por imagem, forçado para branco via filtro CSS */}
+        <img
+          src="/seta-pra-cima.png"
+          alt="Voltar ao topo"
+          width={20}
+          height={20}
+          className="transition-transform duration-300 group-hover:scale-110"
+          style={{ filter: "brightness(0) invert(1)" }}
+        />
       </button>
     </div>
   );
