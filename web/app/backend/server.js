@@ -77,6 +77,7 @@ app.patch("/api/alertas/:id/status", async (req, res) => {
     const { id } = req.params; // Mantido como string (UUID)
     const { status_atual } = req.body;
 
+    // Ajuste aqui: Passamos o ID recebido diretamente (que pode ser UUID) sem converter pra Int
     const { data, error } = await supabase
       .from("alertas_tempo_real")
       .update({ orientacao: status_atual })
