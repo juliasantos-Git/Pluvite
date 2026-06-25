@@ -1,23 +1,25 @@
-const express = require('express');
-const cors = require('cors');
-const { createClient } = require('@supabase/supabase-base'); // ou '@supabase/supabase-js' dependendo da sua versão
+import express from 'express';
+import cors from 'cors';
+import { createClient } from '@supabase/supabase-js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// SUBSTITUA COM AS SUAS CREDENCIAIS REAIS DO SUPABASE
-const SUPABASE_URL = "https://sua-url-do-supabase.supabase.co";
-const SUPABASE_KEY = "seu-anon-key-do-supabase";
+// Credenciais do seu Supabase
+const SUPABASE_URL = "https://qhughmeaxbyupuglpvud.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFodWdobWVheGJ5dXB1Z2xwdnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMjc4MzAsImV4cCI6MjA5NDYwMzgzMH0.lrvg087MamSPfBkhfwt0bkFuBtdZOVWO7lOq1OKrQg8";
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Histórico em memória (não usa o banco de dados)
+let historicoMemoriaLocal = [];
 
 /**
  * 1. ROTA GET: Busca os alertas em tempo real relacionando com o cidadão
- * Resolve o problema de trazer o BAIRRO e o NOME do usuário da tabela vinculada.
  */
 app.get('/api/alertas', async (req, res) => {
   try {
-    // Faz o select na tabela alertas_tempo_real puxando a FK id_cidadao
     const { data, error } = await supabase
       .from('alertas_tempo_real')
       .select(`
@@ -26,10 +28,10 @@ app.get('/api/alertas', async (req, res) => {
         prioridade,
         municipio,
         endereco,
-        descrição,
+        descricao,
         statusatual,
         criado_em,
-        cidadao:id_cidadao (
+        cidadao!fk_cidadao (
           nome_completo,
           bairro
         )
@@ -37,13 +39,11 @@ app.get('/api/alertas', async (req, res) => {
       .order('criado_em', { ascending: false });
 
     if (error) {
-      console.error("Erro na consulta do Supabase:", error);
+      console.error("Erro na consulta do Supabase (Alertas):", error);
       return res.status(500).json({ error: error.message });
     }
 
-    // Formata a resposta limpando a estrutura para o frontend consumir diretamente
     const respostaFormatada = data.map(alerta => {
-      // Normalização de string para o status não quebrar por causa de maiúsculas/minúsculas
       let statusTratado = alerta.statusatual || 'Aguardando';
       const statusLower = statusTratado.toLowerCase();
 
@@ -58,38 +58,37 @@ app.get('/api/alertas', async (req, res) => {
         prioridade: alerta.prioridade,
         municipio: alerta.municipio,
         endereco: alerta.endereco,
-        descricao: alerta.descrição || alerta.descricao || 'Sem descrição.',
+        descricao: alerta.descricao || 'Sem descrição.',
         statusAtual: statusTratado,
         criado_em: alerta.criado_em,
         usuario: alerta.cidadao?.nome_completo || 'Cidadão Anônimo',
-        bairro: alerta.cidadao?.bairro || 'Não Informado' // Pega o Bairro de dentro do relacionamento da tabela cidadao
+        bairro: alerta.cidadao?.bairro || 'Não Informado'
       };
     });
 
     return res.json(respostaFormatada);
   } catch (err) {
-    console.error("Erro interno no servidor:", err);
+    console.error("Erro interno no servidor (Alertas):", err);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 });
 
 /**
  * 2. ROTA PATCH: Atualiza o status do alerta no banco de dados
- * Garante que a coluna 'statusatual' receba a string correta
  */
 app.patch('/api/alertas/:id/status', async (req, res) => {
   const { id } = req.params;
-  const { status_atual } = req.body; // Recebe o novo status enviado pelo front
+  const { status_atual } = req.body;
 
   try {
     const { data, error } = await supabase
       .from('alertas_tempo_real')
-      .update({ statusatual: status_atual }) // Atualiza na coluna correta tudo minúsculo do banco
+      .update({ statusatual: status_atual })
       .eq('id', id)
       .select();
 
     if (error) {
-      console.error("Erro ao atualizar status:", error);
+      console.error("Erro ao atualizar status no Supabase:", error);
       return res.status(500).json({ error: error.message });
     }
 
@@ -101,55 +100,32 @@ app.patch('/api/alertas/:id/status', async (req, res) => {
 });
 
 /**
- * 3. ROTA GET: Busca o histórico de logs/ações operacionais
+ * 3. ROTA GET: Busca as últimas ações da memória local para alimentar o Frontend
  */
-app.get('/api/historico', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('historico_operacional') // Certifique-se de que este é o nome exato da sua tabela de logs no Supabase
-      .select('*')
-      .order('criado_at', { ascending: false })
-      .limit(20);
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-
-    return res.json(data);
-  } catch (err) {
-    return res.status(500).json({ error: "Erro interno no servidor" });
-  }
+app.get('/api/historico', (req, res) => {
+  // Retorna os logs salvos na memória ram do node sem bater no Supabase
+  return res.json(historicoMemoriaLocal.slice(0, 20));
 });
 
 /**
- * 4. ROTA POST: Insere uma nova ação no histórico de logs
+ * 4. ROTA POST: Cria o log de ação apenas na memória local
  */
-app.post('/api/historico', async (req, res) => {
+app.post('/api/historico', (req, res) => {
   const { alertaId, cidade, acao, corAcao } = req.body;
 
-  try {
-    const { data, error } = await supabase
-      .from('historico_operacional')
-      .insert([
-        {
-          alerta_id: alertaId,
-          cidade: cidade,
-          acao: acao,
-          cor_acao: corAcao,
-          criado_at: new Date().toISOString()
-        }
-      ])
-      .select();
+  const novoLog = {
+    id: Math.random().toString(36).substring(2, 9), // Gera um ID temporário
+    alerta_id: alertaId,
+    cidade: cidade || "Geral",
+    acao: acao,
+    cor_acao: corAcao,
+    criado_at: new Date().toISOString()
+  };
 
-    if (error) {
-      console.error("Erro ao gravar log:", error);
-      return res.status(500).json({ error: error.message });
-    }
+  // Adiciona o log no topo da lista na memória
+  historicoMemoriaLocal.unshift(novoLog);
 
-    return res.status(201).json(data);
-  } catch (err) {
-    return res.status(500).json({ error: "Erro interno no servidor" });
-  }
+  return res.status(201).json(novoLog);
 });
 
 // Inicialização do Servidor na porta 3001
