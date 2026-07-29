@@ -1,4 +1,4 @@
-# 🌧️ Pluvite
+# <img src="web/public/Pluvite-png.png" width="28" height="28" style="vertical-align:middle"/> luvite
 
 Pluvite é uma plataforma desenvolvida para monitoramento de riscos climáticos, comunicação de alertas e participação cidadã durante eventos relacionados a desastres naturais.
 O sistema permite que cidadãos acompanhem condições meteorológicas, recebam alertas em tempo real e reportem problemas de infraestrutura urbana, enquanto órgãos públicos podem monitorar ocorrências e gerenciar ações de resposta.
@@ -7,7 +7,7 @@ O sistema permite que cidadãos acompanhem condições meteorológicas, recebam 
 
 ## Objetivo
 
-Facilitar a comunicação entre população e prefeitura durante situações de risco, offering informações climáticas, alertas preventivos e um canal para registro de ocorrências.
+Facilitar a comunicação entre população e prefeitura durante situações de risco, oferecendo informações climáticas, alertas preventivos e um canal para registro de ocorrências.
 
 ---
 
