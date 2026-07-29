@@ -5,15 +5,15 @@ O sistema permite que cidadãos acompanhem condições meteorológicas, recebam 
 
 ---
 
-## 📌 Objetivo
+## Objetivo
 
 Facilitar a comunicação entre população e prefeitura durante situações de risco, offering informações climáticas, alertas preventivos e um canal para registro de ocorrências.
 
 ---
 
-## 🚀 Como Rodar o Projeto 
+## Como Rodar o Projeto 
 
-### 🌐 Executando a Plataforma Web
+### Executando a Plataforma Web
 
 1. Abra o terminal na pasta raiz do repositório e navegue até a pasta `web`:
  ```bash
@@ -75,22 +75,22 @@ Instale o aplicativo **Expo Go** no seu celular (Android ou iOS) e use a câmera
 
 ---
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
-### 👤 Autenticação (Web e Mobile)
+### Autenticação (Web e Mobile)
 
 * Cadastro de usuários
 * Login seguro
 * Controle de acesso por perfil
 
-### 🗺️ Mapa Interativo (Web)
+### Mapa Interativo (Web)
 
 * Visualização dos municípios monitorados
 * Seleção de cidades através de busca
 * Exibição de alertas por região
 * Monitoramento geográfico em tempo real
 
-### 🌦️ Clima (Web e Mobile)
+### Clima (Web e Mobile)
 
 * Consulta de condições meteorológicas
 * Temperatura atual
@@ -98,13 +98,13 @@ Instale o aplicativo **Expo Go** no seu celular (Android ou iOS) e use a câmera
 * Velocidade do vento
 * Previsão do tempo
 
-### 🚨 Alertas (Web e Mobile)
+### Alertas (Web e Mobile)
 
 * Alertas climáticos em tempo real
 * Notificações para regiões monitoradas
 * Classificação de riscos
 
-### 📸 Feed Comunitário e Participação (Web e Mobile)
+### Feed Comunitário e Participação (Web e Mobile)
 
 * Visualização de publicações de ocorrências feitas pela população.
 * No **Aplicativo Mobile**, os usuários podem enviar novas ocorrências direto do celular com:
@@ -121,13 +121,13 @@ Relatos de:
 
 
 
-### 📱 Recursos Exclusivos do Aplicativo Mobile
+### Recursos Exclusivos do Aplicativo Mobile
 
 * **Página de Perfil:** Gerenciamento dos dados pessoais e configurações de acessibilidade do cidadão.
 * **Página de Rotas:** Traçado de caminhos e rotas para ajudar o usuário a desviar de ruas alagadas ou bloqueadas.
 * **Página de Emergências e Contatos:** Lista de contatos rápidos e botões de discagem para socorro imediato (como Defesa Civil, Bombeiros e SAMU).
 
-### 🏛️ Painel Administrativo (Web)
+### Painel Administrativo (Web)
 
 * Visualização das ocorrências reportadas
 * Gestão de alertas
@@ -138,7 +138,7 @@ Relatos de:
 * Resolvido
 * Remoção automática das ocorrências resolvidas do feed público
 
-### 📊 Dashboard do Servidor Público (Web)
+### Dashboard do Servidor Público (Web)
 
 * Quantidade de alertas ativos
 * Estatísticas por Município
@@ -148,7 +148,7 @@ Relatos de:
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 ### Front-end
 
@@ -178,7 +178,7 @@ Relatos de:
 
 ---
 
-## 🎯 Público-Alvo
+## Público-Alvo
 
 * Cidadãos
 * Defesa Civil
@@ -186,7 +186,7 @@ Relatos de:
 
 ---
 
-## 📷 Principais Módulos
+## Principais Módulos
 
 ### Plataforma Web
 
@@ -208,7 +208,7 @@ Relatos de:
 
 ---
 
-## 👩‍💻 Equipe
+## Equipe
 
 Projeto acadêmico da matéria de Projeto Integrador I, desenvolvido para aplicação de:
 
