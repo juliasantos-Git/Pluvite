@@ -1,4 +1,4 @@
-# <img src="web/public/Pluvite-png-removebg.png" width="44" height="44" align="absmiddle" style="margin-right:-14px"/>luvite
+# <img src="web/public/Pluvite-png-removebg.png" width="44" height="44" align="absmiddle"/>luvite
 
 Pluvite é uma plataforma desenvolvida para monitoramento de riscos climáticos, comunicação de alertas e participação cidadã durante eventos relacionados a desastres naturais.
 O sistema permite que cidadãos acompanhem condições meteorológicas, recebam alertas em tempo real e reportem problemas de infraestrutura urbana, enquanto órgãos públicos podem monitorar ocorrências e gerenciar ações de resposta.
