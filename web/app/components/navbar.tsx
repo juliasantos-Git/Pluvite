@@ -70,7 +70,7 @@ export default function navbar() {
 
         <Link
           href="/login"
-          className="flex items-center gap-2 bg-zinc-100 text-back hover:bg-zinc-200 
+          className="flex items-center gap-2 bg-slate-50 text-back hover:bg-zinc-200 
             transition-all duration-150 px-5 py-2 rounded-xl font-bold
             tracking-wide active:black shadow-md"
         >
