@@ -48,6 +48,11 @@ export default function PerfilCidadao() {
     contato_emergencia_nome: "",
     contato_emergencia_telefone: "",
     contato_emergencia_parentesco: "",
+    // Preferências de notificações
+    notif_chuva_forte: true,
+    notif_deslizamento: true,
+    notif_email: true,
+    notif_push: true,
   });
 
   // CARREGAMENTO DOS DADOS DO USUÁRIO DO SUPABASE
@@ -90,7 +95,7 @@ export default function PerfilCidadao() {
           setPerfil((prev) => ({
             ...prev,
             nome_completo: data.nome_completo || nomeDoCadastro,
-            telefone: data.telefone || "",
+            telefone: formatarTelefone(data.telefone || ""),
             data_nascimento: data.data_nascimento || "",
             cidade: data.cidade || "",
             bairro: data.bairro || "",
@@ -103,8 +108,14 @@ export default function PerfilCidadao() {
             condicoes_medicas: data.condicoes_medicas || "",
             medicamentos_uso: data.medicamentos_uso || "",
             contato_emergencia_nome: data.contato_emergencia_nome || "",
-            contato_emergencia_telefone: data.contato_emergencia_telefone || "",
+            contato_emergencia_telefone: formatarTelefone(
+              data.contato_emergencia_telefone || "",
+            ),
             contato_emergencia_parentesco: data.contato_emergencia_parentesco || "",
+            notif_chuva_forte: data.notif_chuva_forte ?? true,
+            notif_deslizamento: data.notif_deslizamento ?? true,
+            notif_email: data.notif_email ?? true,
+            notif_push: data.notif_push ?? true,
           }));
         }
       } catch (err) {
@@ -128,11 +139,30 @@ export default function PerfilCidadao() {
     };
   }, []);
 
+  // FORMATA O TELEFONE NO PADRÃO (00) 00000-0000 ENQUANTO O USUÁRIO DIGITA
+  function formatarTelefone(valor: string) {
+    const numeros = valor.replace(/\D/g, "").slice(0, 11);
+
+    if (numeros.length === 0) return "";
+    if (numeros.length <= 2) return numeros.replace(/^(\d*)/, "($1");
+    if (numeros.length <= 6)
+      return numeros.replace(/^(\d{2})(\d*)/, "($1) $2");
+    if (numeros.length <= 10)
+      return numeros.replace(/^(\d{2})(\d{4})(\d*)/, "($1) $2-$3");
+    return numeros.replace(/^(\d{2})(\d{5})(\d*)/, "($1) $2-$3");
+  }
+
   // CONTROLE DOS INPUTS (texto, textarea e select)
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
+
+    if (name === "telefone" || name === "contato_emergencia_telefone") {
+      setPerfil((prev) => ({ ...prev, [name]: formatarTelefone(value) }));
+      return;
+    }
+
     setPerfil((prev) => ({ ...prev, [name]: value || "" }));
   };
 
@@ -228,6 +258,44 @@ export default function PerfilCidadao() {
     }
   };
 
+  // LIGA/DESLIGA E SALVA UMA PREFERÊNCIA DE NOTIFICAÇÃO IMEDIATAMENTE
+  const alternarNotificacao = async (
+    campo:
+      | "notif_chuva_forte"
+      | "notif_deslizamento"
+      | "notif_email"
+      | "notif_push",
+  ) => {
+    const novoValor = !perfil[campo];
+
+    // Atualiza a tela na hora (otimista)
+    setPerfil((prev) => ({ ...prev, [campo]: novoValor }));
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from("cidadao").upsert(
+        {
+          auth_id: user.id,
+          email: user.email,
+          nome_completo: perfil.nome_completo || "Usuário",
+          [campo]: novoValor,
+        },
+        { onConflict: "auth_id" },
+      );
+
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Erro ao salvar notificação:", err);
+      // Reverte se der erro
+      setPerfil((prev) => ({ ...prev, [campo]: !novoValor }));
+      alert("Erro ao salvar preferência: " + err.message);
+    }
+  };
+
   // ENCERRA A SESSÃO DO USUÁRIO E LIMPA OS DADOS LOCAIS
   const handleSair = async () => {
     setSaindo(true);
@@ -257,6 +325,10 @@ export default function PerfilCidadao() {
         contato_emergencia_nome: "",
         contato_emergencia_telefone: "",
         contato_emergencia_parentesco: "",
+        notif_chuva_forte: true,
+        notif_deslizamento: true,
+        notif_email: true,
+        notif_push: true,
       });
 
       router.push("/");
@@ -495,6 +567,7 @@ export default function PerfilCidadao() {
                             type={f.type}
                             name={f.name}
                             placeholder={f.placeholder}
+                            maxLength={f.name === "telefone" ? 15 : undefined}
                             value={(perfil as any)[f.name] || ""}
                             onChange={handleChange}
                             className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1.5 border border-slate-200 outline-none mt-1 focus:border-[#091f75]"
@@ -686,6 +759,9 @@ export default function PerfilCidadao() {
                             type="text"
                             name={f.name}
                             placeholder={f.placeholder}
+                            maxLength={
+                              f.name === "contato_emergencia_telefone" ? 15 : undefined
+                            }
                             value={(perfil as any)[f.name] || ""}
                             onChange={handleChange}
                             className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1.5 border border-slate-200 outline-none mt-1 focus:border-[#091f75]"
@@ -711,29 +787,38 @@ export default function PerfilCidadao() {
                   Preferências de Notificações
                 </h3>
                 <div className="space-y-3">
-                  {[
-                    "Alertas de chuva forte",
-                    "Alertas de risco de deslizamento",
-                    "Notificações por e-mail",
-                    "Notificações push no navegador",
-                  ].map((label) => (
+                  {(
+                    [
+                      { label: "Alertas de chuva forte", campo: "notif_chuva_forte" },
+                      {
+                        label: "Alertas de risco de deslizamento",
+                        campo: "notif_deslizamento",
+                      },
+                      { label: "Notificações por e-mail", campo: "notif_email" },
+                      {
+                        label: "Notificações push no navegador",
+                        campo: "notif_push",
+                      },
+                    ] as const
+                  ).map(({ label, campo }) => (
                     <div
-                      key={label}
+                      key={campo}
                       className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100"
                     >
                       <span className="text-xs font-semibold text-slate-700">
                         {label}
                       </span>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" defaultChecked className="sr-only peer" />
+                        <input
+                          type="checkbox"
+                          checked={perfil[campo]}
+                          onChange={() => alternarNotificacao(campo)}
+                          className="sr-only peer"
+                        />
                         <div className="w-9 h-5 bg-slate-200 peer-checked:bg-[#091f75] rounded-full transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
                       </label>
                     </div>
                   ))}
-                  <p className="text-[11px] text-slate-400 pt-1">
-                    Essas preferências ainda não estão conectadas ao banco de
-                    dados — só a interface está pronta.
-                  </p>
                 </div>
               </div>
             )}
