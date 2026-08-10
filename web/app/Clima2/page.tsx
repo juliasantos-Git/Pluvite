@@ -128,7 +128,7 @@ export default function ClimaPage() {
   const hoje = forecast.forecastday[0];
 
   return (
-    <main className="fixed h-screen w-full overflow-y-auto mt-15 bg-gray-100 pt-10 flex flex-col items-center gap-6 px-30">
+    <main className="fixed h-screen w-full overflow-y-auto bg-gray-100 pt-10 flex flex-col items-center gap-6 px-30">
       {/* BARRA PESQUISA */}
       <div className="w-full bg-white rounded-3xl p-2 flex items-center shadow-sm border border-gray-200">
         <input

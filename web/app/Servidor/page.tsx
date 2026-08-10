@@ -289,7 +289,7 @@ export default function PainelAdministrativo() {
   }, [chamadosFiltrados]);
 
   return (
-    <div className="h-screen overflow-y-auto overflow-x-hidden w-[calc(100vw-64px)] mt-10 bg-slate-50 p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
+    <div className="h-screen overflow-y-auto overflow-x-hidden w-[calc(100vw-64px)] p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
       <div className="pt-8 mb-8">
         <h1 className="text-4xl font-black text-slate-900 tracking-tight">
           Painel Administrativo
@@ -465,9 +465,9 @@ export default function PainelAdministrativo() {
                   <span>
                     {log.criado_at
                       ? new Date(log.criado_at).toLocaleTimeString("pt-BR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                       : "--:--"}
                   </span>
                 </div>
