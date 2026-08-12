@@ -26,7 +26,7 @@ export default function FeedPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* ELEMENTOS VISUAIS DE FUNDO (BOLAS DECORATIVAS) */}
+            {/* ELEMENTOS VISUAIS DE FUNDO */}
             <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#1447f2]/10 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#1447c4]/8 rounded-full pointer-events-none" />
             <div className="absolute bottom-10 left-1/3 w-48 h-48 bg-[#1447c4]/5 rounded-full blur-xl pointer-events-none" />
@@ -35,8 +35,6 @@ export default function FeedPage() {
             <div className="absolute top-1/2 right-10 w-24 h-24 bg-[#1447c4]/8 rounded-full blur-sm pointer-events-none" />
             <div className="absolute top-8 right-5 w-16 h-16 bg-[#1447f2]/6 rounded-full pointer-events-none z-0" />
             <div className="absolute bottom-5 right-1/3 w-28 h-28 bg-[#1447c4]/3 rounded-full blur-md pointer-events-none" />
-
-            {/* CONTEÚDO PRINCIPAL (Z-INDEX SUPERIOR) */}
             <main className="max-w-6xl mx-auto relative z-10">
 
                 {/* CABEÇALHO */}
@@ -56,7 +54,7 @@ export default function FeedPage() {
                     </button>
                 </div>
 
-                {/* CARDS DE RESUMO DE STATUS (TOPO) */}
+                {/* STATUS */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                     <div className="bg-white/80 backdrop-blur-sm border border-red-100 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow transition-all">
                         <div className="flex items-center gap-3">
@@ -64,7 +62,7 @@ export default function FeedPage() {
                                 <AlertTriangle size={22} />
                             </div>
                             <div>
-                                <span className="text-2xl font-black text-slate-800 block leading-tight">2</span>
+                                <span className="text-2xl font-black text-slate-800 block leading-tight">0</span>
                                 <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider">Aguardando</span>
                             </div>
                         </div>
@@ -76,7 +74,7 @@ export default function FeedPage() {
                                 <Wrench size={22} />
                             </div>
                             <div>
-                                <span className="text-2xl font-black text-slate-800 block leading-tight">2</span>
+                                <span className="text-2xl font-black text-slate-800 block leading-tight">1</span>
                                 <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Em Andamento</span>
                             </div>
                         </div>
@@ -88,20 +86,20 @@ export default function FeedPage() {
                                 <Eye size={22} />
                             </div>
                             <div>
-                                <span className="text-2xl font-black text-slate-800 block leading-tight">2</span>
+                                <span className="text-2xl font-black text-slate-800 block leading-tight">1</span>
                                 <span className="text-[11px] font-bold text-green-600 uppercase tracking-wider">Visualizados</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* ESTRUTURA EM GRID: FEED (ESQUERDA) + SIDEBAR (DIREITA) */}
+                {/* GRID: FEED (ESQUERDA) + SIDEBAR (DIREITA) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-                    {/* COLUNA DA ESQUERDA: FEED DE OCORRÊNCIAS (8 COLUNAS) */}
+                    {/* FEED */}
                     <div className="lg:col-span-8 space-y-6">
 
-                        {/* FILTROS E PESQUISA */}
+                        {/* FILTROS DE PESQUISA */}
                         <div className="bg-white/90 backdrop-blur-sm p-3.5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <div className="relative sm:w-52">
@@ -130,7 +128,7 @@ export default function FeedPage() {
                                 </div>
                             </div>
 
-                            {/* CHIPS DE CATEGORIA */}
+                            {/* CATEGORIA */}
                             <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 no-scrollbar">
                                 <Filter size={14} className="text-slate-400 mr-1 shrink-0" />
                                 {categorias.map((cat) => (
@@ -150,14 +148,11 @@ export default function FeedPage() {
 
                         {/* CARD DE OCORRÊNCIA POSTADA */}
                         <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:border-slate-300 transition">
-
-                            {/* CABEÇALHO DA POSTAGEM */}
                             <div className="p-5 flex items-start justify-between gap-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-11 h-11 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0">
                                         MS
                                     </div>
-
                                     <div>
                                         <h3 className="font-bold text-slate-900 text-sm leading-snug">Maria Silva</h3>
                                         <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
@@ -177,8 +172,6 @@ export default function FeedPage() {
                                     </span>
                                 </div>
                             </div>
-
-                            {/* DESCRIÇÃO DO PROBLEMA */}
                             <div className="px-5 pb-4 text-xs text-slate-700 font-medium leading-relaxed">
                                 Ponto de alagamento acentuado próximo ao cruzamento principal. A água cobriu a calçada impossibilitando a travessia de pedestres. Trânsito lento no local.
                             </div>
@@ -214,10 +207,10 @@ export default function FeedPage() {
 
                     </div>
 
-                    {/* COLUNA DA DIREITA: BARRA LATERAL INFORMATIVA (4 COLUNAS) */}
+                    {/* COLUNA DA DIREITA*/}
                     <div className="lg:col-span-4 space-y-6">
 
-                        {/* CARD 1: CONDIÇÕES NA CIDADE */}
+                        {/* CARD 1*/}
                         <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
@@ -237,7 +230,7 @@ export default function FeedPage() {
                             </div>
                         </div>
 
-                        {/* CARD 2: BAIRROS MAIS AFETADOS */}
+                        {/* CARD 2 */}
                         <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
                             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
                                 <TrendingUp size={16} className="text-[#091f75]" />
@@ -260,7 +253,6 @@ export default function FeedPage() {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </main>
         </div>
