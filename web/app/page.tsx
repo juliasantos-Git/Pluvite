@@ -38,7 +38,7 @@ const scrollTo = (id: string) => {
 
 export default function Home() {
   return (
-    <div className="fixed h-screen w-full overflow-y-auto bg-slate-50 pt-12 font-sans antialiased text-slate-800">
+    <div className="fixed h-screen w-full overflow-y-auto bg-slate pt-12 font-sans antialiased text-slate-800">
       <main>
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
         {/* Reduzido pt-24 para pt-12 e pb-28 para pb-20 para subir o conteúdo */}
@@ -301,7 +301,7 @@ export default function Home() {
                 icon: Building2,
                 title: "Integração Municipal",
                 desc: "Respostas rápidas das defesas civis.",
-                bg: "bg-[#e47c00]",
+                bg: "bg-[#eb8000]",
               },
             ].map(({ icon: Icon, title, desc, bg }) => (
               <div
@@ -391,10 +391,16 @@ export default function Home() {
 
           {/* Municípios */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 shadow-sm">
-            <h3 className="text-base font-bold text-slate-900 mb-5">
-              Principais Municípios Monitorados
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="flex items-center justify-between mb-7">
+              <h3 className="text-base font-bold text-slate-900">
+                Principais Municípios Monitorados
+              </h3>
+              <span className="text-xs font-bold text-[#0d43af] bg-[#0d43af]/5 border border-[#0d43af]/15 px-3.5 py-1.5 rounded-full">
+                39 municípios
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8">
               {[
                 "Taubaté",
                 "São José dos Campos",
@@ -415,9 +421,8 @@ export default function Home() {
               ].map((cidade) => (
                 <div
                   key={cidade}
-                  className="flex items-center gap-2 text-sm text-slate-800 py-1.5 font-bold animate-fade-in"
+                  className="flex items-center gap-2.5 text-sm text-slate-700 py-3 font-semibold border-b border-slate-100 last:sm:border-b last:border-0"
                 >
-                  {/* Ícone de Pin adaptado para a cor verde de zona segura da lista anterior */}
                   <img
                     src="/localizacao-vermelha.png"
                     alt="Local"
@@ -429,9 +434,15 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <p className="text-sm text-[#2C4A6F] font-extrabold mt-5">
-              + 23 municípios adicionais na região
-            </p>
+
+            <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-100">
+              <p className="text-sm text-slate-500 font-medium">
+                + 23 municípios adicionais na região
+              </p>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Vale do Paraíba • Litoral Norte
+              </span>
+            </div>
           </div>
         </section>
 

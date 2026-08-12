@@ -8,7 +8,7 @@ import { useState } from "react";
 export default function navbar() {
   const pathname = usePathname();
   // Iniciando o estado vazio para nenhum botão começar marcado
-  const [activeAnchor, setActiveAnchor] = useState<string>(""); 
+  const [activeAnchor, setActiveAnchor] = useState<string>("");
 
   const navItems = [
     { anchor: "painel", label: "Chamados" },
@@ -53,7 +53,7 @@ export default function navbar() {
       <div className="flex items-center gap-2 mr-10">
         {navItems.map(({ anchor, label }) => {
           const isActive = activeAnchor === anchor;
-          
+
           return (
             <button
               key={anchor}
@@ -70,7 +70,7 @@ export default function navbar() {
 
         <Link
           href="/login"
-          className="flex items-center gap-2 bg-zinc-100 text-back hover:bg-zinc-200 
+          className="flex items-center gap-2 bg-slate-50 text-back hover:bg-zinc-200 
             transition-all duration-150 px-5 py-2 rounded-xl font-bold
             tracking-wide active:black shadow-md"
         >
