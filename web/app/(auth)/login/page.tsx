@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/app/lib/banco";
 
@@ -85,7 +85,15 @@ export default function Login() {
   };
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 sm:p-8 md:p-12 font-sans antialiased relative overflow-hidden">
+    <main className="min-h-screen w-full flex items-center justify-center  -mt-15 bg-slate-50 p-4 sm:p-8 md:p-12 font-sans antialiased relative overflow-hidden">
+      {/* BOTÃO VOLTAR */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#0f35a0] bg-white/80 hover:bg-white px-3.5 py-2 rounded-xl border border-slate-200/80 shadow-sm transition-all"
+      >
+        <ArrowLeft size={16} />
+        Voltar ao início
+      </Link>
       {/* Elementos visuais de fundo */}
       <div className="absolute -top-[50px] -left-15 w-72 h-72 bg-[#0f35a0]/10 rounded-full blur-2xl pointer-events-none" />
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#0f35a0]/8 rounded-full pointer-events-none" />
