@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/app/lib/banco";
-import { UserRound, Map, CloudSun, Route, MessageSquareWarning } from "lucide-react";
+import { UserRound, Map, CloudSun, Route, MessageSquare } from "lucide-react";
 
 export default function Navbar2() {
   const pathname = usePathname();
@@ -21,10 +21,10 @@ export default function Navbar2() {
       if (!user) return;
 
       // 1. Pega os dados direto do provedor de login (Google, Facebook ou Cadastro)
-      const nomeDoProvedor = 
-        user.user_metadata?.nome_completo || 
-        user.user_metadata?.full_name || 
-        user.user_metadata?.name || 
+      const nomeDoProvedor =
+        user.user_metadata?.nome_completo ||
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
         "";
 
       const fotoDoProvedor = user.user_metadata?.avatar_url || "/PluviteIcon.jpg";
@@ -66,7 +66,7 @@ export default function Navbar2() {
     { href: "/Mapa", label: "Mapa", icon: <Map size={18} /> },
     { href: "/Clima2", label: "Clima", icon: <CloudSun size={18} /> },
     { href: "/Rotas", label: "Rotas", icon: <Route size={18} /> },
-    { href: "/Feed", label: "Feed", icon: <MessageSquareWarning size={18} /> },
+    { href: "/Feed", label: "Feed", icon: <MessageSquare size={18} /> },
   ];
 
   return (

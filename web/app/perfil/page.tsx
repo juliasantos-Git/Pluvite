@@ -22,13 +22,17 @@ type Secao = "dados" | "emergencia" | "notificacoes" | "seguranca" | "acessibili
 type Bloco = "pessoais" | "endereco" | "medico" | "contatoEmergencia" | null;
 
 export default function PerfilCidadao() {
+  /* NAVEGACAO E ROTEAMENTO */
   const router = useRouter();
+
+  /* ESTADOS DE CARREGAMENTO E MODO DE EDICAO */
   const [carregando, setCarregando] = useState(false);
   const [saindo, setSaindo] = useState(false);
   const [editandoBloco, setEditandoBloco] = useState<Bloco>(null);
   const [secaoAtiva, setSecaoAtiva] = useState<Secao>("dados");
   const [hoverItem, setHoverItem] = useState<Secao | null>(null);
 
+  /* ESTADO COM DADOS DO PERFIL DO CIDADÃO */
   const [perfil, setPerfil] = useState({
     nome_completo: "",
     email: "",
@@ -38,9 +42,8 @@ export default function PerfilCidadao() {
     bairro: "",
     cep: "",
     pcd: false,
-    tipo_deficiencia: "Nenhuma",
+    tipo_deficiencia: "",
     avatar_url: "/perfil.png",
-    // Dados de emergência
     tipo_sanguineo: "",
     alergias: "",
     condicoes_medicas: "",
@@ -48,14 +51,13 @@ export default function PerfilCidadao() {
     contato_emergencia_nome: "",
     contato_emergencia_telefone: "",
     contato_emergencia_parentesco: "",
-    // Preferências de notificações
     notif_chuva_forte: true,
     notif_deslizamento: true,
     notif_email: true,
     notif_push: true,
   });
 
-  // CARREGAMENTO DOS DADOS DO USUÁRIO DO SUPABASE
+  /* CARREGAR DADOS DO SUPABASE */
   useEffect(() => {
     let ativo = true;
 
@@ -100,9 +102,9 @@ export default function PerfilCidadao() {
             cidade: data.cidade || "",
             bairro: data.bairro || "",
             cep: data.cep || "",
-            pcd: data.pcd ?? false,
+            pcd: data.pcd === true || data.pcd === "true",
             avatar_url: data.avatar_url || fotoDoProvedor,
-            tipo_deficiencia: data.tipo_deficiencia || "Nenhuma",
+            tipo_deficiencia: data.tipo_deficiencia || "",
             tipo_sanguineo: data.tipo_sanguineo || "",
             alergias: data.alergias || "",
             condicoes_medicas: data.condicoes_medicas || "",
@@ -139,7 +141,7 @@ export default function PerfilCidadao() {
     };
   }, []);
 
-  // FORMATA O TELEFONE NO PADRÃO (00) 00000-0000 ENQUANTO O USUÁRIO DIGITA
+  /* FORMATACAO MASCARA DE TELEFONE */
   function formatarTelefone(valor: string) {
     const numeros = valor.replace(/\D/g, "").slice(0, 11);
 
@@ -152,7 +154,7 @@ export default function PerfilCidadao() {
     return numeros.replace(/^(\d{2})(\d{5})(\d*)/, "($1) $2-$3");
   }
 
-  // CONTROLE DOS INPUTS (texto, textarea e select)
+  /* MANIPULACAO DE CAMPOS DE FORMULARIO */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
@@ -166,7 +168,7 @@ export default function PerfilCidadao() {
     setPerfil((prev) => ({ ...prev, [name]: value || "" }));
   };
 
-  // PROCESSAMENTO DE UPLOAD E ATUALIZAÇÃO DA FOTO DE PERFIL
+  /* UPLOAD DE FOTO DE PERFIL */
   const handleTrocarFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
@@ -211,7 +213,7 @@ export default function PerfilCidadao() {
     }
   };
 
-  // ENVIO DOS DADOS ATUALIZADOS PARA O BANCO DE DADOS
+  /* SALVAR DADOS NO SUPABASE */
   const salvarDados = async (bloco: Bloco) => {
     setCarregando(true);
     try {
@@ -230,9 +232,7 @@ export default function PerfilCidadao() {
         bairro: perfil.bairro || null,
         cep: perfil.cep || null,
         pcd: perfil.pcd,
-        tipo_deficiencia: perfil.pcd
-          ? perfil.tipo_deficiencia || "Nenhuma"
-          : "Nenhuma",
+        tipo_deficiencia: perfil.pcd ? perfil.tipo_deficiencia || "" : "",
         tipo_sanguineo: perfil.tipo_sanguineo || null,
         alergias: perfil.alergias || null,
         condicoes_medicas: perfil.condicoes_medicas || null,
@@ -258,7 +258,7 @@ export default function PerfilCidadao() {
     }
   };
 
-  // LIGA/DESLIGA E SALVA UMA PREFERÊNCIA DE NOTIFICAÇÃO IMEDIATAMENTE
+  /* ALTERAR PREFERENCIAS DE NOTIFICACAO */
   const alternarNotificacao = async (
     campo:
       | "notif_chuva_forte"
@@ -267,8 +267,6 @@ export default function PerfilCidadao() {
       | "notif_push",
   ) => {
     const novoValor = !perfil[campo];
-
-    // Atualiza a tela na hora (otimista)
     setPerfil((prev) => ({ ...prev, [campo]: novoValor }));
 
     try {
@@ -290,13 +288,12 @@ export default function PerfilCidadao() {
       if (error) throw error;
     } catch (err: any) {
       console.error("Erro ao salvar notificação:", err);
-      // Reverte se der erro
       setPerfil((prev) => ({ ...prev, [campo]: !novoValor }));
       alert("Erro ao salvar preferência: " + err.message);
     }
   };
 
-  // ENCERRA A SESSÃO DO USUÁRIO E LIMPA OS DADOS LOCAIS
+  /* LOGOUT DO USUARIO */
   const handleSair = async () => {
     setSaindo(true);
     try {
@@ -316,7 +313,7 @@ export default function PerfilCidadao() {
         bairro: "",
         cep: "",
         pcd: false,
-        tipo_deficiencia: "Nenhuma",
+        tipo_deficiencia: "",
         avatar_url: "/perfil.png",
         tipo_sanguineo: "",
         alergias: "",
@@ -340,19 +337,15 @@ export default function PerfilCidadao() {
     }
   };
 
+  /* ESTRUTURA DOS ITENS DA BARRA LATERAL */
   const itensSidebar: { id: Secao; label: string; icon: React.ReactNode }[] = [
     { id: "dados", label: "Meus Dados", icon: <User size={18} /> },
     { id: "emergencia", label: "Dados de Emergência", icon: <HeartPulse size={18} /> },
     { id: "notificacoes", label: "Notificações", icon: <Bell size={18} /> },
     { id: "seguranca", label: "Segurança", icon: <Shield size={18} /> },
-    {
-      id: "acessibilidade",
-      label: "Acessibilidade",
-      icon: <Accessibility size={18} />,
-    },
   ];
 
-  // Pequeno cabeçalho de card reutilizável (estilo "Facebook > Configurações")
+  /* COMPONENTE CABECALHO DE CARDS */
   const CardHeader = ({
     icon,
     title,
@@ -401,13 +394,71 @@ export default function PerfilCidadao() {
     </div>
   );
 
+  /* COMPONENTE DE SELECAO PCD */
+  const BlocoPCD = () => (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-[#091f75]">
+            <Accessibility size={14} />
+          </span>
+          <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+            PCD
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 flex-1 min-w-[200px] justify-end">
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer shrink-0">
+            <input
+              type="checkbox"
+              checked={Boolean(perfil.pcd)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setPerfil((prev) => ({
+                  ...prev,
+                  pcd: checked,
+                  tipo_deficiencia: checked ? prev.tipo_deficiencia : "",
+                }));
+              }}
+              className="accent-[#091f75]"
+            />
+            Possuo Deficiência
+          </label>
+
+          {perfil.pcd && (
+            <input
+              type="text"
+              name="tipo_deficiencia"
+              placeholder="Qual deficiência?"
+              value={perfil.tipo_deficiencia || ""}
+              onChange={handleChange}
+              className="max-w-[180px] w-full bg-slate-50 text-xs font-semibold text-slate-700 rounded-lg px-2 py-1 border border-slate-200 outline-none focus:border-[#091f75]"
+            />
+          )}
+
+          <button
+            onClick={() => salvarDados("endereco")}
+            className="p-1.5 text-[#091f75] hover:bg-blue-50 rounded-lg transition-all cursor-pointer shrink-0"
+            title="Salvar acessibilidade"
+          >
+            {carregando ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <Save size={15} />
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <main className="w-full mt-15 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 min-h-[calc(100vh-68px)] relative">
-      {/* Elementos visuais de fundo (bem sutis) */}
+      {/* FUNDO BOLHAS DE DECORACAO */}
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#0f35a0]/5 rounded-full pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#0f35a0]/4 rounded-full blur-2xl pointer-events-none" />
 
-      {/* SIDEBAR FLUTUANTE FIXA NA LATERAL ESQUERDA DA TELA */}
+      {/* NAVEGACAO LATERAL FIXA */}
       <div className="hidden lg:flex flex-col gap-1 fixed left-8 top-1/2 -translate-y-1/2 z-40 bg-white rounded-2xl border border-slate-200 shadow-sm p-2 w-14">
         {itensSidebar.map((item) => (
           <div
@@ -418,27 +469,23 @@ export default function PerfilCidadao() {
           >
             <button
               onClick={() => setSecaoAtiva(item.id)}
-              className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all cursor-pointer ${
-                secaoAtiva === item.id
-                  ? "bg-blue-50 text-[#091f75]"
-                  : "text-slate-400 hover:bg-slate-50 hover:text-[#091f75]"
-              }`}
+              className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all cursor-pointer ${secaoAtiva === item.id
+                ? "bg-blue-50 text-[#091f75]"
+                : "text-slate-400 hover:bg-slate-50 hover:text-[#091f75]"
+                }`}
             >
               {item.icon}
             </button>
 
-            {/* MENU SUSPENSO HORIZONTAL - aparece ao lado do ícone */}
             <div
-              className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap bg-white border border-slate-200 shadow-md rounded-xl px-3.5 py-2 transition-all duration-200 origin-left ${
-                hoverItem === item.id
-                  ? "opacity-100 scale-100 translate-x-0 pointer-events-auto"
-                  : "opacity-0 scale-95 -translate-x-1 pointer-events-none"
-              }`}
+              className={`absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap bg-white border border-slate-200 shadow-md rounded-xl px-3.5 py-2 transition-all duration-200 origin-left ${hoverItem === item.id
+                ? "opacity-100 scale-100 translate-x-0 pointer-events-auto"
+                : "opacity-0 scale-95 -translate-x-1 pointer-events-none"
+                }`}
             >
               <span
-                className={`text-xs font-bold ${
-                  secaoAtiva === item.id ? "text-[#091f75]" : "text-slate-600"
-                }`}
+                className={`text-xs font-bold ${secaoAtiva === item.id ? "text-[#091f75]" : "text-slate-600"
+                  }`}
               >
                 {item.label}
               </span>
@@ -448,6 +495,7 @@ export default function PerfilCidadao() {
       </div>
 
       <div className="max-w-6xl mx-auto space-y-6 relative z-10 lg:pl-16">
+        {/* TITULO PRINCIPAL */}
         <div className="border-b border-slate-200 pb-4">
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
             MEU PERFIL
@@ -455,7 +503,7 @@ export default function PerfilCidadao() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* CARTÃO LATERAL DE EXIBIÇÃO DE AVATAR */}
+          {/* CARTAO DE AVATAR E USUARIO */}
           <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col items-center justify-between min-h-[455px]">
             <div className="w-full flex flex-col items-center text-center space-y-4">
               <div className="relative mt-2">
@@ -529,10 +577,11 @@ export default function PerfilCidadao() {
             </div>
           </div>
 
-          {/* CONTEÚDO DA DIREITA — MUDA CONFORME A SEÇÃO ATIVA */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* CONTEUDO PRINCIPAL / SEÇÕES */}
+          <div className="lg:col-span-8 space-y-5">
             {secaoAtiva === "dados" && (
               <>
+                {/* INFORMACOES PESSOAIS */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                   <CardHeader icon={<User size={14} />} title="Informações Pessoais" bloco="pessoais" />
 
@@ -581,7 +630,7 @@ export default function PerfilCidadao() {
                     ))}
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 opacity-70">
                       <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wide mb-0.5">
-                        E-mail (Não alterável)
+                        E-mail
                       </span>
                       <span className="text-xs font-semibold text-slate-700 block truncate">
                         {perfil.email}
@@ -590,7 +639,8 @@ export default function PerfilCidadao() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                {/* ENDEREÇO */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
                   <CardHeader icon={<MapPin size={14} />} title="Endereço" bloco="endereco" />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
@@ -623,24 +673,27 @@ export default function PerfilCidadao() {
                     ))}
                   </div>
                 </div>
+                <BlocoPCD />
               </>
             )}
 
             {secaoAtiva === "emergencia" && (
               <>
+                {/* ALERTA INFORMATIVO */}
                 <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-start gap-3">
                   <HeartPulse size={18} className="text-amber-600 mt-0.5 shrink-0" />
                   <p className="text-xs text-amber-800 leading-relaxed">
                     Essas informações ficam guardadas no seu perfil e só são
                     usadas em caso de necessidade de resgate durante uma
-                    emergência. Mantenha sempre atualizadas.
+                    emergência.
                   </p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                {/* INFORMACOES MEDICAS */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4.5">
                   <CardHeader icon={<HeartPulse size={14} />} title="Informações Médicas" bloco="medico" />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2  gap-3">
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                       <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wide mb-0.5">
                         Tipo Sanguíneo
@@ -696,7 +749,7 @@ export default function PerfilCidadao() {
                         <textarea
                           name="condicoes_medicas"
                           rows={2}
-                          placeholder="Ex: diabetes, hipertensão, epilepsia..."
+                          placeholder="Ex: diabetes, hipertensão..."
                           value={perfil.condicoes_medicas || ""}
                           onChange={handleChange}
                           className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1.5 border border-slate-200 outline-none mt-1 resize-none focus:border-[#091f75]"
@@ -716,7 +769,7 @@ export default function PerfilCidadao() {
                         <textarea
                           name="medicamentos_uso"
                           rows={2}
-                          placeholder="Ex: losartana 50mg, insulina..."
+                          placeholder="Ex: losartana 50mg..."
                           value={perfil.medicamentos_uso || ""}
                           onChange={handleChange}
                           className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1.5 border border-slate-200 outline-none mt-1 resize-none focus:border-[#091f75]"
@@ -730,7 +783,8 @@ export default function PerfilCidadao() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                {/* CONTATO DE EMERGENCIA */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5">
                   <CardHeader icon={<Phone size={14} />} title="Contato de Emergência" bloco="contatoEmergencia" />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
@@ -744,7 +798,7 @@ export default function PerfilCidadao() {
                       {
                         label: "Parentesco / Relação",
                         name: "contato_emergencia_parentesco",
-                        placeholder: "Ex: mãe, cônjuge, amigo...",
+                        placeholder: "Ex: mãe, cônjuge...",
                       },
                     ].map((f) => (
                       <div
@@ -779,43 +833,75 @@ export default function PerfilCidadao() {
             )}
 
             {secaoAtiva === "notificacoes" && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-                  <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-[#091f75]">
-                    <Bell size={14} />
-                  </span>
-                  Preferências de Notificações
-                </h3>
+              /* PREFERENCIAS DE NOTIFICACOES */
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-7 space-y-5 pb-10">
+                <div>
+                  <h3 className="text-base font-bold text-slate-800 flex items-center gap-2.5">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-50 text-[#091f75]">
+                      <Bell size={16} />
+                    </span>
+                    Preferências de Notificações
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 pl-10">
+                    Escolha como e quando você deseja receber nossos alertas e avisos de emergência.
+                  </p>
+                </div>
+
                 <div className="space-y-3">
                   {(
                     [
-                      { label: "Alertas de chuva forte", campo: "notif_chuva_forte" },
                       {
-                        label: "Alertas de risco de deslizamento",
-                        campo: "notif_deslizamento",
+                        label: "Alertas de chuva forte",
+                        desc: "Avisos em tempo real sobre tempestades e acumulados pluviométricos na sua região.",
+                        campo: "notif_chuva_forte",
+                        icon: <HeartPulse size={16} className="text-blue-600" />,
                       },
-                      { label: "Notificações por e-mail", campo: "notif_email" },
+                      {
+                        label: "Risco de deslizamento",
+                        desc: "Alertas críticos para áreas de encosta com risco iminente de alagamento ou deslizamento.",
+                        campo: "notif_deslizamento",
+                        icon: <Shield size={16} className="text-amber-600" />,
+                      },
+                      {
+                        label: "Notificações por e-mail",
+                        desc: "Receba relatórios periódicos e avisos importantes diretamente na sua caixa de entrada.",
+                        campo: "notif_email",
+                        icon: <Bell size={16} className="text-indigo-600" />,
+                      },
                       {
                         label: "Notificações push no navegador",
+                        desc: "Avisos sonoros e visuais na tela enquanto o seu navegador estiver aberto.",
                         campo: "notif_push",
+                        icon: <User size={16} className="text-emerald-600" />,
                       },
                     ] as const
-                  ).map(({ label, campo }) => (
+                  ).map(({ label, desc, campo, icon }) => (
                     <div
                       key={campo}
-                      className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100"
+                      className="flex items-center justify-between bg-slate-50/80 hover:bg-slate-50 p-4 rounded-xl border border-slate-200/60 transition-all gap-4"
                     >
-                      <span className="text-xs font-semibold text-slate-700">
-                        {label}
-                      </span>
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-white rounded-lg border border-slate-100 shadow-2xs mt-0.5">
+                          {icon}
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-slate-800 block">
+                            {label}
+                          </span>
+                          <span className="text-[11px] text-slate-400 leading-tight block mt-0.5">
+                            {desc}
+                          </span>
+                        </div>
+                      </div>
+
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
                         <input
                           type="checkbox"
                           checked={perfil[campo]}
                           onChange={() => alternarNotificacao(campo)}
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-slate-200 peer-checked:bg-[#091f75] rounded-full transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                        <div className="w-10 h-5 bg-slate-200 peer-checked:bg-[#091f75] rounded-full transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
                       </label>
                     </div>
                   ))}
@@ -824,92 +910,111 @@ export default function PerfilCidadao() {
             )}
 
             {secaoAtiva === "seguranca" && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-                  <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-[#091f75]">
-                    <Shield size={14} />
-                  </span>
-                  Segurança da Conta
-                </h3>
-                <div className="space-y-3">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wide mb-1">
-                      Senha
+              /* SEGURANCA DA CONTA */
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-5 pb-10">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-[#091f75]">
+                      <Shield size={14} />
                     </span>
-                    <button className="text-xs font-bold text-[#091f75] hover:underline cursor-pointer">
-                      Alterar senha
-                    </button>
-                  </div>
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wide mb-1">
-                      Sessões ativas
-                    </span>
-                    <span className="text-xs font-semibold text-slate-700">
-                      Este dispositivo está conectado
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 pt-1">
-                    Ainda sem lógica de troca de senha implementada — me avise
-                    se quiser que eu conecte com o Supabase Auth.
+                    Segurança da Conta
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Gerencie suas credenciais de acesso e redefinição de senha.
                   </p>
                 </div>
-              </div>
-            )}
 
-            {secaoAtiva === "acessibilidade" && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-                  <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-[#091f75]">
-                    <Accessibility size={14} />
-                  </span>
-                  Acessibilidade
-                </h3>
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
-                  <div className="w-full">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block tracking-wide mb-0.5">
-                      Condição PCD
-                    </span>
-                    <div className="flex items-center gap-4 mt-1">
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={perfil.pcd}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setPerfil((prev) => ({
-                              ...prev,
-                              pcd: checked,
-                              tipo_deficiencia: checked ? "" : "Nenhuma",
-                            }));
-                          }}
-                          className="accent-[#091f75]"
-                        />
-                        Possuo Deficiência
-                      </label>
-                      {perfil.pcd && (
-                        <input
-                          type="text"
-                          name="tipo_deficiencia"
-                          placeholder="Qual deficiência?"
-                          value={perfil.tipo_deficiencia || ""}
-                          onChange={handleChange}
-                          className="flex-1 bg-white text-xs font-semibold text-slate-700 rounded-lg px-2 py-1.5 border border-slate-200 outline-none"
-                        />
-                      )}
+                <div className="space-y-3">
+                  {/* SEÇÃO ALTERAR SENHA */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 block">
+                          Alterar Senha
+                        </span>
+                        <span className="text-[11px] text-slate-400 block mt-0.5">
+                          Escolha uma senha forte para proteger sua conta.
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => setEditandoBloco(editandoBloco === "pessoais" ? null : "pessoais")}
+                        className="px-3 py-1.5 text-xs font-bold text-[#091f75] bg-blue-50 hover:bg-blue-100 rounded-lg transition-all cursor-pointer border border-blue-100 shrink-0"
+                      >
+                        {editandoBloco === "pessoais" ? "Cancelar" : "Alterar"}
+                      </button>
                     </div>
+
+                    {/* FORMULÁRIO DE TROCA DE SENHA */}
+                    {editandoBloco === "pessoais" && (
+                      <div className="pt-3 border-t border-slate-200/60 space-y-3">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                            Senha Atual
+                          </span>
+                          <input
+                            type="password"
+                            placeholder="Digite sua senha atual"
+                            className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none focus:border-[#091f75]"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                              Nova Senha
+                            </span>
+                            <input
+                              type="password"
+                              placeholder="Nova senha"
+                              className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none focus:border-[#091f75]"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                              Confirmar Nova Senha
+                            </span>
+                            <input
+                              type="password"
+                              placeholder="Repita a nova senha"
+                              className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none focus:border-[#091f75]"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => alert("Função para integrar ao Supabase Auth")}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-[#091f75] hover:bg-[#0f35a0] text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer active:scale-95"
+                        >
+                          <Save size={14} />
+                          Salvar Nova Senha
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SEÇÃO ESQUECI MINHA SENHA / RECUPERAÇÃO */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        Esqueceu sua senha?
+                      </span>
+                      <span className="text-[11px] text-slate-400 block mt-0.5">
+                        Enviaremos um link de redefinição para o e-mail: <strong className="text-slate-600">{perfil.email}</strong>
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        if (!perfil.email) return alert("E-mail não encontrado.");
+                        const { error } = await supabase.auth.resetPasswordForEmail(perfil.email);
+                        if (error) alert("Erro ao enviar e-mail: " + error.message);
+                        else alert("E-mail de redefinição enviado com sucesso!");
+                      }}
+                      className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 rounded-lg transition-all cursor-pointer border border-slate-200 shrink-0"
+                    >
+                      Enviar Link
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => salvarDados("endereco")}
-                  className="mt-3 flex items-center gap-2 text-xs font-bold text-[#091f75] hover:underline cursor-pointer"
-                >
-                  {carregando ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Save size={14} />
-                  )}
-                  Salvar
-                </button>
               </div>
             )}
           </div>

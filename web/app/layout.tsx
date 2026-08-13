@@ -30,8 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body className="overflow-hidden">
-        <NavbarWrapper />
+      <body className="overflow-x-hidden">
+        <div className="mb-15">
+          <NavbarWrapper />
+        </div>
         <main>{children}</main>
       </body>
     </html>
