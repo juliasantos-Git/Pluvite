@@ -39,9 +39,7 @@ const scrollTo = (id: string) => {
 export default function Home() {
   return (
     <div className="fixed h-screen w-full overflow-y-auto bg-slate pt-12 font-sans antialiased text-slate-800">
-      <main>
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
-        {/* Reduzido pt-24 para pt-12 e pb-28 para pb-20 para subir o conteúdo */}
         <section
           id="hero"
           className="max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center gap-10"
@@ -121,29 +119,12 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Stats row - Agora com bordas coloridas de acordo com o status */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
                 {[
-                  {
-                    label: "Chamados",
-                    value: "6",
-                    bg: "bg-[#e8000e]",
-                  },
-                  {
-                    label: "Críticos",
-                    value: "3",
-                    bg: "bg-[#1e0972]",
-                  },
-                  {
-                    label: "Andamento",
-                    value: "2",
-                    bg: "bg-[#f18200]",
-                  },
-                  {
-                    label: "Concluídos",
-                    value: "0",
-                    bg: "bg-[#006b26]",
-                  },
+                  { label: "Chamados", value: "6", bg: "bg-[#e8000e]" },
+                  { label: "Críticos", value: "3", bg: "bg-[#1e0972]" },
+                  { label: "Andamento", value: "2", bg: "bg-[#f18200]" },
+                  { label: "Concluídos", value: "0", bg: "bg-[#006b26]" },
                 ].map((s) => (
                   <div
                     key={s.label}
@@ -159,7 +140,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Mini chart */}
               <div>
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   Ocorrências por Município
@@ -237,14 +217,7 @@ export default function Home() {
                 iconColor: "text-[#00b277]",
               },
             ].map(
-              ({
-                icon: Icon,
-                title,
-                desc,
-                bgColor,
-                hoverBorder,
-                iconColor,
-              }) => (
+              ({ icon: Icon, title, desc, bgColor, hoverBorder, iconColor }) => (
                 <div
                   key={title}
                   style={{ backgroundColor: bgColor }}
@@ -266,11 +239,7 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── COMUNICAÇÃO ───────────────────────────────────────────────────── */}
-        {/* Reduzido pt-24 para pt-10 para aproximar o conteúdo da linha divisória */}
-        <section
-          id="comunicacao"
-          className="max-w-6xl mx-auto px-6 pt-10 pb-24"
-        >
+        <section id="comunicacao" className="max-w-6xl mx-auto px-6 pt-10 pb-24">
           <span className="text-sm font-bold text-[#2C4A6F] uppercase tracking-widest">
             Comunicação
           </span>
@@ -283,7 +252,6 @@ export default function Home() {
             naturais.
           </p>
 
-          {/* 3 pilares */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-12">
             {[
               {
@@ -320,7 +288,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Fluxo de comunicação */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 mb-10 shadow-sm">
             <h3 className="text-base font-bold text-slate-900 mb-8">
               Fluxo de Comunicação
@@ -367,7 +334,6 @@ export default function Home() {
                   key={i}
                   className="flex flex-col items-center text-center gap-3 relative"
                 >
-                  {/* Fundo do ícone colorido adaptado */}
                   <div
                     className={`w-11 h-11 border border-slate-300 ${bgColor} rounded-xl flex items-center justify-center`}
                   >
@@ -390,7 +356,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Municípios */}
           <div className="border border-slate-200 bg-white rounded-2xl p-8 shadow-sm">
             <div className="flex items-center justify-between mb-7">
               <h3 className="text-base font-bold text-slate-900">
@@ -450,7 +415,6 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── CATEGORIZAÇÃO ─────────────────────────────────────────────────── */}
-        {/* Reduzido py-24 para pt-10 e pb-24 para subir os elementos em direção à linha */}
         <section id="riscos" className="max-w-6xl mx-auto px-6 pt-10 pb-24">
           <span className="text-sm font-bold text-[#2C4A6F] uppercase tracking-widest">
             Categorização
@@ -463,26 +427,25 @@ export default function Home() {
             classificar cada região em quatro categorias.
           </p>
 
-          {/* 4 níveis - Ajustados para cores bem vivas e bordas completas no mesmo padrão */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
             {[
               {
-                bg: "bg-[#7c3aed]", // Roxo bem vivo
+                bg: "bg-[#7c3aed]",
                 title: "Alerta Máximo",
                 desc: "Inundações iminentes ou deslizamentos detectados.",
               },
               {
-                bg: "bg-[#e8000e]", // Vermelho bem vivo
+                bg: "bg-[#e8000e]",
                 title: "Estado de Alerta",
                 desc: "Índice de chuva crítico acumulado.",
               },
               {
-                bg: "bg-[#e47c00]", // Laranja bem vivo
+                bg: "bg-[#e47c00]",
                 title: "Atenção Crítica",
                 desc: "Previsão de tempestades severas na região.",
               },
               {
-                bg: "bg-[#008d17]", // Verde bem vivo
+                bg: "bg-[#008d17]",
                 title: "Zona Segura",
                 desc: "Condições estáveis e normais.",
               },
@@ -501,9 +464,8 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Impactos Monitorados */}
           <div
-            id="riscos"
+            id="impactos-monitorados"
             className="border border-slate-200 bg-white rounded-2xl p-8 mb-14 shadow-sm select-none"
           >
             <h3 className="text-base font-bold text-slate-900 mb-8">
@@ -573,7 +535,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-10 border-t border-slate-300 text-center">
             {[
               { value: "39", label: "Municípios Monitorados" },
@@ -596,11 +557,9 @@ export default function Home() {
         {/* ── EMERGÊNCIA ────────────────────────────────────────────────────── */}
         <div id="emergencia" className="border-t border-slate-300" />
 
-        {/* Reduzido py-24 para pt-10 e pb-24 para subir os elementos em direção à linha */}
         <section className="max-w-6xl mx-auto px-6 pt-10 pb-24">
           <div className="flex items-start gap-5 mb-10">
             <div className="w-12 h-12 border border-slate-300 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-              {/* Ícone com vermelho de emergência bem vivo */}
               <img src="/telefone.png" alt="Telefone" width={20} height={20} />
             </div>
             <div>
@@ -618,24 +577,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Números com bordas e cores bem vivas */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
             {[
-              {
-                label: "Defesa Civil",
-                numero: "199",
-                bg: "bg-[#00b277]",
-              }, // Verde vivo
-              {
-                label: "Bombeiros",
-                numero: "193",
-                bg: "bg-[#e8000e]",
-              }, // Vermelho vivo
-              {
-                label: "SAMU",
-                numero: "192",
-                bg: "bg-[#2563eb]",
-              }, // Azul vivo
+              { label: "Defesa Civil", numero: "199", bg: "bg-[#00b277]" },
+              { label: "Bombeiros", numero: "193", bg: "bg-[#e8000e]" },
+              { label: "SAMU", numero: "192", bg: "bg-[#2563eb]" },
             ].map(({ label, numero, bg }) => (
               <div
                 key={label}
@@ -649,7 +595,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Instruções */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
               {
@@ -699,7 +644,6 @@ export default function Home() {
                       key={item}
                       className="text-sm text-slate-800 flex gap-2.5 font-bold"
                     >
-                      {/* Substituído o traço antigo por um "check" dinâmico com cor mais viva */}
                       <span className={`${bulletColor} mt-0.5`}>✓</span>
                       {item}
                     </li>
@@ -713,13 +657,11 @@ export default function Home() {
         <div className="border-t border-slate-300" />
 
         {/* ── APP ────────────────────────────────────── */}
-        {/* Alterado de mb-16 para mb-32 para criar um gap amplo e limpo até o footer */}
         <section
           id="app"
           className="max-w-6xl mx-auto px-6 py-12 bg-gradient-to-b from-transparent to-slate-50/50 rounded-3xl mb-17"
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Bloco de Textos, Recursos e Downloads */}
             <div className="lg:col-span-7 flex flex-col justify-start w-full">
               <span className="text-sm font-bold text-[#0d43af] uppercase tracking-widest bg-[#0d43af]/10 px-3 py-1.5 rounded-full w-fit">
                 Tecnologia na sua Mão
@@ -733,7 +675,6 @@ export default function Home() {
                 dia.
               </p>
 
-              {/* Lista de Recursos Detalhados */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 w-full">
                 {[
                   {
@@ -742,16 +683,12 @@ export default function Home() {
                     desc: "Autenticação simples integrada às suas redes sociais favoritas para um login imediato.",
                   },
                   {
-                    icon: (
-                      <ShieldCheck className="text-emerald-600" size={22} />
-                    ),
+                    icon: <ShieldCheck className="text-emerald-600" size={22} />,
                     title: "Cadastro Seguro",
                     desc: "Ambiente protegido para criação de perfis pessoais ou credenciais institucionais validadas.",
                   },
                   {
-                    icon: (
-                      <CloudLightning className="text-amber-500" size={22} />
-                    ),
+                    icon: <CloudLightning className="text-amber-500" size={22} />,
                     title: "Painel de Clima",
                     desc: "Acompanhe as condições meteorológicas locais e receba alertas críticos em tempo real.",
                   },
@@ -780,7 +717,6 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Botões de Download */}
               <div className="flex flex-wrap items-center gap-4 mt-6 pt-4 border-t border-slate-300 w-full">
                 <button className="flex items-center gap-3 bg-[#0f35a0] hover:bg-[#091f75] text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-colors cursor-pointer shadow-md active:scale-95">
                   <span className="font-medium">Disponível no</span>
@@ -796,7 +732,6 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* QR Code */}
               <div className="mt-6 flex items-center gap-5 select-none">
                 <div className="w-[200px] h-[200px] bg-white border border-zinc-200 shadow-[1px_1px_5px_0px_rgba(9,28,75,0.2)] rounded-xl overflow-hidden flex-shrink-0">
                   <img
@@ -820,7 +755,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Exibição dos Mockups */}
             <div className="lg:col-span-5 flex justify-center items-center relative w-full">
               <div className="absolute w-80 h-80 bg-[#0d43af]/5 rounded-full blur-3xl -z-10" />
 
@@ -852,16 +786,13 @@ export default function Home() {
         {/* ── FOOTER ────────────────────────────────────────────────────────── */}
         <footer className="border-t border-slate-800 bg-[#091c4b] px-6 py-8 text-white shadow-inner select-none">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Lado Esquerdo: Identidade Visual Expandida e Contexto Acadêmico */}
             <div className="flex flex-col sm:flex-row items-center gap-4 text-center md:text-left text-xs text-slate-400 font-medium">
               <div className="flex items-center gap-3">
-                {/* Logo aumentada para w-12 h-12 */}
                 <img
                   src="/PluviteIcon.jpg"
                   alt="Logo Pluvite"
                   className="w-12 h-12 rounded-xl object-cover shadow-md flex-shrink-0"
                 />
-                {/* Nome Pluvite aumentado para text-2xl */}
                 <span className="font-black text-white text-2xl tracking-tight">
                   Pluvite
                 </span>
@@ -872,9 +803,7 @@ export default function Home() {
               <p className="italic opacity-80">Projeto Acadêmico</p>
             </div>
 
-            {/* Lado Direito: Localização e Código Aberto (GitHub Ampliado) */}
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-slate-400 font-medium">
-              {/* Localização Focada */}
               <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
                 <img
                   src="/localizacao.png"
@@ -886,39 +815,30 @@ export default function Home() {
                   Vale do Paraíba e Litoral Norte, SP
                 </span>
               </div>
-
-              {/* Link do Repositório do GitHub - Versão Ampliada */}
               <a
                 href="https://github.com/juliasantos-Git/Pluvite"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-5 py-3 rounded-xl border border-white/10 transition-all duration-200 shadow-sm"
                 title="Acessar código-fonte no GitHub"
-              >
-                {/* Ícone substituído por imagem - w-5 h-5 = 20x20px */}
+              />
                 <img
                   src="/github.png"
                   alt="GitHub"
                   className="w-5 h-5"
                   style={{ filter: "brightness(0) invert(1)" }}
                 />
-                {/* Texto aumentado para text-sm */}
                 <span className="font-extrabold text-sm tracking-wider">
                   GitHub
                 </span>
-              </a>
             </div>
-          </div>
-        </footer>
-      </main>
 
       {/* ── BOTÃO SCROLL TO TOP (REDONDO) ────────────────────────── */}
       <button
-        onClick={() => scrollTo("hero")} // Ou adicione o ID do topo da sua página (ex: "home" ou "hero")
+        onClick={() => scrollTo("hero")}
         className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group cursor-pointer"
         title="Voltar ao topo"
       >
-        {/* Ícone de seta para cima substituído por imagem, forçado para branco via filtro CSS */}
         <img
           src="/seta-pra-cima.png"
           alt="Voltar ao topo"
@@ -928,6 +848,8 @@ export default function Home() {
           style={{ filter: "brightness(0) invert(1)" }}
         />
       </button>
+    </div>
+    </footer>
     </div>
   );
 }

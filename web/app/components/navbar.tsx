@@ -1,26 +1,31 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-export default function navbar() {
-  const pathname = usePathname();
-  // Iniciando o estado vazio para nenhum botão começar marcado
-  const [activeAnchor, setActiveAnchor] = useState<string>(""); 
+const navItems = [
+  { anchor: "painel", label: "Chamados" },
+  { anchor: "recursos", label: "Recursos" },
+  { anchor: "comunicacao", label: "Comunicação" },
+  { anchor: "riscos", label: "Categorização" },
+  { anchor: "emergencia", label: "Emergência" },
+  { anchor: "app", label: "Aplicativo" },
+];
 
-  const navItems = [
-    { anchor: "painel", label: "Chamados" },
-    { anchor: "recursos", label: "Recursos" },
-    { anchor: "comunicacao", label: "Comunicação" },
-    { anchor: "riscos", label: "Categorização" },
-    { anchor: "emergencia", label: "Emergência" },
-    { anchor: "app", label: "Aplicativo" },
-  ];
+export default function Navbar() {
+  const [activeAnchor, setActiveAnchor] = useState<string>("");
+  const itemsWrapperRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicator, setIndicator] = useState<{ left: number; width: number; opacity: number }>({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
 
+  // Clique manual (continua funcionando, e ainda faz o scroll suave)
   const handleAnchorClick = (anchor: string) => {
-    setActiveAnchor(anchor); // Só marca o fundo após o clique
+    setActiveAnchor(anchor);
 
     const scrollContainer = document.querySelector(".overflow-y-auto");
     const el = document.getElementById(anchor);
@@ -33,6 +38,74 @@ export default function navbar() {
       el.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // ── Scroll-spy: detecta a seção visível enquanto o usuário rola ──
+  useEffect(() => {
+    const scrollContainer = document.querySelector(".overflow-y-auto");
+    if (!scrollContainer) return;
+
+    const sections = navItems
+      .map(({ anchor }) => document.getElementById(anchor))
+      .filter((el): el is HTMLElement => !!el);
+
+    let rafId: number | null = null;
+
+    const updateActiveSection = () => {
+      rafId = null;
+
+      const containerTop = scrollContainer.getBoundingClientRect().top;
+      // "Linha de gatilho": um pouco abaixo do topo do container (logo abaixo da navbar)
+      const triggerOffset = 100;
+
+      let current = sections[0]?.id ?? "";
+
+      for (const section of sections) {
+        const sectionTop = section.getBoundingClientRect().top - containerTop;
+        if (sectionTop - triggerOffset <= 0) {
+          current = section.id;
+        }
+      }
+
+      setActiveAnchor((prev) => (prev !== current ? current : prev));
+    };
+
+    const onScroll = () => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateActiveSection);
+      }
+    };
+
+    // Define o estado inicial e escuta o scroll
+    updateActiveSection();
+    scrollContainer.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  // ── Indicador deslizante: recalcula posição/largura sempre que o item ativo muda ──
+  useLayoutEffect(() => {
+    const wrapper = itemsWrapperRef.current;
+    const activeBtn = buttonRefs.current[activeAnchor];
+
+    if (!wrapper || !activeBtn) {
+      setIndicator((prev) => ({ ...prev, opacity: 0 }));
+      return;
+    }
+
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+
+    setIndicator({
+      left: btnRect.left - wrapperRect.left,
+      width: btnRect.width,
+      opacity: 1,
+    });
+  }, [activeAnchor]);
 
   return (
     <nav
@@ -51,20 +124,36 @@ export default function navbar() {
       </Link>
 
       <div className="flex items-center gap-2 mr-10">
-        {navItems.map(({ anchor, label }) => {
-          const isActive = activeAnchor === anchor;
-          
-          return (
-            <button
-              key={anchor}
-              onClick={() => handleAnchorClick(anchor)}
-              className={`px-4 py-2 rounded-xl font-medium transition-all duration-150 cursor-pointer text-white
-                ${isActive ? "bg-white/15 shadow-sm font-bold" : "hover:bg-white/10"}`}
-            >
-              {label}
-            </button>
-          );
-        })}
+        {/* Wrapper relativo que recebe o indicador deslizante */}
+        <div ref={itemsWrapperRef} className="relative flex items-center gap-2">
+          {/* Indicador que desliza atrás do botão ativo */}
+          <div
+            className="absolute top-0 h-full bg-white/15 rounded-xl shadow-sm pointer-events-none transition-all duration-300 ease-out"
+            style={{
+              left: indicator.left,
+              width: indicator.width,
+              opacity: indicator.opacity,
+            }}
+          />
+
+          {navItems.map(({ anchor, label }) => {
+            const isActive = activeAnchor === anchor;
+
+            return (
+              <button
+                key={anchor}
+                ref={(el) => {
+                  buttonRefs.current[anchor] = el;
+                }}
+                onClick={() => handleAnchorClick(anchor)}
+                className={`relative z-10 px-4 py-2 rounded-xl font-medium transition-colors duration-150 cursor-pointer text-white
+                  ${isActive ? "font-bold" : "hover:bg-white/10"}`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
         <div className="w-[1px] h-6 bg-white/25 mx-3" />
 
