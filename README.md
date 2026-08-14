@@ -175,6 +175,7 @@ Relatos de:
 * React Leaflet
 * Leaflet
 * Lucide React
+* Concurrently
 
 ---
 
