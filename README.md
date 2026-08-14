@@ -13,7 +13,7 @@ Facilitar a comunicação entre população e prefeitura durante situações de 
 
 ## Como Rodar o Projeto 
 
-### Executando a Plataforma Web
+### 🛜Executando a Plataforma Web
 
 1. Abra o terminal na pasta raiz do repositório e navegue até a pasta `web`:
  ```bash
