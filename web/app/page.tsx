@@ -38,7 +38,7 @@ const scrollTo = (id: string) => {
 
 export default function Home() {
   return (
-    <div className="fixed h-screen w-full overflow-y-auto bg-slate pt-12 font-sans antialiased text-slate-800">
+    <div className="fixed h-screen w-full overflow-y-auto bg-slate pt-12 font-sans antialiased text-slate-800 -mt-10">
       <main>
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
         {/* Reduzido pt-24 para pt-12 e pb-28 para pb-20 para subir o conteúdo */}
@@ -89,7 +89,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="border-t border-slate-300" />
+        <div className="border-t border-slate-300 my-5" />
 
         {/* ── CHAMADOS ────────────────────────────────────────────────────────── */}
         <section id="painel" className="max-w-6xl mx-auto px-6 py-24">
