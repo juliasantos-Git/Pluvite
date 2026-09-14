@@ -1,5 +1,5 @@
 import requests
-API_key = ""
+API_key = "97b41927cc6f5fd03e88a6682c76d6ae"
 cidade = "Taubate"
 link = f"https://api.openweathermap.org/data/2.5/weather?q={cidade}&appid={API_key}&lang=pt_br"
 requisicao = requests.get(link)
