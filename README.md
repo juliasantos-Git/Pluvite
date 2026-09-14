@@ -1,4 +1,4 @@
-# <img src="web/public/Pluvite-png-removebg.png.png" width="29" height="35" style="margin-right:3px;"/>luvite
+# <img src="web/public/Pluvite-png-removebg.png.png" width="25" height="35" style="margin-right:3px;"/>luvite
 
 Pluvite é uma plataforma desenvolvida para monitoramento de riscos climáticos, comunicação de alertas e participação cidadã durante eventos relacionados a desastres naturais.
 O sistema permite que cidadãos acompanhem condições meteorológicas, recebam alertas em tempo real e reportem problemas de infraestrutura urbana, enquanto órgãos públicos podem monitorar ocorrências e gerenciar ações de resposta.
@@ -13,7 +13,7 @@ Facilitar a comunicação entre população e prefeitura durante situações de 
 
 ## Como Rodar o Projeto 
 
-### Executando a Plataforma Web
+### 🛜Executando a Plataforma Web
 
 1. Abra o terminal na pasta raiz do repositório e navegue até a pasta `web`:
  ```bash
@@ -175,6 +175,7 @@ Relatos de:
 * React Leaflet
 * Leaflet
 * Lucide React
+* Concurrently
 
 ---
 
