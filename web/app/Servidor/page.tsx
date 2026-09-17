@@ -10,6 +10,8 @@ import {
   Cell,
   PieChart,
   Pie,
+  AreaChart,
+  Area,
 } from "recharts";
 import {
   Layers,
@@ -20,7 +22,13 @@ import {
   Navigation,
   Clock,
   History,
+  LayoutGrid,
+  ClipboardList,
+  MapPinned,
+  Percent,
+  TrendingUp,
 } from "lucide-react";
+import Navbar3 from "../components/sidebar";
 
 const listaMunicipios = [
   "Aparecida",
@@ -69,7 +77,60 @@ const CORES_PRIORIDADE: Record<string, string> = {
   "Zona Segura": "#0a9667",
 };
 
-export default function PainelAdministrativo() {
+type Aba = "visao" | "ocorrencias";
+
+// Anel de progresso com o valor centralizado — estilo usado nas seções de
+// percentual (Status dos Chamados, Taxa de Conclusão).
+function AnelProgresso({
+  label,
+  valor,
+  cor,
+}: {
+  label: string;
+  valor: number;
+  cor: string;
+}) {
+  const dados = [
+    { name: "valor", value: valor },
+    { name: "resto", value: Math.max(0, 100 - valor) },
+  ];
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={dados}
+              dataKey="value"
+              cx="50%"
+              cy="50%"
+              innerRadius="72%"
+              outerRadius="100%"
+              startAngle={90}
+              endAngle={-270}
+              stroke="none"
+            >
+              <Cell fill={cor} />
+              <Cell fill="#eef1f6" />
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-lg sm:text-xl font-black text-slate-900">
+            {valor}%
+          </span>
+        </div>
+      </div>
+      <p className="text-[11px] font-bold text-slate-600 text-center leading-tight">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+export default function PainelServidor() {
+  const [abaAtiva, setAbaAtiva] = useState<Aba>("visao");
   const [municipioFiltro, setMunicipioFiltro] = useState("Todos os Municípios");
   const [prioridadeFiltro, setPrioridadeFiltro] = useState(
     "Todas as Prioridades",
@@ -77,6 +138,14 @@ export default function PainelAdministrativo() {
   const [chamados, setChamados] = useState<any[]>([]);
   const [historicoLogs, setHistoricoLogs] = useState<any[]>([]);
 
+  // Estado da sidebar levantado pra cá, pra que o padding do conteúdo
+  // reaja quando ela expande/recolhe (em vez de a sidebar ficar por cima).
+  const [sidebarExpandida, setSidebarExpandida] = useState(false);
+
+  // ────────────────────────────────────────────────────────────────────────
+  // A partir daqui até o fechamento do useEffect abaixo, a lógica de busca,
+  // sincronização e despacho é a mesma da versão original — não foi alterada.
+  // ────────────────────────────────────────────────────────────────────────
   const calcularTempo = (criadoEm: string) => {
     if (!criadoEm) return "Agora mesmo";
     const diffMin = Math.floor(
@@ -122,6 +191,7 @@ export default function PainelAdministrativo() {
                 alerta.usuario || alerta.cidadao?.nome_completo || "Cidadão",
               endereco: alerta.endereco,
               tempo: calcularTempo(alerta.criado_em),
+              criadoEm: alerta.criado_em,
               descricao: alerta.descricao,
               statusAtual: statusTratado,
             };
@@ -215,6 +285,7 @@ export default function PainelAdministrativo() {
       "text-emerald-500",
     );
   };
+  // ──────────────────────────── fim da lógica original ────────────────────
 
   const chamadosFiltrados = useMemo(() => {
     return chamados.filter((chamado) => {
@@ -237,6 +308,7 @@ export default function PainelAdministrativo() {
       aguardando = 0,
       visualizados = 0;
     const contagemMunicipios: Record<string, number> = {};
+    const contagemTipos: Record<string, number> = {};
 
     chamadosFiltrados.forEach((c) => {
       if (c.statusAtual !== "Concluído") ativos++;
@@ -251,6 +323,7 @@ export default function PainelAdministrativo() {
       if (c.statusAtual === "Visualizado") visualizados++;
       contagemMunicipios[c.municipio] =
         (contagemMunicipios[c.municipio] || 0) + 1;
+      contagemTipos[c.tipo] = (contagemTipos[c.tipo] || 0) + 1;
     });
 
     const dadosBarras = Object.keys(contagemMunicipios).map((muni) => {
@@ -261,6 +334,11 @@ export default function PainelAdministrativo() {
         color: amostra ? CORES_PRIORIDADE[amostra.prioridade] : "#64748b",
       };
     });
+
+    const dadosPorTipo = Object.keys(contagemTipos)
+      .map((tipo) => ({ name: tipo, total: contagemTipos[tipo] }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 6);
 
     const pctVis =
       totalVisiveis > 0 ? Math.round((visualizados / totalVisiveis) * 100) : 0;
@@ -278,356 +356,504 @@ export default function PainelAdministrativo() {
       { name: "Em Andamento", value: pctAnd, color: "#f59e0b" },
     ];
 
+    const municipiosAfetados = Object.keys(contagemMunicipios).length;
+    const taxaConclusao = pctCon;
+
     return {
       ativos,
       criticos,
       emAndamento,
       concluidos,
       dadosBarras,
+      dadosPorTipo,
       dadosPizza,
+      municipiosAfetados,
+      taxaConclusao,
     };
   }, [chamadosFiltrados]);
 
-  return (
-    <div className="h-screen w-[calc(100vw-64px)] p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
-      <div className="pt-8 mb-8">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-          Painel Administrativo
-        </h1>
-        <p className="text-slate-500 text-sm font-medium mt-1">
-          Gerencie ocorrências e despache equipes em tempo real
-        </p>
-      </div>
+  // Tendência dos últimos 7 dias, a partir do histórico de ações operacionais.
+  const tendencia7dias = useMemo(() => {
+    const dias: { chave: string; label: string; total: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const data = new Date();
+      data.setDate(data.getDate() - i);
+      const chave = data.toISOString().slice(0, 10);
+      const label = data.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+      dias.push({ chave, label, total: 0 });
+    }
+    historicoLogs.forEach((log) => {
+      if (!log.criado_at) return;
+      const chave = new Date(log.criado_at).toISOString().slice(0, 10);
+      const dia = dias.find((d) => d.chave === chave);
+      if (dia) dia.total += 1;
+    });
+    return dias;
+  }, [historicoLogs]);
 
-      {/* Grid de Cards de Métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-blue-600 rounded-2xl p-6 text-white flex flex-col justify-between h-40 shadow-sm">
-          <Layers className="w-7 h-7 opacity-90" />
+  const abas: { id: Aba; label: string; icon: any }[] = [
+    { id: "visao", label: "Visão Geral", icon: LayoutGrid },
+    { id: "ocorrencias", label: "Ocorrências", icon: ClipboardList },
+  ];
+
+  return (
+    <div className="min-h-screen -mt-15 w-full font-sans text-slate-800 bg-[#fbfcfe]">
+      <Navbar3 expandida={sidebarExpandida} onToggle={setSidebarExpandida} />
+
+      {/* O padding-left agora acompanha o estado da sidebar (84px recolhida,
+          256px expandida = w-64), então o conteúdo é empurrado em vez de
+          ficar coberto quando ela expande. */}
+      <div
+        className={`pt-8 pr-6 md:pr-10 pb-16 transition-all duration-300 ease-in-out ${
+          sidebarExpandida ? "pl-64" : "pl-[84px]"
+        }`}
+      >
+      <div className="max-w-7xl mx-auto px-6 md:px-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-4xl font-black mb-1">{metricas.ativos}</h2>
-            <p className="text-xs font-semibold opacity-90">Chamados Ativos</p>
-          </div>
-        </div>
-        <div className="bg-red-600 rounded-2xl p-6 text-white flex flex-col justify-between h-40 shadow-sm">
-          <AlertTriangle className="w-7 h-7 opacity-90" />
-          <div>
-            <h2 className="text-4xl font-black mb-1">{metricas.criticos}</h2>
-            <p className="text-xs font-semibold opacity-90">
-              Ocorrências Críticas
+            <span className="text-xs font-bold text-[#2C4A6F] uppercase tracking-widest">
+              Painel da Prefeitura
+            </span>
+            <h1 className="text-4xl font-extrabold text-slate-950 tracking-tight mt-1">
+              Painel Administrativo
+            </h1>
+            <p className="text-slate-500 text-sm font-medium mt-1">
+              Acompanhe ocorrências, tendências e despache equipes em tempo real
             </p>
           </div>
-        </div>
-        <div className="bg-amber-500 rounded-2xl p-6 text-white flex flex-col justify-between h-40 shadow-sm">
-          <Wrench className="w-7 h-7 opacity-90" />
-          <div>
-            <h2 className="text-4xl font-black mb-1">{metricas.emAndamento}</h2>
-            <p className="text-xs font-semibold opacity-90">Em Andamento</p>
-          </div>
-        </div>
-        <div className="bg-emerald-700 rounded-2xl p-6 text-white flex flex-col justify-between h-40 shadow-sm">
-          <CheckCircle className="w-7 h-7 opacity-90" />
-          <div>
-            <h2 className="text-4xl font-black mb-1">{metricas.concluidos}</h2>
-            <p className="text-xs font-semibold opacity-90">Concluídos</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Seção de Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="font-bold text-slate-800 text-base mb-6">
-            Ocorrências por Município
-          </h3>
-          <div className="h-64 w-full">
-            {metricas.dadosBarras.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">
-                Nenhum dado para exibir
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={metricas.dadosBarras}
-                  margin={{ top: 10, right: 10, left: -25, bottom: 30 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#f1f5f9"
-                  />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fill: "#64748b", fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                    interval={0}
-                    angle={-25}
-                    textAnchor="end"
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Bar dataKey="total" radius={[4, 4, 0, 0]} maxBarSize={35}>
-                    {metricas.dadosBarras.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <h3 className="font-bold text-slate-800 text-base mb-4">
-            Status dos Chamados (%)
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 items-center h-full gap-4">
-            <div className="space-y-4 text-xs hidden sm:block">
-              <p className="text-blue-500 font-bold">
-                Visualizado: {metricas.dadosPizza[0].value}%
-              </p>
-              <p className="text-amber-500 font-bold">
-                Em Andamento: {metricas.dadosPizza[3].value}%
-              </p>
-            </div>
-            <div className="h-48 w-full flex justify-center items-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={metricas.dadosPizza}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={0}
-                    outerRadius={70}
-                    paddingAngle={1}
-                    dataKey="value"
-                  >
-                    {metricas.dadosPizza.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.color}
-                        stroke="#fff"
-                        strokeWidth={2}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-4 text-xs hidden sm:block text-right">
-              <p className="text-slate-400 font-bold">
-                Aguardando: {metricas.dadosPizza[1].value}%
-              </p>
-              <p className="text-emerald-500 font-bold">
-                Concluído: {metricas.dadosPizza[2].value}%
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Histórico de Ações Operacionais */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-8">
-        <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-          <History className="w-5 h-5 text-slate-500" />
-          <h3 className="font-bold text-slate-800 text-base">
-            Histórico de Ações Operacionais
-          </h3>
-        </div>
-        <div className="max-h-40 overflow-y-auto space-y-3 pr-2">
-          {historicoLogs.length === 0 ? (
-            <div className="text-xs text-slate-400 py-2">
-              Nenhuma ação operacional registrada ainda.
-            </div>
-          ) : (
-            historicoLogs.map((log) => (
-              <div
-                key={log.id}
-                className="flex justify-between items-center text-xs bg-slate-50 p-3 rounded-xl border border-slate-100"
+          {/* Menu de abas */}
+          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm w-fit">
+            {abas.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setAbaAtiva(id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer
+                  ${abaAtiva === id
+                    ? "bg-[#0d43af] text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-50"
+                  }`}
               >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`font-black uppercase tracking-wider ${log.cor_acao || "text-blue-500"}`}
-                  >
-                    • REGISTRO
-                  </span>
-                  <span className="text-slate-400 font-bold">
-                    ({log.cidade})
-                  </span>
-                  <p className="text-slate-600 font-semibold">{log.acao}</p>
-                </div>
-                <div className="flex items-center gap-1 text-slate-400 font-bold shrink-0">
-                  <Clock size={12} />
-                  <span>
-                    {log.criado_at
-                      ? new Date(log.criado_at).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                      : "--:--"}
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Filtros de Seleção */}
-      <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200 mb-6">
-        <div className="flex-1 max-w-xs relative">
-          <select
-            value={municipioFiltro}
-            onChange={(e) => setMunicipioFiltro(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
-          >
-            <option value="Todos os Municípios">Todos os Municípios</option>
-            {listaMunicipios.map((cidade) => (
-              <option key={cidade} value={cidade}>
-                {cidade}
-              </option>
+                <Icon size={15} />
+                {label}
+              </button>
             ))}
-          </select>
-          <span className="absolute right-4 top-3.5 text-[9px] text-slate-400 pointer-events-none">
-            ▼
-          </span>
-        </div>
-        <div className="flex-1 max-w-xs relative">
-          <select
-            value={prioridadeFiltro}
-            onChange={(e) => setPrioridadeFiltro(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
-          >
-            <option value="Todas as Prioridades">Todas as Prioridades</option>
-            <option value="Alerta Máximo">Alerta Máximo</option>
-            <option value="Estado de Alerta">Estado de Alerta</option>
-            <option value="Atenção Crítica">Atenção Crítica</option>
-            <option value="Zona Segura">Zona Segura</option>
-          </select>
-          <span className="absolute right-4 top-3.5 text-[9px] text-slate-400 pointer-events-none">
-            ▼
-          </span>
-        </div>
-      </div>
-
-      {/* Lista Dinâmica de Ocorrências */}
-      <div className="space-y-4">
-        {chamadosFiltrados.length === 0 ? (
-          <div className="bg-white rounded-2xl p-10 border border-slate-200 text-center text-slate-400 text-xs font-semibold">
-            Nenhuma ocorrência encontrada para esta combinação de filtros.
           </div>
-        ) : (
-          chamadosFiltrados.map((chamado) => (
-            <div
-              key={chamado.id}
-              className="flex flex-col md:flex-row bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm justify-between items-start md:items-center gap-6"
-            >
-              {/* Lado Esquerdo: Identificação e Textos */}
-              <div className="flex-1 space-y-2 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div
-                    className="p-1.5 rounded-lg text-white shadow-sm"
-                    style={{
-                      backgroundColor:
-                        CORES_PRIORIDADE[chamado.prioridade] || "#94a3b8",
-                    }}
-                  >
-                    <AlertTriangle size={15} />
-                  </div>
-                  <h4 className="font-black text-slate-900 text-sm md:text-base">
-                    {chamado.tipo}
-                  </h4>
-                  <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                    style={{
-                      backgroundColor:
-                        CORES_PRIORIDADE[chamado.prioridade] || "#94a3b8",
-                    }}
-                  >
-                    {chamado.prioridade}
-                  </span>
+        </div>
 
-                  {/* MODIFICAÇÃO SELECIONADA: Exibe agora o município dinâmico recebido do banco de dados */}
-                  <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {chamado.municipio}
-                  </span>
+        {/* Grid de Cards de Métricas — sempre visível, é o resumo do painel */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+          <div className="bg-blue-600 rounded-2xl p-6 text-white flex flex-col justify-between h-36 shadow-sm lg:col-span-1">
+            <Layers className="w-6 h-6 opacity-90" />
+            <div>
+              <h2 className="text-3xl font-black mb-1">{metricas.ativos}</h2>
+              <p className="text-xs font-semibold opacity-90">Ativos</p>
+            </div>
+          </div>
+          <div className="bg-red-600 rounded-2xl p-6 text-white flex flex-col justify-between h-36 shadow-sm lg:col-span-1">
+            <AlertTriangle className="w-6 h-6 opacity-90" />
+            <div>
+              <h2 className="text-3xl font-black mb-1">{metricas.criticos}</h2>
+              <p className="text-xs font-semibold opacity-90">Críticos</p>
+            </div>
+          </div>
+          <div className="bg-amber-500 rounded-2xl p-6 text-white flex flex-col justify-between h-36 shadow-sm lg:col-span-1">
+            <Wrench className="w-6 h-6 opacity-90" />
+            <div>
+              <h2 className="text-3xl font-black mb-1">{metricas.emAndamento}</h2>
+              <p className="text-xs font-semibold opacity-90">Em Andamento</p>
+            </div>
+          </div>
+          <div className="bg-emerald-700 rounded-2xl p-6 text-white flex flex-col justify-between h-36 shadow-sm lg:col-span-1">
+            <CheckCircle className="w-6 h-6 opacity-90" />
+            <div>
+              <h2 className="text-3xl font-black mb-1">{metricas.concluidos}</h2>
+              <p className="text-xs font-semibold opacity-90">Concluídos</p>
+            </div>
+          </div>
+          <div className="bg-[#091c4b] rounded-2xl p-6 text-white flex flex-col justify-between h-36 shadow-sm lg:col-span-1">
+            <MapPinned className="w-6 h-6 opacity-90" />
+            <div>
+              <h2 className="text-3xl font-black mb-1">
+                {metricas.municipiosAfetados}
+              </h2>
+              <p className="text-xs font-semibold opacity-90">Municípios Afetados</p>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-slate-900 flex flex-col justify-between h-36 shadow-sm lg:col-span-1">
+            <Percent className="w-6 h-6 text-emerald-600" />
+            <div>
+              <h2 className="text-3xl font-black mb-1">
+                {metricas.taxaConclusao}%
+              </h2>
+              <p className="text-xs font-semibold text-slate-500">Taxa de Conclusão</p>
+            </div>
+          </div>
+        </div>
+
+        {abaAtiva === "visao" && (
+          <>
+            {/* Linha 1 de gráficos: município + status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-800 text-base mb-6">
+                  Ocorrências por Município
+                </h3>
+                <div className="h-64 w-full">
+                  {metricas.dadosBarras.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">
+                      Nenhum dado para exibir
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={metricas.dadosBarras}
+                        margin={{ top: 10, right: 10, left: -25, bottom: 30 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="#f1f5f9"
+                        />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fill: "#64748b", fontSize: 10 }}
+                          axisLine={false}
+                          tickLine={false}
+                          interval={0}
+                          angle={-25}
+                          textAnchor="end"
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          tick={{ fill: "#64748b", fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Bar dataKey="total" radius={[4, 4, 0, 0]} maxBarSize={35}>
+                          {metricas.dadosBarras.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
-
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 font-semibold items-center">
-                  <span>👤 {chamado.usuario}</span>
-
-                  {/* MODIFICAÇÃO SELECIONADA: Removido o '(municipio)' daqui para não repetir com a tag superior */}
-                  <span>📍 {chamado.endereco}</span>
-
-                  <span>🕒 {chamado.tempo}</span>
-                </div>
-                <p className="text-slate-600 text-xs md:text-sm font-medium pt-1">
-                  {chamado.descricao}
-                </p>
               </div>
 
-              {/* Lado Direito: Botões Operacionais e Status */}
-              <div className="flex flex-col items-stretch md:items-end gap-2 shrink-0 w-full md:w-auto min-w-[170px]">
-                {chamado.statusAtual === "Aguardando" && (
-                  <div className="flex flex-col gap-2 w-full">
-                    <button
-                      onClick={() => handleMarcarComoVisto(chamado.id)}
-                      className="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm"
-                    >
-                      Marcar como Visto
-                    </button>
-                    <button
-                      onClick={() => handleDespacharEquipe(chamado.id)}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
-                    >
-                      <Navigation size={12} className="fill-white" /> Despachar
-                      Equipe
-                    </button>
-                  </div>
-                )}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                <h3 className="font-bold text-slate-800 text-base mb-6">
+                  Status dos Chamados (%)
+                </h3>
+                <div className="flex-1 grid grid-cols-2 gap-y-6 place-items-center">
+                  {metricas.dadosPizza.map((item) => (
+                    <AnelProgresso
+                      key={item.name}
+                      label={item.name}
+                      valor={item.value}
+                      cor={item.color}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
 
-                {chamado.statusAtual === "Visualizado" && (
-                  <div className="flex flex-col gap-2 w-full">
-                    <span className="bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
-                      <Eye size={12} /> Visualizado
-                    </span>
-                    <button
-                      onClick={() => handleDespacharEquipe(chamado.id)}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
+            {/* Linha 2 de gráficos: tendência + tipos de ocorrência */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-6">
+                  <TrendingUp size={16} className="text-[#0d43af]" />
+                  <h3 className="font-bold text-slate-800 text-base">
+                    Tendência de Ocorrências (7 dias)
+                  </h3>
+                </div>
+                <div className="h-56 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={tendencia7dias}
+                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                     >
-                      <Navigation size={12} className="fill-white" /> Despachar
-                      Equipe
-                    </button>
-                  </div>
-                )}
+                      <defs>
+                        <linearGradient id="corTendencia" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#0d43af" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#0d43af" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#f1f5f9"
+                      />
+                      <XAxis
+                        dataKey="label"
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#0d43af"
+                        strokeWidth={2.5}
+                        fill="url(#corTendencia)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
 
-                {chamado.statusAtual === "Em Andamento" && (
-                  <div className="flex flex-col gap-2 w-full">
-                    <span className="bg-amber-50 text-amber-600 border border-amber-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
-                      <Wrench size={12} /> Em Andamento
-                    </span>
-                    <button
-                      onClick={() => handleMarcarConcluido(chamado.id)}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="font-bold text-slate-800 text-base mb-6">
+                  Principais Tipos de Ocorrência
+                </h3>
+                <div className="h-56 w-full">
+                  {metricas.dadosPorTipo.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-xs text-slate-400 font-medium">
+                      Nenhum dado para exibir
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={metricas.dadosPorTipo}
+                        layout="vertical"
+                        margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                      >
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          horizontal={false}
+                          stroke="#f1f5f9"
+                        />
+                        <XAxis
+                          type="number"
+                          allowDecimals={false}
+                          tick={{ fill: "#64748b", fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={110}
+                          tick={{ fill: "#334155", fontSize: 11, fontWeight: 600 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Bar dataKey="total" radius={[0, 4, 4, 0]} maxBarSize={18} fill="#0d43af" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Histórico de Ações Operacionais */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-6">
+              <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+                <History className="w-5 h-5 text-slate-500" />
+                <h3 className="font-bold text-slate-800 text-base">
+                  Histórico de Ações Operacionais
+                </h3>
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-3 pr-2">
+                {historicoLogs.length === 0 ? (
+                  <div className="text-xs text-slate-400 py-2">
+                    Nenhuma ação operacional registrada ainda.
+                  </div>
+                ) : (
+                  historicoLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex justify-between items-center text-xs bg-slate-50 p-3 rounded-xl border border-slate-100"
                     >
-                      <CheckCircle size={12} /> Marcar Concluído
-                    </button>
-                  </div>
-                )}
-
-                {chamado.statusAtual === "Concluído" && (
-                  <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-1 w-full text-center border border-emerald-200">
-                    ✓ Finalizado
-                  </span>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`font-black uppercase tracking-wider ${log.cor_acao || "text-blue-500"}`}
+                        >
+                          • REGISTRO
+                        </span>
+                        <span className="text-slate-400 font-bold">
+                          ({log.cidade})
+                        </span>
+                        <p className="text-slate-600 font-semibold">{log.acao}</p>
+                      </div>
+                      <div className="flex items-center gap-1 text-slate-400 font-bold shrink-0">
+                        <Clock size={12} />
+                        <span>
+                          {log.criado_at
+                            ? new Date(log.criado_at).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            : "--:--"}
+                        </span>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
-          ))
+          </>
         )}
+
+        {abaAtiva === "ocorrencias" && (
+          <>
+            {/* Filtros de Seleção */}
+            <div className="flex flex-col sm:flex-row gap-4 pb-6 mb-6 border-b border-slate-200">
+              <div className="flex-1 max-w-xs relative">
+                <select
+                  value={municipioFiltro}
+                  onChange={(e) => setMunicipioFiltro(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                >
+                  <option value="Todos os Municípios">Todos os Municípios</option>
+                  {listaMunicipios.map((cidade) => (
+                    <option key={cidade} value={cidade}>
+                      {cidade}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute right-4 top-3.5 text-[9px] text-slate-400 pointer-events-none">
+                  ▼
+                </span>
+              </div>
+              <div className="flex-1 max-w-xs relative">
+                <select
+                  value={prioridadeFiltro}
+                  onChange={(e) => setPrioridadeFiltro(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-xs font-bold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                >
+                  <option value="Todas as Prioridades">Todas as Prioridades</option>
+                  <option value="Alerta Máximo">Alerta Máximo</option>
+                  <option value="Estado de Alerta">Estado de Alerta</option>
+                  <option value="Atenção Crítica">Atenção Crítica</option>
+                  <option value="Zona Segura">Zona Segura</option>
+                </select>
+                <span className="absolute right-4 top-3.5 text-[9px] text-slate-400 pointer-events-none">
+                  ▼
+                </span>
+              </div>
+            </div>
+
+            {/* Lista Dinâmica de Ocorrências */}
+            <div className="space-y-4">
+              {chamadosFiltrados.length === 0 ? (
+                <div className="bg-white rounded-2xl p-10 border border-slate-200 text-center text-slate-400 text-xs font-semibold">
+                  Nenhuma ocorrência encontrada para esta combinação de filtros.
+                </div>
+              ) : (
+                chamadosFiltrados.map((chamado) => (
+                  <div
+                    key={chamado.id}
+                    className="flex flex-col md:flex-row bg-white rounded-2xl p-5 md:p-6 border border-slate-200 shadow-sm justify-between items-start md:items-center gap-6"
+                  >
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div
+                          className="p-1.5 rounded-lg text-white shadow-sm"
+                          style={{
+                            backgroundColor:
+                              CORES_PRIORIDADE[chamado.prioridade] || "#94a3b8",
+                          }}
+                        >
+                          <AlertTriangle size={15} />
+                        </div>
+                        <h4 className="font-black text-slate-900 text-sm md:text-base">
+                          {chamado.tipo}
+                        </h4>
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                          style={{
+                            backgroundColor:
+                              CORES_PRIORIDADE[chamado.prioridade] || "#94a3b8",
+                          }}
+                        >
+                          {chamado.prioridade}
+                        </span>
+                        <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {chamado.municipio}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 font-semibold items-center">
+                        <span>👤 {chamado.usuario}</span>
+                        <span>📍 {chamado.endereco}</span>
+                        <span>🕒 {chamado.tempo}</span>
+                      </div>
+                      <p className="text-slate-600 text-xs md:text-sm font-medium pt-1">
+                        {chamado.descricao}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col items-stretch md:items-end gap-2 shrink-0 w-full md:w-auto min-w-[170px]">
+                      {chamado.statusAtual === "Aguardando" && (
+                        <div className="flex flex-col gap-2 w-full">
+                          <button
+                            onClick={() => handleMarcarComoVisto(chamado.id)}
+                            className="w-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm"
+                          >
+                            Marcar como Visto
+                          </button>
+                          <button
+                            onClick={() => handleDespacharEquipe(chamado.id)}
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                          >
+                            <Navigation size={12} className="fill-white" /> Despachar
+                            Equipe
+                          </button>
+                        </div>
+                      )}
+
+                      {chamado.statusAtual === "Visualizado" && (
+                        <div className="flex flex-col gap-2 w-full">
+                          <span className="bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
+                            <Eye size={12} /> Visualizado
+                          </span>
+                          <button
+                            onClick={() => handleDespacharEquipe(chamado.id)}
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                          >
+                            <Navigation size={12} className="fill-white" /> Despachar
+                            Equipe
+                          </button>
+                        </div>
+                      )}
+
+                      {chamado.statusAtual === "Em Andamento" && (
+                        <div className="flex flex-col gap-2 w-full">
+                          <span className="bg-amber-50 text-amber-600 border border-amber-100 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 justify-center">
+                            <Wrench size={12} /> Em Andamento
+                          </span>
+                          <button
+                            onClick={() => handleMarcarConcluido(chamado.id)}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                          >
+                            <CheckCircle size={12} /> Marcar Concluído
+                          </button>
+                        </div>
+                      )}
+
+                      {chamado.statusAtual === "Concluído" && (
+                        <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-1 w-full text-center border border-emerald-200">
+                          ✓ Finalizado
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
+      </div>
       </div>
     </div>
   );

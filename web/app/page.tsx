@@ -39,19 +39,19 @@ export default function Home() {
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
         <section
           id="hero"
-          className="max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center gap-10"
+          className="max-w-5xl mx-auto px-6 pt-8 pb-20 flex flex-col items-center text-center gap-10"
         >
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#ccddff] bg-[#eff5ff] text-slate-700 text-xs font-bold tracking-widest uppercase shadow-sm">
             <Activity size={13} className="text-[#2C4A6F]" />
             Monitoramento do Vale do Paraíba e Litoral Norte
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.1] max-w-3xl">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.1] max-w-3xl -mt-3">
             Sistema de Monitoramento{" "}
             <span className="text-[#0d43af]">de Riscos do Vale do Paraíba</span>
           </h1>
 
-          <p className="text-lg text-slate-800 font-medium max-w-4xl leading-relaxed">
+          <p className="text-lg text-slate-800 font-medium max-w-4xl leading-relaxed -mt-4">
             Desenvolvido para a região do Vale do Paraíba e Litoral Norte, o
             Pluvite é um sistema de monitoramento de desastres naturais. Com o
             objetivo de prevenir enchentes, deslizamentos e outras complicações
@@ -62,7 +62,7 @@ export default function Home() {
             colaborativo para que os moradores relatem incidentes.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-1">
             <Link href="/cadastro-cidadao">
               <button className="bg-[#0d43af] hover:bg-[#0c2b6b] text-white font-bold text-base px-9 py-4 rounded-lg transition-colors flex items-center gap-2 cursor-pointer shadow-md">
                 Iniciar sessão
