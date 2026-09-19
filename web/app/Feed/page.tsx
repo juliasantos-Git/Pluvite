@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+// Ajuste este caminho se você já tem um cliente Supabase em outro arquivo do projeto
+import { supabase } from "@/app/lib/banco";
 import {
     AlertTriangle,
     Wrench,
@@ -19,6 +21,13 @@ import {
     Send,
     CheckCircle,
     ChevronDown,
+    Check,
+    Megaphone,
+    FileText,
+    Camera,
+    Copy,
+    Mail,
+    MessageCircle,
 } from "lucide-react";
 
 interface Comentario {
@@ -41,8 +50,52 @@ const TIPOS_OCORRENCIA = [
 
 type TipoOcorrencia = (typeof TIPOS_OCORRENCIA)[number];
 
+// Os 39 municípios do Vale do Paraíba e Litoral Norte — usados no filtro e na publicação
+const CIDADES = [
+    "Aparecida",
+    "Arapeí",
+    "Areias",
+    "Bananal",
+    "Caçapava",
+    "Cachoeira Paulista",
+    "Campos do Jordão",
+    "Canas",
+    "Caraguatatuba",
+    "Cruzeiro",
+    "Cunha",
+    "Guaratinguetá",
+    "Igaratá",
+    "Ilhabela",
+    "Jacareí",
+    "Jambeiro",
+    "Lagoinha",
+    "Lavrinhas",
+    "Lorena",
+    "Monteiro Lobato",
+    "Natividade da Serra",
+    "Paraibuna",
+    "Pindamonhangaba",
+    "Piquete",
+    "Potim",
+    "Queluz",
+    "Redenção da Serra",
+    "Roseira",
+    "Santa Branca",
+    "Santo Antônio do Pinhal",
+    "São Bento do Sapucaí",
+    "São José do Barreiro",
+    "São José dos Campos",
+    "São Luiz do Paraitinga",
+    "São Sebastião",
+    "Silveiras",
+    "Taubaté",
+    "Tremembé",
+    "Ubatuba",
+] as const;
+
 interface Ocorrencia {
     id: string;
+    autorId: string;
     autor: string;
     iniciais: string;
     endereco: string;
@@ -50,6 +103,7 @@ interface Ocorrencia {
     cidade: string;
     tipo: TipoOcorrencia;
     tempo: string;
+    criadoEm: string;
     status: StatusOcorrencia;
     descricao: string;
     imagemUrl: string | null;
@@ -73,138 +127,249 @@ const normalizar = (texto: string) =>
         .toLowerCase()
         .trim();
 
-// Posts de exemplo pra o feed já nascer com conteúdo variado.
-// Troque as imagens (imagemUrl) pelos arquivos reais quando tiver.
-const OCORRENCIAS_INICIAIS: Ocorrencia[] = [
-    {
-        id: "post-1",
-        autor: "Maria Silva",
-        iniciais: "MS",
-        endereco: "Avenida Armando de Moura, 256",
-        bairro: "Três Marias",
-        cidade: "Taubaté",
-        tipo: "Alagamento",
-        tempo: "há 15 minutos",
-        status: "Em Andamento",
-        descricao:
-            "Ponto de alagamento acentuado próximo ao cruzamento principal. A água cobriu a calçada impossibilitando a travessia de pedestres. Trânsito lento no local.",
-        imagemUrl: "/TresMarias.jpg",
-        curtido: false,
-        curtidas: 12,
-        comentarios: [
-            { id: "c1", autor: "João Pedro", texto: "Mesma coisa aqui na rua de baixo, cuidado!" },
-            { id: "c2", autor: "Ana Costa", texto: "Prefeitura já foi avisada?" },
-        ],
-    },
-    {
-        id: "post-2",
-        autor: "Carlos Eduardo",
-        iniciais: "CE",
-        endereco: "Rua das Palmeiras, 89",
-        bairro: "Cecap",
-        cidade: "Taubaté",
-        tipo: "Árvore caída",
-        tempo: "há 42 minutos",
-        status: "Aguardando",
-        descricao:
-            "Árvore de grande porte caiu sobre a via após a chuva forte de hoje de manhã. Bloqueando totalmente a passagem de carros nos dois sentidos.",
-        imagemUrl: "https://picsum.photos/seed/arvore-cecap/900/700",
-        curtido: false,
-        curtidas: 5,
-        comentarios: [
-            { id: "c3", autor: "Fernanda Lima", texto: "Já faz mais de uma hora, ninguém veio ainda." },
-        ],
-    },
-    {
-        id: "post-3",
-        autor: "Beatriz Rocha",
-        iniciais: "BR",
-        endereco: "Estrada do Barreiro, km 3",
-        bairro: "Jardim Jaraguá",
-        cidade: "Taubaté",
-        tipo: "Deslizamento de terra",
-        tempo: "há 1 hora",
-        status: "Visualizado",
-        descricao:
-            "Pequeno deslizamento de terra na encosta ao lado da estrada. Ainda não atingiu a pista, mas o barranco está bem instável.",
-        imagemUrl: "https://picsum.photos/seed/deslizamento-jaragua/900/700",
-        curtido: true,
-        curtidas: 8,
-        comentarios: [],
-    },
-    {
-        id: "post-4",
-        autor: "Rafael Nogueira",
-        iniciais: "RN",
-        endereco: "Avenida Independência, 1450",
-        bairro: "Independência",
-        cidade: "Taubaté",
-        tipo: "Alagamento",
-        tempo: "há 3 horas",
-        status: "Concluído",
-        descricao:
-            "Alagamento na esquina foi resolvido depois da equipe desobstruir o bueiro. Rua já está passável normalmente.",
-        imagemUrl: "https://picsum.photos/seed/rua-independencia/900/700",
-        curtido: false,
-        curtidas: 3,
-        comentarios: [
-            { id: "c4", autor: "Marcos Vinícius", texto: "Boa, obrigado por avisar!" },
-        ],
-    },
-    {
-        id: "post-5",
-        autor: "Juliana Prado",
-        iniciais: "JP",
-        endereco: "Rua das Acácias, 310",
-        bairro: "Quiririm",
-        cidade: "Taubaté",
-        tipo: "Buraco na via",
-        tempo: "há 5 horas",
-        status: "Aguardando",
-        descricao:
-            "Buraco grande no meio da rua, já causou dano em pelo menos dois carros. Está sem sinalização e piora quando chove.",
-        imagemUrl: "https://picsum.photos/seed/buraco-quiririm/900/700",
-        curtido: false,
-        curtidas: 6,
-        comentarios: [
-            { id: "c5", autor: "Lucas Andrade", texto: "Passei aqui ontem e quase perdi o pneu." },
-        ],
-    },
-    {
-        id: "post-6",
-        autor: "Thiago Mendes",
-        iniciais: "TM",
-        endereco: "Avenida Beira-Mar, 820",
-        bairro: "Centro",
-        cidade: "Ubatuba",
-        tipo: "Alagamento",
-        tempo: "há 6 horas",
-        status: "Visualizado",
-        descricao:
-            "Maré alta somada à chuva deixou a avenida com água na altura do meio-fio. Comércios da região estão com dificuldade de abrir.",
-        imagemUrl: "https://picsum.photos/seed/alagamento-ubatuba/900/700",
-        curtido: false,
-        curtidas: 9,
-        comentarios: [],
-    },
-];
+// Calcula um texto relativo ("há 15 minutos", "há 2 horas"...) a partir do
+// timestamp `criado_em` que vem do Supabase
+const tempoRelativo = (dataIso: string) => {
+    const diffMs = Date.now() - new Date(dataIso).getTime();
+    const minutos = Math.floor(diffMs / 60000);
+    if (minutos < 1) return "Agora mesmo";
+    if (minutos < 60) return `há ${minutos} ${minutos === 1 ? "minuto" : "minutos"}`;
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return `há ${horas} ${horas === 1 ? "hora" : "horas"}`;
+    const dias = Math.floor(horas / 24);
+    return `há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+};
 
-// Campo de select: cantos bem arredondados (o "menu suspenso" pedido) e um chevron próprio,
-// já que o nativo do navegador não segue o border-radius do container.
+// Campo padrão (inputs, textarea e gatilho dos menus suspensos): cantos bem arredondados.
 const CAMPO_CLASSE =
     "w-full bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#0f2a8f] focus:ring-2 focus:ring-[#0f2a8f]/10";
+
+interface OpcaoMenu {
+    valor: string;
+    rotulo: string;
+}
+
+const paraOpcoes = (lista: readonly string[]): OpcaoMenu[] =>
+    lista.map((item) => ({ valor: item, rotulo: item }));
+
+/**
+ * Menu suspenso próprio do Pluvite.
+ * O <select> nativo desenha a lista de opções pelo sistema/navegador (sem como mudar cor, borda
+ * ou arredondamento com CSS), então aqui a lista é montada à mão: fundo azul escuro, borda azul
+ * mais clara e cantos arredondados. Funciona com mouse e teclado (setas, Enter, Espaço, Esc e
+ * digitar a primeira letra pra pular até a cidade — útil na lista grande de municípios).
+ */
+function MenuSuspenso({
+    id,
+    valor,
+    onChange,
+    opcoes,
+    placeholder = "Selecione",
+    icone,
+    negrito = false,
+    className = "",
+}: {
+    id: string;
+    valor: string;
+    onChange: (valor: string) => void;
+    opcoes: OpcaoMenu[];
+    placeholder?: string;
+    icone?: React.ReactNode;
+    negrito?: boolean;
+    className?: string;
+}) {
+    const [aberto, setAberto] = useState(false);
+    const [indiceAtivo, setIndiceAtivo] = useState(-1);
+    const raizRef = useRef<HTMLDivElement>(null);
+    const listaRef = useRef<HTMLUListElement>(null);
+
+    const selecionada = opcoes.find((op) => op.valor === valor);
+
+    // Fecha ao clicar fora do menu
+    useEffect(() => {
+        if (!aberto) return;
+        const aoClicarFora = (e: MouseEvent) => {
+            if (raizRef.current && !raizRef.current.contains(e.target as Node)) {
+                setAberto(false);
+            }
+        };
+        document.addEventListener("mousedown", aoClicarFora);
+        return () => document.removeEventListener("mousedown", aoClicarFora);
+    }, [aberto]);
+
+    // Mantém a opção destacada visível ao navegar com as setas
+    useEffect(() => {
+        if (aberto && indiceAtivo >= 0) {
+            (listaRef.current?.children[indiceAtivo] as HTMLElement | undefined)?.scrollIntoView({
+                block: "nearest",
+            });
+        }
+    }, [indiceAtivo, aberto]);
+
+    const abrir = () => {
+        setIndiceAtivo(Math.max(0, opcoes.findIndex((op) => op.valor === valor)));
+        setAberto(true);
+    };
+
+    const selecionar = (novoValor: string) => {
+        onChange(novoValor);
+        setAberto(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key === "Escape") {
+            if (aberto) {
+                e.stopPropagation();
+                setAberto(false);
+            }
+            return;
+        }
+        if (e.key === "Tab") {
+            setAberto(false);
+            return;
+        }
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            if (!aberto) abrir();
+            else setIndiceAtivo((i) => Math.min(opcoes.length - 1, i + 1));
+            return;
+        }
+        if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (!aberto) abrir();
+            else setIndiceAtivo((i) => Math.max(0, i - 1));
+            return;
+        }
+        if ((e.key === "Enter" || e.key === " ") && aberto) {
+            e.preventDefault();
+            if (indiceAtivo >= 0) selecionar(opcoes[indiceAtivo].valor);
+            return;
+        }
+
+        // Digitar uma letra pula pra próxima opção que começa com ela
+        if (e.key.length === 1 && /\S/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const letra = normalizar(e.key);
+            const base = aberto ? indiceAtivo : opcoes.findIndex((op) => op.valor === valor);
+            for (let passo = 1; passo <= opcoes.length; passo++) {
+                const i = (base + passo + opcoes.length) % opcoes.length;
+                if (normalizar(opcoes[i].rotulo).startsWith(letra)) {
+                    e.preventDefault();
+                    if (!aberto) setAberto(true);
+                    setIndiceAtivo(i);
+                    break;
+                }
+            }
+        }
+    };
+
+    return (
+        <div ref={raizRef} className={`relative ${className}`}>
+            {icone && (
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    {icone}
+                </span>
+            )}
+
+            <button
+                type="button"
+                id={id}
+                role="combobox"
+                aria-haspopup="listbox"
+                aria-expanded={aberto}
+                aria-controls={`${id}-lista`}
+                onClick={() => (aberto ? setAberto(false) : abrir())}
+                onKeyDown={handleKeyDown}
+                className={`${CAMPO_CLASSE} flex items-center justify-between gap-2 text-left cursor-pointer ${icone ? "pl-10" : ""} ${aberto ? "border-[#0f2a8f] ring-2 ring-[#0f2a8f]/10" : ""}`}
+            >
+                <span
+                    className={`truncate ${selecionada ? (negrito ? "font-semibold" : "") : "text-slate-400"}`}
+                >
+                    {selecionada ? selecionada.rotulo : placeholder}
+                </span>
+                <ChevronDown
+                    size={15}
+                    className={`shrink-0 text-slate-400 transition-transform duration-200 ${aberto ? "rotate-180" : ""}`}
+                />
+            </button>
+
+            {aberto && (
+                <ul
+                    ref={listaRef}
+                    id={`${id}-lista`}
+                    role="listbox"
+                    style={{ scrollbarWidth: "thin", scrollbarColor: "#3d5cc9 transparent" }}
+                    className="absolute left-0 right-0 top-full mt-1.5 z-50 max-h-64 overflow-y-auto rounded-2xl border border-[#3d5cc9] bg-[#091f75] p-1.5 shadow-xl shadow-[#091f75]/30"
+                >
+                    {opcoes.map((op, i) => {
+                        const escolhida = op.valor === valor;
+                        const destacada = i === indiceAtivo;
+
+                        return (
+                            <li
+                                key={op.valor}
+                                role="option"
+                                aria-selected={escolhida}
+                                onMouseEnter={() => setIndiceAtivo(i)}
+                                onClick={() => selecionar(op.valor)}
+                                className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer transition-colors ${escolhida
+                                    ? "bg-white/15 text-white font-semibold"
+                                    : destacada
+                                        ? "bg-white/10 text-white"
+                                        : "text-white/85"
+                                    }`}
+                            >
+                                <span className="truncate">{op.rotulo}</span>
+                                {escolhida && <Check size={14} className="shrink-0" />}
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+        </div>
+    );
+}
+
+// Campo com rótulo (e asterisco azul quando obrigatório) usado no modal de publicação
+function CampoModal({
+    htmlFor,
+    rotulo,
+    obrigatorio = false,
+    children,
+}: {
+    htmlFor: string;
+    rotulo: string;
+    obrigatorio?: boolean;
+    children: React.ReactNode;
+}) {
+    return (
+        <div>
+            <label htmlFor={htmlFor} className="block text-xs font-bold text-slate-700 mb-1.5">
+                {rotulo}
+                {obrigatorio && <span className="text-[#0f2a8f] ml-0.5">*</span>}
+            </label>
+            {children}
+        </div>
+    );
+}
 
 export default function FeedPage() {
     const [busca, setBusca] = useState("");
     const [cidade, setCidade] = useState("");
     const [categoriaAtiva, setCategoriaAtiva] = useState("Todas");
 
-    const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>(OCORRENCIAS_INICIAIS);
+    const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
+    const [carregandoFeed, setCarregandoFeed] = useState(true);
+
+    // Usuário logado (Supabase Auth) — null enquanto carrega ou se ninguém estiver logado
+    const [usuarioId, setUsuarioId] = useState<string | null>(null);
+    const [usuarioNome, setUsuarioNome] = useState("Você");
 
     // Modal de nova publicação
     const [modalAberto, setModalAberto] = useState(false);
     const [novaLegenda, setNovaLegenda] = useState("");
-    const [novaImagem, setNovaImagem] = useState<string | null>(null);
+    const [novaImagemPreview, setNovaImagemPreview] = useState<string | null>(null);
+    const [novaImagemArquivo, setNovaImagemArquivo] = useState<File | null>(null);
+    const [publicando, setPublicando] = useState(false);
     const [novoTipo, setNovoTipo] = useState<TipoOcorrencia | "">("");
     const [novaCidade, setNovaCidade] = useState("");
     const [novoBairro, setNovoBairro] = useState("");
@@ -218,8 +383,28 @@ export default function FeedPage() {
     // Id da ocorrência aberta no modal estilo Instagram (null = nenhum aberto)
     const [postoSelecionado, setPostoSelecionado] = useState<string | null>(null);
 
-    const cidades = ["Taubaté", "São José dos Campos", "Ubatuba", "Caraguatatuba", "São Sebastião"];
+    // Id da ocorrência aberta no menu de compartilhamento (null = nenhum aberto)
+    const [compartilhandoId, setCompartilhandoId] = useState<string | null>(null);
+    const [linkCopiado, setLinkCopiado] = useState(false);
+
+    // Se a página foi aberta a partir de um link compartilhado (?ocorrencia=<id>),
+    // abre automaticamente o post correspondente assim que a página carrega.
+    // Roda depois que o feed carrega, já que a ocorrência agora vem do Supabase.
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const params = new URLSearchParams(window.location.search);
+        const idNaUrl = params.get("ocorrencia");
+        if (idNaUrl) {
+            setPostoSelecionado(idNaUrl);
+        }
+    }, []);
+
     const categorias = ["Todas", ...TIPOS_OCORRENCIA];
+
+    // Opções dos menus suspensos
+    const opcoesCidadeFiltro: OpcaoMenu[] = [{ valor: "", rotulo: "Todas as cidades" }, ...paraOpcoes(CIDADES)];
+    const opcoesCidade = paraOpcoes(CIDADES);
+    const opcoesTipo = paraOpcoes(TIPOS_OCORRENCIA);
 
     const gerarIniciais = (nome: string) =>
         nome
@@ -228,6 +413,94 @@ export default function FeedPage() {
             .slice(0, 2)
             .map((p) => p[0]?.toUpperCase())
             .join("");
+
+    // ───── USUÁRIO LOGADO ─────
+    useEffect(() => {
+        const carregarUsuario = async () => {
+            const { data } = await supabase.auth.getUser();
+            const usuario = data.user;
+            if (!usuario) return;
+            setUsuarioId(usuario.id);
+
+            // Ajuste "nome" abaixo se a coluna na sua tabela cidadao tiver outro nome
+            const { data: cidadaoRow } = await supabase
+                .from("cidadao")
+                .select("nome")
+                .eq("id", usuario.id)
+                .single();
+            if (cidadaoRow?.nome) setUsuarioNome(cidadaoRow.nome);
+        };
+        carregarUsuario();
+    }, []);
+
+    // ───── CARREGAR FEED DO SUPABASE ─────
+    const carregarFeed = async () => {
+        setCarregandoFeed(true);
+
+        // Ajuste "nome" abaixo se a coluna na sua tabela cidadao tiver outro nome
+        const { data: linhas, error: erroOcorrencias } = await supabase
+            .from("ocorrencias")
+            .select("*, cidadao(nome)")
+            .order("criado_em", { ascending: false });
+
+        if (erroOcorrencias || !linhas) {
+            console.error(erroOcorrencias);
+            setCarregandoFeed(false);
+            return;
+        }
+
+        const { data: curtidasLinhas } = await supabase.from("curtidas").select("ocorrencia_id, usuario_id");
+        const { data: comentariosLinhas } = await supabase
+            .from("comentarios")
+            .select("id, ocorrencia_id, texto, cidadao(nome)")
+            .order("criado_em", { ascending: true });
+
+        const { data: sessaoAtual } = await supabase.auth.getUser();
+        const idUsuarioAtual = sessaoAtual.user?.id ?? null;
+
+        const ocorrenciasMontadas: Ocorrencia[] = linhas.map((linha: any) => {
+            const curtidasDaOcorrencia = (curtidasLinhas || []).filter(
+                (c: any) => c.ocorrencia_id === linha.id,
+            );
+            const comentariosDaOcorrencia = (comentariosLinhas || [])
+                .filter((c: any) => c.ocorrencia_id === linha.id)
+                .map((c: any) => ({
+                    id: c.id,
+                    autor: c.cidadao?.nome || "Cidadão",
+                    texto: c.texto,
+                }));
+
+            const nomeAutor = linha.cidadao?.nome || "Cidadão";
+
+            return {
+                id: linha.id,
+                autorId: linha.autor_id,
+                autor: nomeAutor,
+                iniciais: gerarIniciais(nomeAutor),
+                endereco: linha.endereco,
+                bairro: linha.bairro,
+                cidade: linha.cidade,
+                tipo: linha.tipo,
+                tempo: tempoRelativo(linha.criado_em),
+                criadoEm: linha.criado_em,
+                status: linha.status,
+                descricao: linha.descricao || "",
+                imagemUrl: linha.imagem_url,
+                curtido: idUsuarioAtual
+                    ? curtidasDaOcorrencia.some((c: any) => c.usuario_id === idUsuarioAtual)
+                    : false,
+                curtidas: curtidasDaOcorrencia.length,
+                comentarios: comentariosDaOcorrencia,
+            };
+        });
+
+        setOcorrencias(ocorrenciasMontadas);
+        setCarregandoFeed(false);
+    };
+
+    useEffect(() => {
+        carregarFeed();
+    }, []);
 
     // ───── FILTROS E BUSCA ─────
     const termoBusca = normalizar(busca);
@@ -255,11 +528,15 @@ export default function FeedPage() {
     const handleSelecionarImagem = (e: React.ChangeEvent<HTMLInputElement>) => {
         const arquivo = e.target.files?.[0];
         if (!arquivo) return;
-        const url = URL.createObjectURL(arquivo);
-        setNovaImagem(url);
+        setNovaImagemArquivo(arquivo);
+        setNovaImagemPreview(URL.createObjectURL(arquivo));
     };
 
     const handleAbrirModal = () => {
+        if (!usuarioId) {
+            alert("Você precisa estar logada para publicar uma ocorrência.");
+            return;
+        }
         // Já sugere a cidade escolhida no filtro, se houver
         setNovaCidade(cidade);
         setModalAberto(true);
@@ -267,7 +544,8 @@ export default function FeedPage() {
 
     const handleFecharModal = () => {
         setNovaLegenda("");
-        setNovaImagem(null);
+        setNovaImagemPreview(null);
+        setNovaImagemArquivo(null);
         setNovoTipo("");
         setNovaCidade("");
         setNovoBairro("");
@@ -275,35 +553,63 @@ export default function FeedPage() {
         setModalAberto(false);
     };
 
-    const formularioValido =
-        novoTipo !== "" &&
-        novaCidade !== "" &&
-        novoBairro.trim() !== "" &&
-        novoEndereco.trim() !== "" &&
-        (novaLegenda.trim() !== "" || novaImagem !== null);
+    // Três etapas do formulário: tipo, local e conteúdo (descrição ou foto)
+    const etapasConcluidas = [
+        novoTipo !== "",
+        novaCidade !== "" && novoBairro.trim() !== "" && novoEndereco.trim() !== "",
+        novaLegenda.trim() !== "" || novaImagemPreview !== null,
+    ].filter(Boolean).length;
 
-    const handlePublicar = () => {
+    const formularioValido = etapasConcluidas === 3;
+
+    const handlePublicar = async () => {
+        if (!usuarioId) {
+            alert("Você precisa estar logada para publicar uma ocorrência.");
+            return;
+        }
         if (!novoTipo || !novaCidade || !novoBairro.trim() || !novoEndereco.trim()) return;
-        if (!novaLegenda.trim() && !novaImagem) return;
+        if (!novaLegenda.trim() && !novaImagemArquivo) return;
 
-        const novaOcorrencia: Ocorrencia = {
-            id: `post-${Date.now()}`,
-            autor: "Você",
-            iniciais: "EU",
-            endereco: novoEndereco.trim(),
-            bairro: novoBairro.trim(),
-            cidade: novaCidade,
+        setPublicando(true);
+
+        let imagemUrlFinal: string | null = null;
+
+        if (novaImagemArquivo) {
+            const nomeArquivo = `${usuarioId}/${Date.now()}-${novaImagemArquivo.name}`;
+            // Ajuste "ocorrencias" abaixo caso o bucket de Storage tenha outro nome
+            const { error: erroUpload } = await supabase.storage
+                .from("ocorrencias")
+                .upload(nomeArquivo, novaImagemArquivo);
+
+            if (erroUpload) {
+                console.error(erroUpload);
+                alert("Não foi possível enviar a foto. Tente novamente.");
+                setPublicando(false);
+                return;
+            }
+
+            const { data: urlPublica } = supabase.storage.from("ocorrencias").getPublicUrl(nomeArquivo);
+            imagemUrlFinal = urlPublica.publicUrl;
+        }
+
+        const { error: erroInsercao } = await supabase.from("ocorrencias").insert({
+            autor_id: usuarioId,
             tipo: novoTipo,
-            tempo: "Agora mesmo",
+            cidade: novaCidade,
+            bairro: novoBairro.trim(),
+            endereco: novoEndereco.trim(),
+            descricao: novaLegenda.trim() || null,
+            imagem_url: imagemUrlFinal,
             status: "Aguardando",
-            descricao: novaLegenda.trim(),
-            imagemUrl: novaImagem,
-            curtido: false,
-            curtidas: 0,
-            comentarios: [],
-        };
+        });
 
-        setOcorrencias((prev) => [novaOcorrencia, ...prev]);
+        setPublicando(false);
+
+        if (erroInsercao) {
+            console.error(erroInsercao);
+            alert("Não foi possível publicar a ocorrência. Tente novamente.");
+            return;
+        }
 
         // Garante que a publicação nova apareça no feed, mesmo com filtros ativos
         setBusca("");
@@ -311,13 +617,20 @@ export default function FeedPage() {
         if (cidade && cidade !== novaCidade) setCidade("");
 
         handleFecharModal();
+        carregarFeed();
     };
 
-    const handleCurtir = (id: string) => {
+    const handleCurtir = async (id: string) => {
+        if (!usuarioId) {
+            alert("Você precisa estar logada para curtir uma ocorrência.");
+            return;
+        }
+
         const ocorrencia = ocorrencias.find((oc) => oc.id === id);
         if (!ocorrencia) return;
         const vaiCurtir = !ocorrencia.curtido;
 
+        // Atualização otimista — muda na tela antes da resposta do banco
         setOcorrencias((prev) =>
             prev.map((oc) =>
                 oc.id === id
@@ -326,30 +639,106 @@ export default function FeedPage() {
             ),
         );
 
-        // Só anima quando está curtindo (não quando remove a curtida)
         if (vaiCurtir) {
             setCurtidaAnimando((prev) => ({ ...prev, [id]: true }));
             setTimeout(() => {
                 setCurtidaAnimando((prev) => ({ ...prev, [id]: false }));
             }, 500);
+
+            const { error } = await supabase.from("curtidas").insert({ ocorrencia_id: id, usuario_id: usuarioId });
+            if (error) console.error(error);
+        } else {
+            const { error } = await supabase
+                .from("curtidas")
+                .delete()
+                .eq("ocorrencia_id", id)
+                .eq("usuario_id", usuarioId);
+            if (error) console.error(error);
         }
     };
 
     const abrirPost = (id: string) => setPostoSelecionado(id);
     const fecharPost = () => setPostoSelecionado(null);
 
-    const handleEnviarComentario = (id: string) => {
+    // ───── COMPARTILHAMENTO ─────
+    // Link "público" da ocorrência (usa a própria URL da página + um parâmetro de identificação)
+    const gerarLinkOcorrencia = (id: string) => {
+        if (typeof window === "undefined") return "";
+        const base = `${window.location.origin}${window.location.pathname}`;
+        return `${base}?ocorrencia=${id}`;
+    };
+
+    const gerarTextoCompartilhamento = (oc: Ocorrencia) =>
+        `${oc.tipo} em ${oc.bairro}, ${oc.cidade} — via Pluvite`;
+
+    // No celular, abre o menu nativo de compartilhamento (o mesmo que apps como YouTube usam).
+    // No desktop (ou se o navegador não suportar), abre o menu próprio com as opções abaixo.
+    const handleCompartilhar = async (id: string) => {
+        const ocorrencia = ocorrencias.find((oc) => oc.id === id);
+        if (!ocorrencia) return;
+        const link = gerarLinkOcorrencia(id);
+        const texto = gerarTextoCompartilhamento(ocorrencia);
+
+        if (typeof navigator !== "undefined" && navigator.share) {
+            try {
+                await navigator.share({ title: "Pluvite", text: texto, url: link });
+                return;
+            } catch {
+                // Se o usuário cancelar o share nativo, não faz nada
+                return;
+            }
+        }
+
+        setLinkCopiado(false);
+        setCompartilhandoId(id);
+    };
+
+    const fecharCompartilhar = () => {
+        setCompartilhandoId(null);
+        setLinkCopiado(false);
+    };
+
+    const handleCopiarLink = async (id: string) => {
+        const link = gerarLinkOcorrencia(id);
+        try {
+            await navigator.clipboard.writeText(link);
+            setLinkCopiado(true);
+            setTimeout(() => setLinkCopiado(false), 2000);
+        } catch {
+            // Navegador sem permissão de clipboard — sem tratamento extra por enquanto
+        }
+    };
+
+    const handleEnviarComentario = async (id: string) => {
+        if (!usuarioId) {
+            alert("Você precisa estar logada para comentar.");
+            return;
+        }
+
         const texto = (comentarioAtual[id] || "").trim();
         if (!texto) return;
 
+        setComentarioAtual((prev) => ({ ...prev, [id]: "" }));
+
+        // Atualização otimista — mostra o comentário antes da resposta do banco
         setOcorrencias((prev) =>
             prev.map((oc) =>
                 oc.id === id
-                    ? { ...oc, comentarios: [...oc.comentarios, { id: `c-${Date.now()}`, autor: "Você", texto }] }
+                    ? { ...oc, comentarios: [...oc.comentarios, { id: `temp-${Date.now()}`, autor: usuarioNome, texto }] }
                     : oc,
             ),
         );
-        setComentarioAtual((prev) => ({ ...prev, [id]: "" }));
+
+        const { error } = await supabase.from("comentarios").insert({
+            ocorrencia_id: id,
+            autor_id: usuarioId,
+            texto,
+        });
+
+        if (error) {
+            console.error(error);
+            alert("Não foi possível enviar o comentário.");
+        }
     };
 
     // Contadores refletem o que está sendo exibido no feed
@@ -488,20 +877,16 @@ export default function FeedPage() {
                 {/* FILTROS DE PESQUISA */}
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4 mb-6">
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative sm:w-56">
-                            <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                            <select
-                                value={cidade}
-                                onChange={(e) => setCidade(e.target.value)}
-                                className={`${CAMPO_CLASSE} appearance-none pl-10 pr-9 font-semibold cursor-pointer`}
-                            >
-                                <option value="">Todas as cidades</option>
-                                {cidades.map((item) => (
-                                    <option key={item} value={item}>{item}</option>
-                                ))}
-                            </select>
-                            <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        </div>
+                        <MenuSuspenso
+                            id="filtro-cidade"
+                            className="sm:w-64"
+                            valor={cidade}
+                            onChange={setCidade}
+                            opcoes={opcoesCidadeFiltro}
+                            placeholder="Todas as cidades"
+                            icone={<MapPin size={16} />}
+                            negrito
+                        />
 
                         <div className="relative flex-1">
                             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -561,7 +946,13 @@ export default function FeedPage() {
                             {ocorrenciasFiltradas.length === 1 ? "ocorrência encontrada" : "ocorrências encontradas"}
                         </p>
 
-                        {ocorrenciasFiltradas.length === 0 && (
+                        {carregandoFeed && (
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
+                                <p className="text-xs text-slate-500 font-semibold">Carregando ocorrências...</p>
+                            </div>
+                        )}
+
+                        {!carregandoFeed && ocorrenciasFiltradas.length === 0 && (
                             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
                                 <div className="p-3 rounded-full bg-slate-100 text-slate-400">
                                     <Search size={22} />
@@ -641,10 +1032,10 @@ export default function FeedPage() {
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={() => handleCurtir(oc.id)}
-                                                className={`relative flex items-center gap-1.5 transition cursor-pointer ${oc.curtido ? "text-[#091f75]" : "hover:text-[#091f75]"}`}
+                                                className={`relative flex items-center gap-1.5 transition cursor-pointer ${oc.curtido ? "text-red-600" : "text-slate-500 hover:text-red-600"}`}
                                             >
                                                 {curtidaAnimando[oc.id] && (
-                                                    <span className="absolute -left-1.5 -top-1.5 w-7 h-7 rounded-full bg-[#091f75]/20 animate-ping pointer-events-none" />
+                                                    <span className="absolute -left-1.5 -top-1.5 w-7 h-7 rounded-full bg-red-500/20 animate-ping pointer-events-none" />
                                                 )}
                                                 <ThumbsUp
                                                     size={15}
@@ -662,7 +1053,10 @@ export default function FeedPage() {
                                             </button>
                                         </div>
 
-                                        <button className="flex items-center gap-1.5 hover:text-[#091f75] transition cursor-pointer">
+                                        <button
+                                            onClick={() => handleCompartilhar(oc.id)}
+                                            className="flex items-center gap-1.5 hover:text-[#091f75] transition cursor-pointer"
+                                        >
                                             <Share2 size={15} />
                                             <span className="hidden sm:inline">Compartilhar</span>
                                         </button>
@@ -870,11 +1264,11 @@ export default function FeedPage() {
                                         <div className="flex items-center gap-4">
                                             <button
                                                 onClick={() => handleCurtir(post.id)}
-                                                className={`relative transition cursor-pointer ${post.curtido ? "text-[#091f75]" : "text-slate-500 hover:text-[#091f75]"}`}
+                                                className={`relative transition cursor-pointer ${post.curtido ? "text-red-600" : "text-slate-500 hover:text-red-600"}`}
                                                 title="Curtir"
                                             >
                                                 {curtidaAnimando[post.id] && (
-                                                    <span className="absolute -left-2 -top-2 w-9 h-9 rounded-full bg-[#091f75]/20 animate-ping pointer-events-none" />
+                                                    <span className="absolute -left-2 -top-2 w-9 h-9 rounded-full bg-red-500/20 animate-ping pointer-events-none" />
                                                 )}
                                                 <ThumbsUp
                                                     size={20}
@@ -883,7 +1277,11 @@ export default function FeedPage() {
                                                 />
                                             </button>
                                             <MessageSquare size={20} className="text-slate-500" />
-                                            <button className="text-slate-500 hover:text-[#091f75] transition cursor-pointer" title="Compartilhar">
+                                            <button
+                                                onClick={() => handleCompartilhar(post.id)}
+                                                className="text-slate-500 hover:text-[#091f75] transition cursor-pointer"
+                                                title="Compartilhar"
+                                            >
                                                 <Share2 size={20} />
                                             </button>
                                         </div>
@@ -926,164 +1324,299 @@ export default function FeedPage() {
                 );
             })()}
 
-            {/* MODAL DE NOVA PUBLICAÇÃO */}
+            {/* MENU DE COMPARTILHAMENTO — link + redes sociais, estilo YouTube/Instagram.
+                Só aparece em telas onde a Web Share API nativa não está disponível (desktop). */}
+            {compartilhandoId && (() => {
+                const oc = ocorrencias.find((o) => o.id === compartilhandoId);
+                if (!oc) return null;
+
+                const link = gerarLinkOcorrencia(oc.id);
+                const texto = gerarTextoCompartilhamento(oc);
+
+                const opcoes = [
+                    {
+                        nome: "WhatsApp",
+                        href: `https://wa.me/?text=${encodeURIComponent(`${texto} ${link}`)}`,
+                        classe: "bg-[#25D366]",
+                        icone: <MessageCircle size={20} className="text-white" fill="white" />,
+                    },
+                    {
+                        nome: "Telegram",
+                        href: `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(texto)}`,
+                        classe: "bg-[#26A5E4]",
+                        icone: <Send size={19} className="text-white" />,
+                    },
+                    {
+                        nome: "Facebook",
+                        href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`,
+                        classe: "bg-[#1877F2]",
+                        icone: <span className="text-white font-black text-base leading-none">f</span>,
+                    },
+                    {
+                        nome: "X",
+                        href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}&text=${encodeURIComponent(texto)}`,
+                        classe: "bg-slate-900",
+                        icone: <span className="text-white font-black text-sm leading-none">X</span>,
+                    },
+                    {
+                        nome: "E-mail",
+                        href: `mailto:?subject=${encodeURIComponent("Ocorrência reportada no Pluvite")}&body=${encodeURIComponent(`${texto}\n\n${link}`)}`,
+                        classe: "bg-slate-500",
+                        icone: <Mail size={19} className="text-white" />,
+                    },
+                ];
+
+                return (
+                    <div
+                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[10003] flex items-end sm:items-center justify-center p-4"
+                        onClick={fecharCompartilhar}
+                    >
+                        <div
+                            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* CABEÇALHO */}
+                            <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-100">
+                                <div className="min-w-0">
+                                    <h2 className="font-bold text-slate-900 text-sm leading-tight">Compartilhar</h2>
+                                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                        {oc.tipo} em {oc.bairro}, {oc.cidade}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={fecharCompartilhar}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer shrink-0"
+                                    title="Fechar"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* OPÇÕES DE REDES SOCIAIS */}
+                            <div className="px-5 pt-5 pb-2">
+                                <div className="grid grid-cols-5 gap-2.5">
+                                    {opcoes.map((op) => (
+                                        <a
+                                            key={op.nome}
+                                            href={op.href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex flex-col items-center gap-1.5 group"
+                                        >
+                                            <span
+                                                className={`w-11 h-11 rounded-full flex items-center justify-center shadow-sm transition group-hover:opacity-90 group-active:scale-95 ${op.classe}`}
+                                            >
+                                                {op.icone}
+                                            </span>
+                                            <span className="text-[10px] font-semibold text-slate-600 text-center leading-tight">
+                                                {op.nome}
+                                            </span>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* LINK COPIÁVEL */}
+                            <div className="px-5 pb-5 pt-3">
+                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-1.5 pl-3.5">
+                                    <span className="flex-1 text-xs text-slate-500 truncate">{link}</span>
+                                    <button
+                                        onClick={() => handleCopiarLink(oc.id)}
+                                        className={`flex items-center gap-1.5 shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer ${linkCopiado
+                                            ? "bg-emerald-50 text-emerald-600"
+                                            : "bg-[#091f75] hover:bg-[#0f2a8f] text-white"
+                                            }`}
+                                    >
+                                        {linkCopiado ? <Check size={14} /> : <Copy size={14} />}
+                                        {linkCopiado ? "Copiado!" : "Copiar"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {/* MODAL DE NOVA PUBLICAÇÃO
+                Largo e em duas colunas (tipo/local à esquerda, descrição/foto à direita) pra caber
+                sem rolagem. Nas telas maiores o corpo não tem overflow, assim as listas dos menus
+                suspensos abrem por cima do modal em vez de criar uma barra de rolagem. */}
             {modalAberto && (
                 <div
                     className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[10001] flex items-center justify-center p-4"
                     onClick={handleFecharModal}
                 >
                     <div
-                        className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+                        className="bg-white rounded-2xl shadow-2xl border border-slate-200 border-t-[3px] border-t-[#091f75] w-full max-w-4xl max-h-[92vh] flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
-                            <h2 className="font-bold text-slate-900 text-sm">Publicar Ocorrência</h2>
-                            <button onClick={handleFecharModal} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                        {/* CABEÇALHO */}
+                        <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-100 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-[#091f75]/[0.08] text-[#091f75] flex items-center justify-center shrink-0">
+                                    <Megaphone size={18} />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-slate-900 text-base leading-tight">Publicar Ocorrência</h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Conte o que está acontecendo e ajude a mapear onde agir primeiro.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleFecharModal}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer shrink-0"
+                                title="Fechar"
+                            >
                                 <X size={18} />
                             </button>
                         </div>
 
-                        <div className="p-5 space-y-4 overflow-y-auto">
-                            {/* TIPO DA OCORRÊNCIA */}
-                            <div>
-                                <label htmlFor="novo-tipo" className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Tipo de ocorrência
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        id="novo-tipo"
-                                        value={novoTipo}
-                                        onChange={(e) => setNovoTipo(e.target.value as TipoOcorrencia | "")}
-                                        className={`${CAMPO_CLASSE} appearance-none pr-9 cursor-pointer`}
-                                    >
-                                        <option value="" disabled>Selecione o tipo</option>
-                                        {TIPOS_OCORRENCIA.map((tipo) => (
-                                            <option key={tipo} value={tipo}>{tipo}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                </div>
-                            </div>
+                        <div className="p-6 overflow-y-auto md:overflow-visible">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
+                                {/* COLUNA ESQUERDA: TIPO E LOCALIZAÇÃO */}
+                                <div className="space-y-4 md:pr-8">
+                                    <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                        <MapPin size={13} className="text-[#091f75]/70" />
+                                        Tipo e localização
+                                    </h3>
 
-                            {/* LOCAL */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label htmlFor="nova-cidade" className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Cidade
-                                    </label>
-                                    <div className="relative">
-                                        <select
+                                    <CampoModal htmlFor="novo-tipo" rotulo="Categoria" obrigatorio>
+                                        <MenuSuspenso
+                                            id="novo-tipo"
+                                            valor={novoTipo}
+                                            onChange={(v) => setNovoTipo(v as TipoOcorrencia | "")}
+                                            opcoes={opcoesTipo}
+                                            placeholder="Selecione o tipo"
+                                        />
+                                    </CampoModal>
+
+                                    <CampoModal htmlFor="nova-cidade" rotulo="Cidade" obrigatorio>
+                                        <MenuSuspenso
                                             id="nova-cidade"
-                                            value={novaCidade}
-                                            onChange={(e) => setNovaCidade(e.target.value)}
-                                            className={`${CAMPO_CLASSE} appearance-none pr-9 cursor-pointer`}
-                                        >
-                                            <option value="" disabled>Selecione a cidade</option>
-                                            {cidades.map((item) => (
-                                                <option key={item} value={item}>{item}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            valor={novaCidade}
+                                            onChange={setNovaCidade}
+                                            opcoes={opcoesCidade}
+                                            placeholder="Selecione a cidade"
+                                        />
+                                    </CampoModal>
+
+                                    <CampoModal htmlFor="novo-bairro" rotulo="Bairro" obrigatorio>
+                                        <input
+                                            id="novo-bairro"
+                                            type="text"
+                                            value={novoBairro}
+                                            onChange={(e) => setNovoBairro(e.target.value)}
+                                            placeholder="Ex: Quiririm"
+                                            className={CAMPO_CLASSE}
+                                        />
+                                    </CampoModal>
+
+                                    <CampoModal htmlFor="novo-endereco" rotulo="Endereço" obrigatorio>
+                                        <div className="relative">
+                                            <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                            <input
+                                                id="novo-endereco"
+                                                type="text"
+                                                value={novoEndereco}
+                                                onChange={(e) => setNovoEndereco(e.target.value)}
+                                                placeholder="Rua e número (ou ponto de referência)"
+                                                className={`${CAMPO_CLASSE} pl-10`}
+                                            />
+                                        </div>
+                                    </CampoModal>
+                                </div>
+
+                                {/* COLUNA DIREITA: DESCRIÇÃO E FOTO */}
+                                <div className="space-y-4 md:pl-8 md:border-l md:border-slate-100">
+                                    <h3 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                        <FileText size={13} className="text-[#091f75]/70" />
+                                        Detalhes
+                                    </h3>
+
+                                    <CampoModal htmlFor="nova-legenda" rotulo="Descrição">
+                                        <textarea
+                                            id="nova-legenda"
+                                            value={novaLegenda}
+                                            onChange={(e) => setNovaLegenda(e.target.value)}
+                                            placeholder="Descreva o que está acontecendo..."
+                                            rows={4}
+                                            className={`${CAMPO_CLASSE} resize-none`}
+                                        />
+                                    </CampoModal>
+
+                                    <input
+                                        ref={inputImagemRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleSelecionarImagem}
+                                        className="hidden"
+                                    />
+
+                                    <div>
+                                        <p className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-1.5">
+                                            <Camera size={13} className="text-slate-400" />
+                                            Foto
+                                            <span className="font-medium text-slate-400">(descrição ou foto — ao menos um)</span>
+                                        </p>
+
+                                        {novaImagemPreview ? (
+                                            <div className="relative w-full h-36 rounded-2xl overflow-hidden border border-slate-200">
+                                                <img src={novaImagemPreview} alt="Prévia" className="w-full h-full object-cover" />
+                                                <button
+                                                    onClick={() => {
+                                                        setNovaImagemPreview(null);
+                                                        setNovaImagemArquivo(null);
+                                                    }}
+                                                    className="absolute top-2 right-2 bg-slate-900/60 hover:bg-slate-900/80 text-white p-1.5 rounded-full cursor-pointer transition"
+                                                    title="Remover foto"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => inputImagemRef.current?.click()}
+                                                className="w-full h-36 flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-slate-200 hover:border-[#091f75]/50 hover:bg-slate-50 rounded-2xl text-slate-400 hover:text-[#091f75] transition cursor-pointer"
+                                            >
+                                                <ImagePlus size={22} />
+                                                <span className="text-xs font-bold">Adicionar foto</span>
+                                                <span className="text-[11px] font-medium text-slate-400">
+                                                    Clique para escolher uma imagem
+                                                </span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
-
-                                <div>
-                                    <label htmlFor="novo-bairro" className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Bairro
-                                    </label>
-                                    <input
-                                        id="novo-bairro"
-                                        type="text"
-                                        value={novoBairro}
-                                        onChange={(e) => setNovoBairro(e.target.value)}
-                                        placeholder="Ex: Quiririm"
-                                        className={CAMPO_CLASSE}
-                                    />
-                                </div>
                             </div>
-
-                            <div>
-                                <label htmlFor="novo-endereco" className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Endereço
-                                </label>
-                                <div className="relative">
-                                    <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                    <input
-                                        id="novo-endereco"
-                                        type="text"
-                                        value={novoEndereco}
-                                        onChange={(e) => setNovoEndereco(e.target.value)}
-                                        placeholder="Rua e número (ou ponto de referência)"
-                                        className={`${CAMPO_CLASSE} pl-10`}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* DESCRIÇÃO */}
-                            <div>
-                                <label htmlFor="nova-legenda" className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Descrição
-                                </label>
-                                <textarea
-                                    id="nova-legenda"
-                                    value={novaLegenda}
-                                    onChange={(e) => setNovaLegenda(e.target.value)}
-                                    placeholder="Descreva o que está acontecendo..."
-                                    rows={3}
-                                    className={`${CAMPO_CLASSE} resize-none`}
-                                />
-                            </div>
-
-                            <input
-                                ref={inputImagemRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleSelecionarImagem}
-                                className="hidden"
-                            />
-
-                            {novaImagem ? (
-                                <div className="relative w-full h-48 rounded-xl overflow-hidden border border-slate-200">
-                                    <img src={novaImagem} alt="Prévia" className="w-full h-full object-cover" />
-                                    <button
-                                        onClick={() => setNovaImagem(null)}
-                                        className="absolute top-2 right-2 bg-slate-900/60 hover:bg-slate-900/80 text-white p-1.5 rounded-full cursor-pointer"
-                                        title="Remover foto"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => inputImagemRef.current?.click()}
-                                    className="w-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-xl py-6 text-slate-400 hover:border-[#091f75] hover:text-[#091f75] transition cursor-pointer"
-                                >
-                                    <ImagePlus size={22} />
-                                    <span className="text-xs font-semibold">Adicionar foto</span>
-                                </button>
-                            )}
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/60 shrink-0">
-                            <p className="text-[11px] text-slate-400 font-medium">
+                        {/* RODAPÉ */}
+                        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/70 rounded-b-2xl shrink-0">
+                            <p
+                                className={`text-[11px] font-semibold flex items-center gap-1.5 ${formularioValido ? "text-[#091f75]" : "text-slate-500"}`}
+                            >
+                                {formularioValido && <CheckCircle size={13} />}
                                 {formularioValido
                                     ? "Tudo certo para publicar."
-                                    : "Informe o tipo, o local e uma descrição ou foto."}
+                                    : `${etapasConcluidas} de 3 etapas: tipo, local e descrição ou foto.`}
                             </p>
-                            <div className="flex items-center gap-3 shrink-0">
+
+                            <div className="flex items-center gap-2 shrink-0">
                                 <button
                                     onClick={handleFecharModal}
-                                    className="text-xs font-bold text-slate-500 hover:text-slate-700 px-4 py-2.5 cursor-pointer"
+                                    className="text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 px-4 py-2.5 rounded-xl transition cursor-pointer"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handlePublicar}
-                                    disabled={!formularioValido}
+                                    disabled={!formularioValido || publicando}
                                     className="flex items-center gap-2 bg-[#091f75] hover:bg-[#0f2a8f] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold px-5 py-2.5 rounded-xl transition cursor-pointer"
                                 >
                                     <Plus size={14} />
-                                    Publicar
+                                    {publicando ? "Publicando..." : "Publicar"}
                                 </button>
                             </div>
                         </div>
