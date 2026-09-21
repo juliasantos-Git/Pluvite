@@ -4,9 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"node app/backend/server.js\"",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "build": "next build --webpack",
+    "start": "next start"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",

@@ -289,7 +289,7 @@ export default function PainelAdministrativo() {
   }, [chamadosFiltrados]);
 
   return (
-    <div className="h-screen overflow-y-auto overflow-x-hidden w-[calc(100vw-64px)] p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
+    <div className="h-screen  w-[calc(100vw-64px)] p-6 md:p-8 font-sans text-slate-800 pb-16 ml-16">
       <div className="pt-8 mb-8">
         <h1 className="text-4xl font-black text-slate-900 tracking-tight">
           Painel Administrativo
