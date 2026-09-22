@@ -6,7 +6,8 @@
     "dev": "concurrently \"next dev --webpack\" \"node app/backend/server.js\"",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backend": "node app/backend/server.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
