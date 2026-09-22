@@ -6,6 +6,41 @@ import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/app/lib/banco";
 
+// Depois de logar, cada tipo de conta vai pra um lugar diferente:
+// admin (equipe Pluvite) -> /admin/servidores
+// servidor (prefeitura) -> /painel-servidor
+// cidadao -> /Mapa (comportamento padrão)
+// A ordem importa: primeiro confere admin, depois servidor, por último
+// assume que é cidadão (que é o caso mais comum).
+async function redirecionarConformeConta(
+  userId: string,
+  router: ReturnType<typeof useRouter>,
+) {
+  const { data: adminRow } = await supabase
+    .from("admin")
+    .select("id")
+    .eq("auth_id", userId)
+    .maybeSingle();
+
+  if (adminRow) {
+    router.push("/Adm");
+    return;
+  }
+
+  const { data: servidorRow } = await supabase
+    .from("servidor")
+    .select("id")
+    .eq("auth_id", userId)
+    .maybeSingle();
+
+  if (servidorRow) {
+    router.push("/Prefeituras");
+    return;
+  }
+
+  router.push("/Mapa");
+}
+
 export default function Login() {
   const router = useRouter();
 
@@ -20,18 +55,40 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password: senha,
       });
 
-      if (error) {
-        alert("E-mail ou senha incorretos!");
+      if (error || !data.user) {
+        // O Supabase não diz se o erro foi "senha errada" ou "e-mail não
+        // cadastrado" (ambos voltam como "Invalid login credentials"), então
+        // pra dar uma mensagem mais específica a gente confere à parte se
+        // esse e-mail existe na tabela cidadao. Contas de admin/servidor
+        // fazem login com o mesmo formulário, mas não têm linha em
+        // "cidadao" — então esse fallback de "conta não encontrada" só
+        // dispara de verdade pra e-mails que nunca foram cadastrados em
+        // lugar nenhum (nem cidadão, nem servidor, nem admin).
+        const [{ data: cidadaoExistente }, { data: servidorExistente }, { data: adminExistente }] =
+          await Promise.all([
+            supabase.from("cidadao").select("id").eq("email", email).maybeSingle(),
+            supabase.from("servidor").select("id").eq("email", email).maybeSingle(),
+            supabase.from("admin").select("id").eq("email", email).maybeSingle(),
+          ]);
+
+        if (!cidadaoExistente && !servidorExistente && !adminExistente) {
+          router.push(`/conta-nao-encontrada?email=${encodeURIComponent(email)}`);
+          return;
+        }
+
+        alert("Senha incorreta!");
         setSenha("");
         return;
       }
 
-      router.push("/Mapa");
+      // Login deu certo: agora decide pra onde mandar essa conta
+      // (admin, servidor ou cidadão).
+      await redirecionarConformeConta(data.user.id, router);
     } catch (error) {
       console.error("Erro inesperado no login:", error);
       alert("Erro inesperado. Tente novamente.");
@@ -41,14 +98,20 @@ export default function Login() {
   };
 
   // LOGIN SOCIAL
+  // Vai pro /callback com intent=login: se a conta acabou de ser criada
+  // agora mesmo (ou seja, não existia antes), o callback desloga e manda
+  // pra /conta-nao-encontrada em vez de deixar entrar.
   const handleSocialLogin = async (provedor: "google" | "facebook") => {
     setCarregando(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
         options: {
-          redirectTo: `${window.location.origin}/Mapa`,
-          queryParams: provedor === 'facebook' ? { auth_type: 'rerequest' } : { prompt: 'select_account' }
+          redirectTo: `${window.location.origin}/callback?intent=login`,
+          queryParams:
+            provedor === "facebook"
+              ? { auth_type: "rerequest" }
+              : { prompt: "select_account" },
         },
       });
 

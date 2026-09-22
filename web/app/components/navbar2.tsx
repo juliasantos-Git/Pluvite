@@ -113,6 +113,7 @@ export default function Navbar2() {
               <img
                 src={avatarUrl}
                 alt="Perfil"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
             ) : nome ? (

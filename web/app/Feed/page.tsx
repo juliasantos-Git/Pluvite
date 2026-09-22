@@ -15,7 +15,6 @@ import {
   ThumbsUp,
   Share2,
   TrendingUp,
-  CloudRain,
   ImagePlus,
   X,
   Send,
@@ -28,6 +27,8 @@ import {
   Copy,
   Mail,
   MessageCircle,
+  Users,
+  ShieldAlert,
 } from "lucide-react";
 
 interface Comentario {
@@ -101,6 +102,7 @@ interface Ocorrencia {
   id: string;
   autorId: string;
   autor: string;
+  autorAvatarUrl: string | null;
   iniciais: string;
   endereco: string;
   bairro: string;
@@ -504,7 +506,9 @@ export default function FeedPage() {
 
     const { data: linhas, error: erroOcorrencias } = await supabase
       .from("ocorrencias")
-      .select("*, cidadao!ocorrencias_autor_id_fkey(nome_completo)")
+      .select(
+        "*, cidadao!ocorrencias_autor_id_fkey(nome_completo, avatar_url)",
+      )
       .order("criado_em", { ascending: false });
 
     if (erroOcorrencias || !linhas) {
@@ -552,11 +556,17 @@ export default function FeedPage() {
         }));
 
       const nomeAutor = linha.cidadao?.nome_completo || "Cidadão";
+      // avatar_url pode ser um caminho relativo (ex: "/perfil.png", o padrão de
+      // quem nunca trocou a foto) — nesse caso trata como "sem foto"
+      const avatarAutor = linha.cidadao?.avatar_url;
+      const avatarAutorValido =
+        avatarAutor && avatarAutor !== "/perfil.png" ? avatarAutor : null;
 
       return {
         id: linha.id,
         autorId: linha.autor_id,
         autor: nomeAutor,
+        autorAvatarUrl: avatarAutorValido,
         iniciais: gerarIniciais(nomeAutor),
         endereco: linha.endereco,
         bairro: linha.bairro,
@@ -871,6 +881,13 @@ export default function FeedPage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
+  // Números gerais da comunidade (sempre do total, sem respeitar filtros do feed)
+  const estatisticas = {
+    total: ocorrencias.length,
+    concluidas: ocorrencias.filter((o) => o.status === "Concluído").length,
+    cidadaosAtivos: new Set(ocorrencias.map((o) => o.autorId)).size,
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#f4f5f7]">
       {/* Animação do like — "pop" no ícone + onda saindo dele */}
@@ -1125,8 +1142,17 @@ export default function FeedPage() {
                 >
                   <div className="p-4 sm:p-5 flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shrink-0">
-                        {oc.iniciais}
+                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shrink-0 overflow-hidden">
+                        {oc.autorAvatarUrl ? (
+                          <img
+                            src={oc.autorAvatarUrl}
+                            alt={oc.autor}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          oc.iniciais
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
@@ -1250,7 +1276,7 @@ export default function FeedPage() {
 
           {/* COLUNA DIREITA — fixa na tela (sticky) com scroll próprio e delimitado,
                         em vez de tentar herdar uma altura indefinida do layout em flex */}
-          <aside className="w-full lg:w-1/3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] overflow-y-auto space-y-4 pr-0.5">
+          <aside className="w-full lg:w-1/3 lg:sticky lg:top-20 lg:self-start space-y-3">
             {/* STATUS */}
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-sm">
@@ -1290,26 +1316,6 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* CARD SITUAÇÃO */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                  <CloudRain size={16} className="text-[#091f75]" />
-                  Situação em Três Marias
-                </h3>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                  Estável
-                </span>
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-2">
-                <div className="flex justify-between text-slate-600">
-                  <span>Risco de Deslizamento:</span>
-                  <span className="font-bold text-amber-600">Baixo</span>
-                </div>
-              </div>
-            </div>
-
             {/* CARD BAIRROS */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
               <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
@@ -1338,6 +1344,66 @@ export default function FeedPage() {
                   ))
                 )}
               </div>
+            </div>
+
+            {/* CARD ESTATÍSTICAS DA COMUNIDADE */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <Users size={16} className="text-[#091f75]" />
+                Estatísticas da comunidade
+              </h3>
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center gap-0.5">
+                  <span className="text-lg font-black text-[#091f75] leading-tight">
+                    {estatisticas.total}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                    Relatos no total
+                  </span>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center gap-0.5">
+                  <span className="text-lg font-black text-emerald-600 leading-tight">
+                    {estatisticas.concluidas}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                    Resolvidos
+                  </span>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center gap-0.5">
+                  <span className="text-lg font-black text-slate-800 leading-tight">
+                    {estatisticas.cidadaosAtivos}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                    Cidadãos ativos
+                  </span>
+                </div>
+              </div>
+            </div>
+
+
+            {/* CARD DICAS DE SEGURANÇA */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-2">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <ShieldAlert size={16} className="text-[#091f75]" />
+                Dicas de segurança
+              </h3>
+              <ul className="space-y-1.5">
+                {[
+                  "Evite atravessar ruas alagadas, mesmo que a água pareça rasa.",
+                  "Em caso de deslizamento, afaste-se de encostas e barrancos.",
+                  "Desligue a energia elétrica se a água invadir sua casa.",
+                ].map((dica, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-[11px] text-slate-600 leading-snug"
+                  >
+                    <span className="w-4 h-4 rounded-full bg-blue-50 text-[#091f75] text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
+                    {dica}
+                  </li>
+                ))}
+              </ul>
             </div>
           </aside>
         </div>
@@ -1384,8 +1450,17 @@ export default function FeedPage() {
                   {/* CABEÇALHO DO POST */}
                   <div className="p-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0">
-                        {post.iniciais}
+                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0 overflow-hidden">
+                        {post.autorAvatarUrl ? (
+                          <img
+                            src={post.autorAvatarUrl}
+                            alt={post.autor}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          post.iniciais
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
@@ -1418,8 +1493,17 @@ export default function FeedPage() {
 
                     {post.descricao && (
                       <div className="flex items-start gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-[10px] shrink-0">
-                          {post.iniciais}
+                        <div className="w-7 h-7 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-[10px] shrink-0 overflow-hidden">
+                          {post.autorAvatarUrl ? (
+                            <img
+                              src={post.autorAvatarUrl}
+                              alt={post.autor}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            post.iniciais
+                          )}
                         </div>
                         <p className="text-xs text-slate-700 leading-relaxed">
                           <span className="font-bold text-slate-900">
