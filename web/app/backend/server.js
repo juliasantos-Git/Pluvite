@@ -1,10 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
+import rotasRouter from './routes/rotas.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Rotas seguras: grafos viários por município e cálculo de trajeto
+app.use('/api/rotas', rotasRouter);
 
 // Credenciais do seu Supabase
 const SUPABASE_URL = "https://qhughmeaxbyupuglpvud.supabase.co";
