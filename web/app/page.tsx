@@ -39,19 +39,19 @@ export default function Home() {
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
         <section
           id="hero"
-          className="max-w-5xl mx-auto px-6 pt-12 pb-20 flex flex-col items-center text-center gap-10"
+          className="max-w-5xl mx-auto px-6 pt-8 pb-20 flex flex-col items-center text-center gap-10"
         >
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[#ccddff] bg-[#eff5ff] text-slate-700 text-xs font-bold tracking-widest uppercase shadow-sm">
             <Activity size={13} className="text-[#2C4A6F]" />
             Monitoramento do Vale do Paraíba e Litoral Norte
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.1] max-w-3xl">
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.1] max-w-3xl -mt-3">
             Sistema de Monitoramento{" "}
             <span className="text-[#0d43af]">de Riscos do Vale do Paraíba</span>
           </h1>
 
-          <p className="text-lg text-slate-800 font-medium max-w-4xl leading-relaxed">
+          <p className="text-lg text-slate-800 font-medium max-w-4xl leading-relaxed -mt-4">
             Desenvolvido para a região do Vale do Paraíba e Litoral Norte, o
             Pluvite é um sistema de monitoramento de desastres naturais. Com o
             objetivo de prevenir enchentes, deslizamentos e outras complicações
@@ -62,7 +62,7 @@ export default function Home() {
             colaborativo para que os moradores relatem incidentes.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4 mt-2">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-1">
             <Link href="/cadastro-cidadao">
               <button className="bg-[#0d43af] hover:bg-[#0c2b6b] text-white font-bold text-base px-9 py-4 rounded-lg transition-colors flex items-center gap-2 cursor-pointer shadow-md">
                 Iniciar sessão
@@ -86,7 +86,6 @@ export default function Home() {
 
         <div className="border-t border-slate-300 my-5" />
 
-        {/* ── CHAMADOS ────────────────────────────────────────────────────────── */}
         <section id="painel" className="max-w-6xl mx-auto px-6 py-24">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
             <div>
@@ -717,64 +716,64 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-        <footer className="border-t border-slate-800 bg-[#091c4b] px-6 py-8 text-white shadow-inner select-none">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Logo + Nome */}
-            <div className="flex items-center gap-3">
-              <img
-                src="/PluviteIcon.jpg"
-                alt="Logo Pluvite"
-                className="w-12 h-12 rounded-xl object-cover shadow-md flex-shrink-0"
-              />
-              <span className="font-black text-white text-2xl tracking-tight">
-                Pluvite
-              </span>
-            </div>
-
-            {/* GitHub */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-slate-400 font-medium">
-              <span className="text-slate-300 font-semibold">
-                Vale do Paraíba • Litoral Norte
-              </span>
-              <a
-                href="https://github.com/juliasantos-Git/Pluvite"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-5 py-3 rounded-xl border border-white/10 transition-all duration-200 shadow-sm"
-                title="Acessar código-fonte no GitHub"
-              >
-                <img
-                  src="/github.png"
-                  alt="GitHub"
-                  className="w-5 h-5"
-                  style={{ filter: "brightness(0) invert(1)" }}
-                />
-                <span className="font-extrabold text-sm tracking-wider">
-                  GitHub
-                </span>
-              </a>
-            </div>
-          </div>
-        </footer>
       </main>
 
-      {/* ── BOTÃO SCROLL TO TOP ─────────────────────────────────────────────── */}
-      <button
-        onClick={() => scrollTo("hero")}
-        className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group cursor-pointer"
-        title="Voltar ao topo"
-      >
-        <img
-          src="/seta-pra-cima.png"
-          alt="Voltar ao topo"
-          width={20}
-          height={20}
-          className="transition-transform duration-300 group-hover:scale-110"
-          style={{ filter: "brightness(0) invert(1)" }}
-        />
-      </button>
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-800 bg-[#091c4b] px-6 py-8 text-white shadow-inner select-none">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Logo + Nome */}
+          <div className="flex items-center gap-3">
+            <img
+              src="/PluviteIcon.jpg"
+              alt="Logo Pluvite"
+              className="w-12 h-12 rounded-xl object-cover shadow-md flex-shrink-0"
+            />
+            <span className="font-black text-white text-2xl tracking-tight">
+              Pluvite
+            </span>
+          </div>
+
+          {/* GitHub */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-slate-400 font-medium">
+            <span className="text-slate-300 font-semibold">
+              Vale do Paraíba • Litoral Norte
+            </span>
+            <a
+              href="https://github.com/juliasantos-Git/Pluvite"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-5 py-3 rounded-xl border border-white/10 transition-all duration-200 shadow-sm"
+              title="Acessar código-fonte no GitHub"
+            >
+              <img
+                src="/github.png"
+                alt="GitHub"
+                className="w-5 h-5"
+                style={{ filter: "brightness(0) invert(1)" }}
+              />
+              <span className="font-extrabold text-sm tracking-wider">
+                GitHub
+              </span>
+            </a>
+          </div>
+        </div>
+        {/* ── BOTÃO SCROLL TO TOP ─────────────────────────────────────────────── */}
+        <button
+          onClick={() => scrollTo("hero")}
+          className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group cursor-pointer"
+          title="Voltar ao topo"
+        >
+          <img
+            src="/seta-pra-cima.png"
+            alt="Voltar ao topo"
+            width={20}
+            height={20}
+            className="transition-transform duration-300 group-hover:scale-110"
+            style={{ filter: "brightness(0) invert(1)" }}
+          />
+        </button>
+      </footer>
     </div>
   );
 }
+

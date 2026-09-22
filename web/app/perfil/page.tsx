@@ -16,10 +16,88 @@ import {
   Shield,
   HeartPulse,
   Phone,
+  Image as ImageIcon,
+  MessageSquare,
+  ThumbsUp,
+  Send,
+  AlertTriangle,
+  Wrench,
+  Eye,
+  CheckCircle,
 } from "lucide-react";
 
-type Secao = "dados" | "emergencia" | "notificacoes" | "seguranca" | "acessibilidade";
+type Secao = "dados" | "emergencia" | "notificacoes" | "seguranca" | "acessibilidade" | "publicacoes";
 type Bloco = "pessoais" | "endereco" | "medico" | "contatoEmergencia" | null;
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MINHAS PUBLICAÇÕES — dados e tipos das ocorrências que o próprio
+   cidadão reportou no feed. Por enquanto são dados de exemplo; quando
+   houver uma tabela real de ocorrências no Supabase, troque
+   MINHAS_PUBLICACOES_INICIAIS por uma busca filtrando por auth_id.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+interface ComentarioPublicacao {
+  id: string;
+  autor: string;
+  texto: string;
+}
+
+type StatusPublicacao = "Aguardando" | "Em Andamento" | "Visualizado" | "Concluído";
+
+interface Publicacao {
+  id: string;
+  tempo: string;
+  status: StatusPublicacao;
+  descricao: string;
+  imagemUrl: string;
+  curtido: boolean;
+  curtidas: number;
+  comentarios: ComentarioPublicacao[];
+}
+
+const STATUS_ESTILO_PUB: Record<StatusPublicacao, { badge: string; icon: any; texto: string }> = {
+  Aguardando: { badge: "bg-red-50 text-red-700 border-red-200", icon: AlertTriangle, texto: "Aguardando" },
+  "Em Andamento": { badge: "bg-amber-50 text-amber-800 border-amber-200", icon: Wrench, texto: "Em Andamento" },
+  Visualizado: { badge: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: Eye, texto: "Visualizado" },
+  Concluído: { badge: "bg-slate-100 text-slate-600 border-slate-200", icon: CheckCircle, texto: "Concluído" },
+};
+
+const MINHAS_PUBLICACOES_INICIAIS: Publicacao[] = [
+  {
+    id: "pub-1",
+    tempo: "há 2 dias",
+    status: "Concluído",
+    descricao: "Alagamento na Rua das Acácias após a chuva forte de domingo. Já foi resolvido pela equipe.",
+    imagemUrl: "https://picsum.photos/seed/perfil-pub1/700/700",
+    curtido: false,
+    curtidas: 6,
+    comentarios: [
+      { id: "pc1", autor: "Juliana Alves", texto: "Vi que resolveram rápido, muito bom!" },
+    ],
+  },
+  {
+    id: "pub-2",
+    tempo: "há 1 semana",
+    status: "Visualizado",
+    descricao: "Bueiro entupido na esquina perto de casa, começando a acumular água.",
+    imagemUrl: "https://picsum.photos/seed/perfil-pub2/700/700",
+    curtido: true,
+    curtidas: 3,
+    comentarios: [],
+  },
+  {
+    id: "pub-3",
+    tempo: "há 3 semanas",
+    status: "Concluído",
+    descricao: "Galho de árvore quebrado bloqueando parte da calçada.",
+    imagemUrl: "https://picsum.photos/seed/perfil-pub3/700/700",
+    curtido: false,
+    curtidas: 1,
+    comentarios: [
+      { id: "pc2", autor: "Roberto Dias", texto: "Obrigado por avisar, passei por ali hoje e já tinham limpado." },
+    ],
+  },
+];
 
 export default function PerfilCidadao() {
   /* NAVEGACAO E ROTEAMENTO */
@@ -56,6 +134,11 @@ export default function PerfilCidadao() {
     notif_email: true,
     notif_push: true,
   });
+
+  /* ESTADO DAS PUBLICAÇÕES DO PRÓPRIO CIDADÃO */
+  const [minhasPublicacoes, setMinhasPublicacoes] = useState<Publicacao[]>(MINHAS_PUBLICACOES_INICIAIS);
+  const [publicacaoSelecionada, setPublicacaoSelecionada] = useState<string | null>(null);
+  const [comentarioAtualPub, setComentarioAtualPub] = useState<Record<string, string>>({});
 
   /* CARREGAR DADOS DO SUPABASE */
   useEffect(() => {
@@ -153,6 +236,15 @@ export default function PerfilCidadao() {
       return numeros.replace(/^(\d{2})(\d{4})(\d*)/, "($1) $2-$3");
     return numeros.replace(/^(\d{2})(\d{5})(\d*)/, "($1) $2-$3");
   }
+
+  /* GERA AS INICIAIS DE UM NOME (usado nos avatares dos comentários) */
+  const gerarIniciais = (nome: string) =>
+    nome
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join("");
 
   /* MANIPULACAO DE CAMPOS DE FORMULARIO */
   const handleChange = (
@@ -293,6 +385,38 @@ export default function PerfilCidadao() {
     }
   };
 
+  /* CURTIR UMA PUBLICAÇÃO PRÓPRIA */
+  const handleCurtirPublicacao = (id: string) => {
+    setMinhasPublicacoes((prev) =>
+      prev.map((pub) =>
+        pub.id === id
+          ? { ...pub, curtido: !pub.curtido, curtidas: pub.curtido ? pub.curtidas - 1 : pub.curtidas + 1 }
+          : pub,
+      ),
+    );
+  };
+
+  /* ENVIAR COMENTÁRIO EM UMA PUBLICAÇÃO PRÓPRIA */
+  const handleEnviarComentarioPub = (id: string) => {
+    const texto = (comentarioAtualPub[id] || "").trim();
+    if (!texto) return;
+
+    setMinhasPublicacoes((prev) =>
+      prev.map((pub) =>
+        pub.id === id
+          ? {
+            ...pub,
+            comentarios: [
+              ...pub.comentarios,
+              { id: `pc-${Date.now()}`, autor: perfil.nome_completo || "Você", texto },
+            ],
+          }
+          : pub,
+      ),
+    );
+    setComentarioAtualPub((prev) => ({ ...prev, [id]: "" }));
+  };
+
   /* LOGOUT DO USUARIO */
   const handleSair = async () => {
     setSaindo(true);
@@ -340,6 +464,7 @@ export default function PerfilCidadao() {
   /* ESTRUTURA DOS ITENS DA BARRA LATERAL */
   const itensSidebar: { id: Secao; label: string; icon: React.ReactNode }[] = [
     { id: "dados", label: "Meus Dados", icon: <User size={18} /> },
+    { id: "publicacoes", label: "Minhas Publicações", icon: <ImageIcon size={18} /> },
     { id: "emergencia", label: "Dados de Emergência", icon: <HeartPulse size={18} /> },
     { id: "notificacoes", label: "Notificações", icon: <Bell size={18} /> },
     { id: "seguranca", label: "Segurança", icon: <Shield size={18} /> },
@@ -551,6 +676,15 @@ export default function PerfilCidadao() {
               <span className="inline-flex px-3 py-1 bg-blue-50 text-[#091f75] text-[11px] font-bold rounded-full border border-blue-100">
                 Taubaté
               </span>
+
+              {/* CONTADOR DE PUBLICAÇÕES — leva direto pra aba de publicações */}
+              <button
+                onClick={() => setSecaoAtiva("publicacoes")}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#091f75] transition cursor-pointer"
+              >
+                <ImageIcon size={13} />
+                {minhasPublicacoes.length} {minhasPublicacoes.length === 1 ? "publicação" : "publicações"}
+              </button>
             </div>
 
             <div className="w-full space-y-2.5 pt-4 mt-6 border-t border-slate-100">
@@ -675,6 +809,58 @@ export default function PerfilCidadao() {
                 </div>
                 <BlocoPCD />
               </>
+            )}
+
+            {secaoAtiva === "publicacoes" && (
+              /* MINHAS PUBLICAÇÕES — grid estilo Instagram */
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div className="mb-5">
+                  <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-50 text-[#091f75]">
+                      <ImageIcon size={14} />
+                    </span>
+                    Minhas Publicações
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 pl-9">
+                    Ocorrências que você reportou no feed da comunidade. Clique numa foto pra ver os detalhes e os comentários.
+                  </p>
+                </div>
+
+                {minhasPublicacoes.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <ImageIcon size={28} className="text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs text-slate-400 font-medium">
+                      Você ainda não publicou nenhuma ocorrência.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2">
+                    {minhasPublicacoes.map((pub) => (
+                      <button
+                        key={pub.id}
+                        onClick={() => setPublicacaoSelecionada(pub.id)}
+                        className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer bg-slate-100"
+                      >
+                        <img
+                          src={pub.imagemUrl}
+                          alt="Publicação"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/50 transition-all flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100">
+                          <span className="flex items-center gap-1.5 text-white text-xs font-bold">
+                            <ThumbsUp size={14} fill="currentColor" />
+                            {pub.curtidas}
+                          </span>
+                          <span className="flex items-center gap-1.5 text-white text-xs font-bold">
+                            <MessageSquare size={14} fill="currentColor" />
+                            {pub.comentarios.length}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
 
             {secaoAtiva === "emergencia" && (
@@ -1020,6 +1206,150 @@ export default function PerfilCidadao() {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE POST COMPLETO (ESTILO INSTAGRAM) — mesma lógica do Feed */}
+      {publicacaoSelecionada && (() => {
+        const pub = minhasPublicacoes.find((p) => p.id === publicacaoSelecionada);
+        if (!pub) return null;
+        const estiloPub = STATUS_ESTILO_PUB[pub.status];
+        const StatusIconPub = estiloPub.icon;
+
+        return (
+          <div
+            className="fixed inset-0 bg-slate-950/90 z-[10002] flex items-center justify-center p-4"
+            onClick={() => setPublicacaoSelecionada(null)}
+          >
+            <button
+              onClick={() => setPublicacaoSelecionada(null)}
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/80 hover:text-white cursor-pointer z-10"
+              title="Fechar"
+            >
+              <X size={28} />
+            </button>
+
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* IMAGEM GRANDE */}
+              <div className="w-full md:w-3/5 bg-black flex items-center justify-center max-h-[45vh] md:max-h-[90vh] shrink-0">
+                <img
+                  src={pub.imagemUrl}
+                  alt="Publicação"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              {/* PAINEL DE LEGENDA E COMENTÁRIOS */}
+              <div className="w-full md:w-2/5 flex flex-col min-h-0">
+                {/* CABEÇALHO DO POST */}
+                <div className="p-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-blue-50 overflow-hidden flex items-center justify-center text-[#091f75] font-black text-xs shrink-0">
+                      {perfil.avatar_url && perfil.avatar_url !== "/perfil.png" ? (
+                        <img src={perfil.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        gerarIniciais(perfil.nome_completo || "Você")
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
+                        {perfil.nome_completo || "Você"}
+                      </h3>
+                      <span className="text-[11px] text-slate-400">{pub.tempo}</span>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border shrink-0 ${estiloPub.badge}`}>
+                    <StatusIconPub size={11} />
+                    {estiloPub.texto}
+                  </span>
+                </div>
+
+                {/* LEGENDA + COMENTÁRIOS (rolável) */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3.5">
+                  {pub.descricao && (
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-blue-50 overflow-hidden flex items-center justify-center text-[#091f75] font-black text-[10px] shrink-0">
+                        {perfil.avatar_url && perfil.avatar_url !== "/perfil.png" ? (
+                          <img src={perfil.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          gerarIniciais(perfil.nome_completo || "Você")
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-700 leading-relaxed">
+                        <span className="font-bold text-slate-900">{perfil.nome_completo || "Você"}</span>{" "}
+                        {pub.descricao}
+                      </p>
+                    </div>
+                  )}
+
+                  {pub.comentarios.length === 0 ? (
+                    <p className="text-xs text-slate-400 font-medium pt-1">
+                      Nenhum comentário ainda.
+                    </p>
+                  ) : (
+                    pub.comentarios.map((com) => (
+                      <div key={com.id} className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-[10px] shrink-0">
+                          {gerarIniciais(com.autor)}
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">
+                          <span className="font-bold text-slate-900">{com.autor}</span>{" "}
+                          {com.texto}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* AÇÕES, CURTIDAS E CAMPO DE COMENTÁRIO (fixo embaixo) */}
+                <div className="border-t border-slate-100 shrink-0">
+                  <div className="flex items-center justify-between px-4 pt-3">
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => handleCurtirPublicacao(pub.id)}
+                        className={`transition cursor-pointer ${pub.curtido ? "text-[#091f75]" : "text-slate-500 hover:text-[#091f75]"}`}
+                        title="Curtir"
+                      >
+                        <ThumbsUp size={20} fill={pub.curtido ? "currentColor" : "none"} />
+                      </button>
+                      <MessageSquare size={20} className="text-slate-500" />
+                    </div>
+                  </div>
+
+                  <div className="px-4 pt-2">
+                    <span className="text-xs font-bold text-slate-800 block">
+                      {pub.curtidas} {pub.curtidas === 1 ? "curtida" : "curtidas"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-4 pt-3">
+                    <input
+                      type="text"
+                      value={comentarioAtualPub[pub.id] || ""}
+                      onChange={(e) =>
+                        setComentarioAtualPub((prev) => ({ ...prev, [pub.id]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleEnviarComentarioPub(pub.id);
+                      }}
+                      placeholder="Adicione um comentário..."
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-800 outline-none focus:border-[#091f75]"
+                    />
+                    <button
+                      onClick={() => handleEnviarComentarioPub(pub.id)}
+                      className="p-2.5 rounded-xl bg-[#091f75] hover:bg-[#0f35a0] text-white transition cursor-pointer shrink-0"
+                      title="Enviar comentário"
+                    >
+                      <Send size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </main>
   );
 }
