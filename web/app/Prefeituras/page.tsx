@@ -34,25 +34,14 @@ import {
   X,
 } from "lucide-react";
 import Navbar3 from "../components/sidebar";
+import { CORES_PRIORIDADE, PRIORIDADE_POR_TIPO_PADRAO } from "@/app/lib/constantes";
 
 // Deriva uma "prioridade" visual a partir do tipo da ocorrência — a tabela
 // "ocorrencias" (a mesma usada pelo Feed) não tem coluna de prioridade,
-// então mapeamos aqui. Ajuste se quiser outra gravidade por tipo.
-const PRIORIDADE_POR_TIPO: Record<string, string> = {
-  "Deslizamento de terra": "Alerta Máximo",
-  Alagamento: "Estado de Alerta",
-  "Via interditada": "Atenção Crítica",
-  "Árvore caída": "Atenção Crítica",
-  "Buraco na via": "Atenção Crítica",
-  Outros: "Zona Segura",
-};
-
-const CORES_PRIORIDADE: Record<string, string> = {
-  "Alerta Máximo": "#653dc2",
-  "Estado de Alerta": "#ef4444",
-  "Atenção Crítica": "#f59e0b",
-  "Zona Segura": "#0a9667",
-};
+// então mapeamos por tipo. Esse mapeamento agora é editável pela equipe
+// Pluvite em /Adm > "Níveis de Risco" (tabela "config_prioridades"); aqui
+// começamos com o padrão de app/lib/constantes.ts e sobrescrevemos assim
+// que a configuração carrega (ver carregarConfigPrioridades abaixo).
 
 type Aba = "visao" | "ocorrencias";
 
@@ -144,6 +133,34 @@ export default function PainelServidor() {
   const [nomeServidor, setNomeServidor] = useState("");
   const [verificandoLogin, setVerificandoLogin] = useState(true);
 
+  // Mapeamento tipo de ocorrência -> prioridade. Começa com o padrão de
+  // app/lib/constantes.ts e é sobrescrito pelo que a equipe Pluvite configurou
+  // em /Adm > "Níveis de Risco" (tabela "config_prioridades"), se já existir.
+  const [prioridadePorTipo, setPrioridadePorTipo] = useState<
+    Record<string, string>
+  >(PRIORIDADE_POR_TIPO_PADRAO);
+
+  useEffect(() => {
+    const carregarConfigPrioridades = async () => {
+      const { data, error } = await supabase
+        .from("config_prioridades")
+        .select("tipo, prioridade");
+
+      // Se a tabela ainda não existe (migration não rodada) ou está vazia,
+      // fica com o padrão — não é um erro fatal pro painel.
+      if (error || !data || data.length === 0) return;
+
+      setPrioridadePorTipo((prev) => {
+        const novo = { ...prev };
+        data.forEach((linha: any) => {
+          novo[linha.tipo] = linha.prioridade;
+        });
+        return novo;
+      });
+    };
+    carregarConfigPrioridades();
+  }, []);
+
   useEffect(() => {
     const verificarServidor = async () => {
       const { data } = await supabase.auth.getUser();
@@ -216,7 +233,7 @@ export default function PainelServidor() {
       const formatados: Chamado[] = linhas.map((o: any) => ({
         id: o.id,
         tipo: o.tipo,
-        prioridade: PRIORIDADE_POR_TIPO[o.tipo] || "Zona Segura",
+        prioridade: prioridadePorTipo[o.tipo] || "Zona Segura",
         bairro: o.bairro,
         municipio: o.cidade,
         usuario: o.cidadao?.nome_completo || "Cidadão",
@@ -244,8 +261,12 @@ export default function PainelServidor() {
   useEffect(() => {
     if (!meuMunicipio) return;
     buscarDadosBanco();
+    // Refaz a busca quando a configuração de prioridades chega (ela pode
+    // carregar depois do município, já que são dois efeitos independentes) —
+    // assim os chamados já existentes ganham a prioridade certa sem precisar
+    // recarregar a página.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meuMunicipio]);
+  }, [meuMunicipio, prioridadePorTipo]);
 
   // ───── REALTIME — só dispara para ocorrências da própria cidade ─────
   useEffect(() => {
@@ -383,7 +404,7 @@ export default function PainelServidor() {
       return {
         name: bairro,
         total: contagemBairros[bairro],
-        color: amostra ? CORES_PRIORIDADE[amostra.prioridade] : "#64748b",
+        color: amostra ? CORES_PRIORIDADE[amostra.prioridade as keyof typeof CORES_PRIORIDADE] : "#64748b",
       };
     });
 
@@ -860,7 +881,7 @@ export default function PainelServidor() {
                           className="p-1.5 rounded-lg text-white shadow-sm"
                           style={{
                             backgroundColor:
-                              CORES_PRIORIDADE[chamado.prioridade] || "#94a3b8",
+                              CORES_PRIORIDADE[chamado.prioridade as keyof typeof CORES_PRIORIDADE]
                           }}
                         >
                           <AlertTriangle size={15} />
@@ -872,7 +893,7 @@ export default function PainelServidor() {
                           className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
                           style={{
                             backgroundColor:
-                              CORES_PRIORIDADE[chamado.prioridade] || "#94a3b8",
+                              CORES_PRIORIDADE[chamado.prioridade as keyof typeof CORES_PRIORIDADE]
                           }}
                         >
                           {chamado.prioridade}

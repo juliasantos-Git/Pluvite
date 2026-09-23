@@ -1,51 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { exigirAdmin, supabaseAdminClient } from "../admin/_auth";
 
 // Rota ADMIN — só quem está logado com uma conta cadastrada na tabela "admin"
 // (equipe Pluvite) pode usar. O front manda o token de acesso da sessão logada
-// no header Authorization; aqui a gente confirma esse token e confere se o
-// usuário é mesmo um admin antes de deixar ler ou criar servidores.
-async function exigirAdmin(request: Request) {
-  const authHeader = request.headers.get("authorization") || "";
-  const token = authHeader.replace("Bearer ", "").trim();
-
-  if (!token) {
-    return { ok: false as const, status: 401, mensagem: "Não autenticado." };
-  }
-
-  const supabaseAdmin = supabaseAdminClient();
-
-  const { data: usuarioData, error: erroUsuario } =
-    await supabaseAdmin.auth.getUser(token);
-
-  if (erroUsuario || !usuarioData.user) {
-    return { ok: false as const, status: 401, mensagem: "Sessão inválida." };
-  }
-
-  const { data: adminRow, error: erroAdmin } = await supabaseAdmin
-    .from("admin")
-    .select("id")
-    .eq("auth_id", usuarioData.user.id)
-    .maybeSingle();
-
-  if (erroAdmin || !adminRow) {
-    return {
-      ok: false as const,
-      status: 403,
-      mensagem: "Essa conta não tem acesso ao painel de administração.",
-    };
-  }
-
-  return { ok: true as const };
-}
-
-function supabaseAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  );
-}
+// no header Authorization; exigirAdmin (em app/api/admin/_auth.ts) confirma
+// esse token e confere se o usuário é mesmo um admin antes de deixar ler,
+// criar ou remover servidores.
 
 // Lista os servidores já cadastrados
 export async function GET(request: Request) {
@@ -133,6 +93,78 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, id: usuarioCriado.user.id });
   } catch (error) {
     console.error("Erro inesperado ao criar servidor:", error);
+    return NextResponse.json({ error: "Erro inesperado" }, { status: 500 });
+  }
+}
+
+// Remove a conta de uma prefeitura: apaga a linha em "servidor" e o usuário
+// correspondente no Auth (assim o login some por completo, não só o acesso
+// ao painel). Id vem via query string: DELETE /api/criar-servidor?id=<uuid>
+// (id é o id da linha na tabela "servidor", não o auth_id).
+export async function DELETE(request: Request) {
+  const verificacao = await exigirAdmin(request);
+  if (!verificacao.ok) {
+    return NextResponse.json(
+      { error: verificacao.mensagem },
+      { status: verificacao.status },
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json(
+      { error: "Informe o id do servidor." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const supabaseAdmin = supabaseAdminClient();
+
+    const { data: servidor, error: erroBusca } = await supabaseAdmin
+      .from("servidor")
+      .select("id, auth_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (erroBusca || !servidor) {
+      return NextResponse.json(
+        { error: "Servidor não encontrado." },
+        { status: 404 },
+      );
+    }
+
+    const { error: erroDelete } = await supabaseAdmin
+      .from("servidor")
+      .delete()
+      .eq("id", id);
+
+    if (erroDelete) {
+      console.error("Erro ao remover servidor:", erroDelete);
+      return NextResponse.json({ error: erroDelete.message }, { status: 500 });
+    }
+
+    if (servidor.auth_id) {
+      const { error: erroAuth } = await supabaseAdmin.auth.admin.deleteUser(
+        servidor.auth_id,
+      );
+      if (erroAuth) {
+        // A linha em "servidor" já foi removida — o login pelo Auth pode
+        // continuar existindo (órfão), mas sem acesso a nenhum painel.
+        // Loga o erro em vez de falhar a requisição, já que o efeito
+        // principal (tirar o acesso) já aconteceu.
+        console.error(
+          "Servidor removido, mas falhou ao apagar o usuário no Auth:",
+          erroAuth,
+        );
+      }
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Erro inesperado ao remover servidor:", error);
     return NextResponse.json({ error: "Erro inesperado" }, { status: 500 });
   }
 }

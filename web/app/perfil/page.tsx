@@ -879,7 +879,7 @@ export default function PerfilCidadao() {
   );
 
   return (
-    <main className="w-full mt-15 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 min-h-[calc(100vh-68px)] relative">
+    <main className="w-full mt-15 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 min-h-full overflow-hidden relative">
       {/* FUNDO BOLHAS DE DECORACAO */}
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#0f35a0]/5 rounded-full pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#0f35a0]/4 rounded-full blur-2xl pointer-events-none" />

@@ -86,8 +86,8 @@ export default function Home() {
 
         <div className="border-t border-slate-300 my-5" />
 
-        {/* ── CHAMADOS ────────────────────────────────────────────────────────── */}
-      <section id="painel" className="max-w-6xl mx-auto px-6 py-24">
+      {/* ── CHAMADOS ────────────────────────────────────────────────────────── */}
+      <section id="painel" className="max-w-6xl mx-auto px-6 py-15">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
           <div>
             <span className="text-md font-bold text-[#2C4A6F] uppercase tracking-widest">
@@ -432,7 +432,7 @@ export default function Home() {
         <div className="border-t border-slate-300 my-5" />
 
         {/* ── CATEGORIZAÇÃO ─────────────────────────────────────────────────── */}
-        <section id="riscos" className="max-w-6xl mx-auto px-6 pt-2 pb-24">
+        <section id="riscos" className="max-w-6xl mx-auto px-6 pt-20 pb-24">
           <span className="text-sm font-bold text-[#2C4A6F] uppercase tracking-widest">
             Categorização
           </span>
