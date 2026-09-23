@@ -15,7 +15,6 @@ import {
   ThumbsUp,
   Share2,
   TrendingUp,
-  CloudRain,
   ImagePlus,
   X,
   Send,
@@ -28,6 +27,8 @@ import {
   Copy,
   Mail,
   MessageCircle,
+  Users,
+  ShieldAlert,
 } from "lucide-react";
 
 interface Comentario {
@@ -101,6 +102,7 @@ interface Ocorrencia {
   id: string;
   autorId: string;
   autor: string;
+  autorAvatarUrl: string | null;
   iniciais: string;
   endereco: string;
   bairro: string;
@@ -146,7 +148,7 @@ const STATUS_ESTILO: Record<
 const normalizar = (texto: string) =>
   texto
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
 
@@ -353,13 +355,12 @@ function MenuSuspenso({
                 aria-selected={escolhida}
                 onMouseEnter={() => setIndiceAtivo(i)}
                 onClick={() => selecionar(op.valor)}
-                className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer transition-colors ${
-                  escolhida
+                className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer transition-colors ${escolhida
                     ? "bg-white/15 text-white font-semibold"
                     : destacada
                       ? "bg-white/10 text-white"
                       : "text-white/85"
-                }`}
+                  }`}
               >
                 <span className="truncate">{op.rotulo}</span>
                 {escolhida && <Check size={14} className="shrink-0" />}
@@ -441,6 +442,21 @@ export default function FeedPage() {
   const [compartilhandoId, setCompartilhandoId] = useState<string | null>(null);
   const [linkCopiado, setLinkCopiado] = useState(false);
 
+  // Barra de filtros fixa ao rolar a página. A altura dela é medida pra a coluna lateral
+  // ficar fixa logo ABAIXO dela, sem os dois se sobreporem (mesmo se a barra crescer/encolher).
+  const TOPO_NAVBAR_PX = 80; // altura da barra de navegação fixa — igual ao "top-20" abaixo
+  const filtrosRef = useRef<HTMLDivElement>(null);
+  const [alturaFiltros, setAlturaFiltros] = useState(153);
+  useEffect(() => {
+    const el = filtrosRef.current;
+    if (!el) return;
+    const atualizar = () => setAlturaFiltros(el.offsetHeight);
+    atualizar();
+    const observador = new ResizeObserver(atualizar);
+    observador.observe(el);
+    return () => observador.disconnect();
+  }, []);
+
   // Se a página foi aberta a partir de um link compartilhado (?ocorrencia=<id>),
   // abre automaticamente o post correspondente assim que a página carrega.
   // Roda depois que o feed carrega, já que a ocorrência agora vem do Supabase.
@@ -504,7 +520,9 @@ export default function FeedPage() {
 
     const { data: linhas, error: erroOcorrencias } = await supabase
       .from("ocorrencias")
-      .select("*, cidadao!ocorrencias_autor_id_fkey(nome_completo)")
+      .select(
+        "*, cidadao!ocorrencias_autor_id_fkey(nome_completo, avatar_url)",
+      )
       .order("criado_em", { ascending: false });
 
     if (erroOcorrencias || !linhas) {
@@ -552,11 +570,17 @@ export default function FeedPage() {
         }));
 
       const nomeAutor = linha.cidadao?.nome_completo || "Cidadão";
+      // avatar_url pode ser um caminho relativo (ex: "/perfil.png", o padrão de
+      // quem nunca trocou a foto) — nesse caso trata como "sem foto"
+      const avatarAutor = linha.cidadao?.avatar_url;
+      const avatarAutorValido =
+        avatarAutor && avatarAutor !== "/perfil.png" ? avatarAutor : null;
 
       return {
         id: linha.id,
         autorId: linha.autor_id,
         autor: nomeAutor,
+        autorAvatarUrl: avatarAutorValido,
         iniciais: gerarIniciais(nomeAutor),
         endereco: linha.endereco,
         bairro: linha.bairro,
@@ -569,8 +593,8 @@ export default function FeedPage() {
         imagemUrl: linha.imagem_url,
         curtido: idUsuarioAtual
           ? curtidasDaOcorrencia.some(
-              (c: any) => c.usuario_id === idUsuarioAtual,
-            )
+            (c: any) => c.usuario_id === idUsuarioAtual,
+          )
           : false,
         curtidas: curtidasDaOcorrencia.length,
         comentarios: comentariosDaOcorrencia,
@@ -731,10 +755,10 @@ export default function FeedPage() {
       prev.map((oc) =>
         oc.id === id
           ? {
-              ...oc,
-              curtido: vaiCurtir,
-              curtidas: vaiCurtir ? oc.curtidas + 1 : oc.curtidas - 1,
-            }
+            ...oc,
+            curtido: vaiCurtir,
+            curtidas: vaiCurtir ? oc.curtidas + 1 : oc.curtidas - 1,
+          }
           : oc,
       ),
     );
@@ -827,12 +851,12 @@ export default function FeedPage() {
       prev.map((oc) =>
         oc.id === id
           ? {
-              ...oc,
-              comentarios: [
-                ...oc.comentarios,
-                { id: `temp-${Date.now()}`, autor: usuarioNome, texto },
-              ],
-            }
+            ...oc,
+            comentarios: [
+              ...oc.comentarios,
+              { id: `temp-${Date.now()}`, autor: usuarioNome, texto },
+            ],
+          }
           : oc,
       ),
     );
@@ -870,6 +894,13 @@ export default function FeedPage() {
   )
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
+
+  // Números gerais da comunidade (sempre do total, sem respeitar filtros do feed)
+  const estatisticas = {
+    total: ocorrencias.length,
+    concluidas: ocorrencias.filter((o) => o.status === "Concluído").length,
+    cidadaosAtivos: new Set(ocorrencias.map((o) => o.autorId)).size,
+  };
 
   return (
     <div className="min-h-screen w-full bg-[#f4f5f7]">
@@ -1008,8 +1039,11 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* FILTROS DE PESQUISA */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4 mb-6">
+        {/* FILTROS DE PESQUISA — ficam fixos no topo (abaixo da navbar) ao rolar a página */}
+        <div
+          ref={filtrosRef}
+          className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4 mb-6 md:sticky md:top-20 md:z-30"
+        >
           <div className="flex flex-col sm:flex-row gap-3">
             <MenuSuspenso
               id="filtro-cidade"
@@ -1053,11 +1087,10 @@ export default function FeedPage() {
               <button
                 key={cat}
                 onClick={() => setCategoriaAtiva(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${
-                  categoriaAtiva === cat
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${categoriaAtiva === cat
                     ? "bg-[#091f75] text-white border-[#091f75]"
                     : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                }`}
+                  }`}
               >
                 {cat}
               </button>
@@ -1125,8 +1158,17 @@ export default function FeedPage() {
                 >
                   <div className="p-4 sm:p-5 flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shrink-0">
-                        {oc.iniciais}
+                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shrink-0 overflow-hidden">
+                        {oc.autorAvatarUrl ? (
+                          <img
+                            src={oc.autorAvatarUrl}
+                            alt={oc.autor}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          oc.iniciais
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
@@ -1248,9 +1290,16 @@ export default function FeedPage() {
             })}
           </div>
 
-          {/* COLUNA DIREITA — fixa na tela (sticky) com scroll próprio e delimitado,
-                        em vez de tentar herdar uma altura indefinida do layout em flex */}
-          <aside className="w-full lg:w-1/3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] overflow-y-auto space-y-4 pr-0.5">
+          {/* COLUNA DIREITA — fixa na tela (sticky) logo abaixo da barra de filtros. Se a tela for
+                        baixa, ela rola por dentro (sem mostrar a barra) em vez de ser cortada. */}
+          <aside
+            style={
+              {
+                "--topo-aside": `${TOPO_NAVBAR_PX + alturaFiltros + 12}px`,
+              } as React.CSSProperties
+            }
+            className="w-full lg:w-1/3 lg:sticky lg:top-[var(--topo-aside)] lg:self-start lg:max-h-[calc(100vh-var(--topo-aside)-1rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-3"
+          >
             {/* STATUS */}
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-sm">
@@ -1290,26 +1339,6 @@ export default function FeedPage() {
               </div>
             </div>
 
-            {/* CARD SITUAÇÃO */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                  <CloudRain size={16} className="text-[#091f75]" />
-                  Situação em Três Marias
-                </h3>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                  Estável
-                </span>
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs space-y-2">
-                <div className="flex justify-between text-slate-600">
-                  <span>Risco de Deslizamento:</span>
-                  <span className="font-bold text-amber-600">Baixo</span>
-                </div>
-              </div>
-            </div>
-
             {/* CARD BAIRROS */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
               <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
@@ -1338,6 +1367,65 @@ export default function FeedPage() {
                   ))
                 )}
               </div>
+            </div>
+
+            {/* CARD ESTATÍSTICAS DA COMUNIDADE */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <Users size={16} className="text-[#091f75]" />
+                Estatísticas da comunidade
+              </h3>
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center gap-0.5">
+                  <span className="text-lg font-black text-[#091f75] leading-tight">
+                    {estatisticas.total}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                    Relatos no total
+                  </span>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center gap-0.5">
+                  <span className="text-lg font-black text-emerald-600 leading-tight">
+                    {estatisticas.concluidas}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                    Resolvidos
+                  </span>
+                </div>
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center gap-0.5">
+                  <span className="text-lg font-black text-slate-800 leading-tight">
+                    {estatisticas.cidadaosAtivos}
+                  </span>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                    Cidadãos ativos
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* CARD DICAS DE SEGURANÇA */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-2">
+              <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <ShieldAlert size={16} className="text-[#091f75]" />
+                Dicas de segurança
+              </h3>
+              <ul className="space-y-1.5">
+                {[
+                  "Evite atravessar ruas alagadas, mesmo que a água pareça rasa.",
+                  "Em caso de deslizamento, afaste-se de encostas e barrancos.",
+                  "Desligue a energia elétrica se a água invadir sua casa.",
+                ].map((dica, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-[11px] text-slate-600 leading-snug"
+                  >
+                    <span className="w-4 h-4 rounded-full bg-blue-50 text-[#091f75] text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
+                    {dica}
+                  </li>
+                ))}
+              </ul>
             </div>
           </aside>
         </div>
@@ -1384,8 +1472,17 @@ export default function FeedPage() {
                   {/* CABEÇALHO DO POST */}
                   <div className="p-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0">
-                        {post.iniciais}
+                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shadow-sm shrink-0 overflow-hidden">
+                        {post.autorAvatarUrl ? (
+                          <img
+                            src={post.autorAvatarUrl}
+                            alt={post.autor}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          post.iniciais
+                        )}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
@@ -1418,8 +1515,17 @@ export default function FeedPage() {
 
                     {post.descricao && (
                       <div className="flex items-start gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-[10px] shrink-0">
-                          {post.iniciais}
+                        <div className="w-7 h-7 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-[10px] shrink-0 overflow-hidden">
+                          {post.autorAvatarUrl ? (
+                            <img
+                              src={post.autorAvatarUrl}
+                              alt={post.autor}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            post.iniciais
+                          )}
                         </div>
                         <p className="text-xs text-slate-700 leading-relaxed">
                           <span className="font-bold text-slate-900">
@@ -1639,11 +1745,10 @@ export default function FeedPage() {
                     </span>
                     <button
                       onClick={() => handleCopiarLink(oc.id)}
-                      className={`flex items-center gap-1.5 shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer ${
-                        linkCopiado
+                      className={`flex items-center gap-1.5 shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer ${linkCopiado
                           ? "bg-emerald-50 text-emerald-600"
                           : "bg-[#091f75] hover:bg-[#0f2a8f] text-white"
-                      }`}
+                        }`}
                     >
                       {linkCopiado ? <Check size={14} /> : <Copy size={14} />}
                       {linkCopiado ? "Copiado!" : "Copiar"}

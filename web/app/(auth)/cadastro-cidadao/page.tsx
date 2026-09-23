@@ -55,13 +55,15 @@ export default function CadastroCidadao() {
   };
 
   // Cadastro/Login Social via OAuth
+  // Vai pro /auth/callback com intent=cadastro: aqui a intenção é criar conta
+  // mesmo, então o callback nunca desloga, só manda pro /Mapa.
   const handleSocialLogin = async (provedor: "google" | "facebook") => {
     setCarregando(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provedor,
         options: {
-          redirectTo: `${window.location.origin}/Mapa`,
+          redirectTo: `${window.location.origin}/callback?intent=cadastro`,
         },
       });
 
