@@ -27,15 +27,18 @@ Pluvite/
 │   │   ├── Feed/            Community occurrence feed (Supabase CRUD, likes, comments)
 │   │   ├── perfil/          Citizen profile (medical data, emergency contact, notification prefs)
 │   │   ├── Servidor/        Public-servant dashboard (Recharts; talks to Express backend)
-│   │   ├── Rotas/           Waze-like routing: pick city → origin/destination → turn-by-turn (backend /api/rotas)
-│   │   ├── components/      navbar (landing), navbar2 (citizen), sidebar (servidor), MapaValeComponent
+│   │   ├── Rotas/           Waze-like routing + real-time GPS navigation avoiding Feed occurrences (/api/rotas)
+│   │   ├── components/      navbar (landing), navbar2 (citizen), sidebar (servidor), Mapa*Component, SeletorLocalMapa
 │   │   ├── lib/banco.ts     Supabase browser client (single instance — always import this)
+│   │   ├── lib/rotas/       Routing client: api.ts, navegacao.ts (pure), useNavegacao.ts, useOcorrencias.ts
+│   │   ├── lib/             Also constantes.ts (domain lists), geo.ts, localizacao.ts (GPS hook), api.ts
 │   │   ├── backend/         Express 5 API (plain JS, ESM) on :3001
-│   │   └── python/          Prototypes: SMS (Twilio), desktop popup, rain test, SSE chat alert
+│   │   └── python/          Prototypes: SMS + WhatsApp (Twilio), desktop popup, rain test, SSE chat alert
 │   └── public/              Images, map.json / bairros.json (GeoJSON)
 ├── mobile/pluvite/          Expo 54 / React Native 0.81 app (React Navigation 7)
 │   └── src/{pages,navigation,assets}
 ├── Rotas/                   Road graphs per municipality (*.json, OSM + SRTM elevation) + gerar_grafos.py
+├── supabase/migrations/     SQL migrations (apply in the Supabase SQL Editor; idempotent)
 ├── Sprints/                 Sprint review PDFs and results
 ├── SKILLS/                  Coding standards for generated code (read before coding!)
 └── ROADMAP.md               Feature checklist — update when finishing an item
@@ -59,6 +62,8 @@ account for:
 - **Turns** — angle-based turn cost and U-turns (OSRM), via edge-based A*.
 - **Peak hours** — CET-SP windows (weekdays 7–10h, 17–20h).
 - **Preferences** — change the chosen path only, never the reported ETA.
+- **Feed occurrences** — active `ocorrencias` become blocked/restricted edges (`rotas/ocorrencias.js`);
+  like preferences they change the path only. Navigation re-routes when one hits the remaining path.
 
 Every constant lives in `PARAMETROS` with its source; unmeasured values are labelled "estimativa".
 These factors are **calculation logic only** — the map shows just the route and endpoints. Any
@@ -109,7 +114,7 @@ and by running the affected screen.
 | Table / bucket          | Key columns | Used by |
 |-------------------------|-------------|---------|
 | `cidadao`               | `auth_id` (= auth.users.id, upsert conflict key), `email`, `nome_completo`, `avatar_url`, `telefone`, `data_nascimento`, `cidade`, `bairro`, `cep`, `pcd`, `tipo_deficiencia`, `tipo_sanguineo`, `alergias`, `condicoes_medicas`, `medicamentos_uso`, `contato_emergencia_*`, `notif_*` | perfil, navbar2, Feed, mobile |
-| `ocorrencias`           | `id`, `autor_id`, `tipo`, `cidade`, `bairro`, `endereco`, `descricao`, `imagem_url`, `status`, `criado_em` | Feed |
+| `ocorrencias`           | `id`, `autor_id`, `tipo`, `cidade`, `bairro`, `endereco`, `descricao`, `imagem_url`, `status`, `criado_em`, `latitude`, `longitude` (nullable — migration `20260923120000`) | Feed, Rotas (backend + Realtime) |
 | `curtidas`              | `ocorrencia_id`, `usuario_id` | Feed |
 | `comentarios`           | `ocorrencia_id`, author, text | Feed |
 | `alertas_tempo_real`    | `id`, `tipo`, `prioridade`, `municipio`, `endereco`, `descricao`, `statusatual`, `criado_em`, FK `fk_cidadao` → `cidadao` | backend, Mapa realtime, Python scripts |
@@ -122,7 +127,8 @@ Always check the real columns in Supabase before writing queries against a table
 ## Domain vocabulary (single source of truth — see `SKILLS/pluvite-domain`)
 
 - **Occurrence status**: `Aguardando` → `Visualizado` → `Em Andamento` → `Concluído`.
-- **Occurrence types**: Alagamento, Árvore caída, Buraco na via, Deslizamento de terra, Via interditada, Outros.
+- **Occurrence types** (`TIPOS_OCORRENCIA` in `lib/constantes.ts`): Acidente, Alagamento, Árvore caída,
+  Buraco na via, Deslizamento de terra, Via interditada, Outros.
 - **Alert priority**: `Zona Segura` (#0a9667), `Atenção Crítica` (#f59e0b), `Estado de Alerta` (#ef4444), `Alerta Máximo` (#653dc2).
 - **Users**: `cidadao` (citizen) and `servidor` / `prefeitura` (public servant). Role separation is not enforced yet.
 
@@ -184,8 +190,13 @@ Read the matching skill **before** generating code:
 
 ## Known pitfalls
 
-- `web/app/backend/supabase.js` declares `supabaseUrl` twice and does not compile; `server.js`
-  creates its own client instead. Do not import `supabase.js` until it is fixed.
+- The backend has one Supabase client, `web/app/backend/supabase.js` (env vars, anon-key fallback).
+- `web/app/backend/` lives inside `app/`, so `next build` picks up `backend/node_modules/router/lib/route.js`
+  as a route handler. Harmless today; moving the backend out of `app/` fixes it (see ROADMAP).
+- Until the `latitude/longitude` migration is applied, the Feed publishes without the exact point and the
+  routing backend falls back to the street named in `endereco` (whole street).
+- Browser geolocation (Rotas navigation, Feed "usar minha localização") only works on HTTPS or localhost.
+  `/Rotas?simular=15` drives the navigation along the route at 15 m/s for demos.
 - The Servidor dashboard reads `alertas_tempo_real`, while citizens write to `ocorrencias` — they are
   not connected yet (see ROADMAP).
 - `Servidor/page.tsx` polls the backend every 5 s with hardcoded `http://localhost:3001`.

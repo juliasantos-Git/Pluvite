@@ -14,11 +14,34 @@ export function supabaseAdminClient() {
   );
 }
 
+// Sem estas variáveis o createClient lança ("supabaseUrl is required") antes de qualquer
+// try/catch da rota: o Next devolve um 500 sem corpo JSON e o painel mostra só "Erro
+// inesperado", sem pista do que falta. Conferir antes deixa o erro legível.
+const configuracaoAusente = () =>
+  [
+    !process.env.NEXT_PUBLIC_SUPABASE_URL && "NEXT_PUBLIC_SUPABASE_URL",
+    !process.env.SUPABASE_SERVICE_ROLE_KEY && "SUPABASE_SERVICE_ROLE_KEY",
+  ]
+    .filter(Boolean)
+    .join(" e ");
+
 type ResultadoAuth =
   | { ok: true }
   | { ok: false; status: number; mensagem: string };
 
 export async function exigirAdmin(request: Request): Promise<ResultadoAuth> {
+  const faltando = configuracaoAusente();
+  if (faltando) {
+    console.error(
+      `Painel /Adm sem configuração: defina ${faltando} em web/.env.local e reinicie o npm run dev.`,
+    );
+    return {
+      ok: false,
+      status: 500,
+      mensagem: `O servidor está sem ${faltando}. Configure em web/.env.local e reinicie o servidor.`,
+    };
+  }
+
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "").trim();
 

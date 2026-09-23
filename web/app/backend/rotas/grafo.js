@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { distanciaMetros, pontoAFrente, rumo } from './geo.js';
+import { distanciaMetros, distanciaPontoSegmento, pontoAFrente, rumo } from './geo.js';
 import {
   PARAMETROS,
   fatorRampa,
@@ -30,6 +30,8 @@ const BASE_RUMO = 25;
 const TAMANHO_CELULA_URBANA = 0.005;
 const INTERSECOES_AREA_URBANA = 30;
 const TAMANHO_CELULA_SEMAFORO = 0.0005;
+// Grade (~220 m) do índice espacial de arestas usado para achar as vias perto de um ponto
+const TAMANHO_CELULA_ARESTAS = 0.002;
 
 // Remove acentos e maiúsculas — "São José dos Campos" e "sao_jose_dos_campos" viram a mesma chave
 export const normalizar = (texto) =>
@@ -141,6 +143,7 @@ const montarGrafo = (bruto) => {
   const arestas = [];
   const saidas = new Map();
   const nosPorRua = new Map();
+  const arestasPorRua = new Map();
   let velocidadeMaximaMs = 0;
 
   for (const bruta of bruto.edges ?? bruto.links) {
@@ -210,6 +213,8 @@ const montarGrafo = (bruto) => {
     for (const nome of nomes) {
       if (!nosPorRua.has(nome)) nosPorRua.set(nome, new Set());
       nosPorRua.get(nome).add(aresta.de).add(aresta.para);
+      if (!arestasPorRua.has(nome)) arestasPorRua.set(nome, []);
+      arestasPorRua.get(nome).push(aresta.id);
     }
   }
 
@@ -218,11 +223,64 @@ const montarGrafo = (bruto) => {
     arestas,
     saidas,
     nosPorRua,
+    arestasPorRua,
     velocidadeMaximaMs,
     temElevacao: bruto.nodes.some((no) => no.elevacao != null),
     ruas: [...nosPorRua.keys()].sort((a, b) => a.localeCompare(b, 'pt-BR')),
     limites: [[minLat, minLng], [maxLat, maxLng]],
   };
+};
+
+// Índice espacial das arestas (célula da grade → ids), montado na primeira consulta de cada grafo
+const indicesEspaciais = new WeakMap();
+
+const indiceEspacial = (grafo) => {
+  let indice = indicesEspaciais.get(grafo);
+  if (indice) return indice;
+  indice = new Map();
+  for (const aresta of grafo.arestas) {
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    for (const [lat, lng] of aresta.coords) {
+      minLat = Math.min(minLat, lat); maxLat = Math.max(maxLat, lat);
+      minLng = Math.min(minLng, lng); maxLng = Math.max(maxLng, lng);
+    }
+    for (let i = Math.floor(minLat / TAMANHO_CELULA_ARESTAS); i <= Math.floor(maxLat / TAMANHO_CELULA_ARESTAS); i++) {
+      for (let j = Math.floor(minLng / TAMANHO_CELULA_ARESTAS); j <= Math.floor(maxLng / TAMANHO_CELULA_ARESTAS); j++) {
+        const chave = `${i}:${j}`;
+        if (!indice.has(chave)) indice.set(chave, []);
+        indice.get(chave).push(aresta.id);
+      }
+    }
+  }
+  indicesEspaciais.set(grafo, indice);
+  return indice;
+};
+
+/**
+ * Arestas cuja geometria passa a até `raio` metros do ponto, da mais próxima para a mais distante:
+ * [{ id, distancia }].
+ */
+export const arestasProximas = (grafo, lat, lng, raio) => {
+  const indice = indiceEspacial(grafo);
+  const dLat = raio / 110540;
+  const dLng = raio / (111320 * Math.cos((lat * Math.PI) / 180));
+  const vistas = new Set();
+  const proximas = [];
+  for (let i = Math.floor((lat - dLat) / TAMANHO_CELULA_ARESTAS); i <= Math.floor((lat + dLat) / TAMANHO_CELULA_ARESTAS); i++) {
+    for (let j = Math.floor((lng - dLng) / TAMANHO_CELULA_ARESTAS); j <= Math.floor((lng + dLng) / TAMANHO_CELULA_ARESTAS); j++) {
+      for (const id of indice.get(`${i}:${j}`) ?? []) {
+        if (vistas.has(id)) continue;
+        vistas.add(id);
+        const { coords } = grafo.arestas[id];
+        let menor = Infinity;
+        for (let k = 1; k < coords.length; k++) {
+          menor = Math.min(menor, distanciaPontoSegmento([lat, lng], coords[k - 1], coords[k]));
+        }
+        if (menor <= raio) proximas.push({ id, distancia: menor });
+      }
+    }
+  }
+  return proximas.sort((a, b) => a.distancia - b.distancia);
 };
 
 export const carregarGrafo = async (cidade) => {
