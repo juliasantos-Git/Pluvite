@@ -1,6 +1,7 @@
 import { diferencaRumo, distanciaMetros, pontoAFrente, rumo } from './geo.js';
 import {
   custoChegada,
+  custoConversao,
   custoPartida,
   custoTransicao,
   multiplicadorPico,
@@ -8,6 +9,13 @@ import {
 
 // Distância máxima (m) entre o ponto informado e a via mais próxima
 const DISTANCIA_MAXIMA_SNAP = 2000;
+
+// Navegação: com o rumo do veículo, o ponto de partida é o nó mais próximo À FRENTE dele (até
+// RAIO_NO_A_FRENTE m e dentro de ±TOLERANCIA_RUMO°), para a rota não começar voltando para um nó
+// que já ficou para trás. A menos de DISTANCIA_SOBRE_O_NO m o veículo está no próprio nó.
+const RAIO_NO_A_FRENTE = 80;
+const TOLERANCIA_RUMO = 60;
+const DISTANCIA_SOBRE_O_NO = 8;
 
 /**
  * PREFERÊNCIAS do usuário: mudam só a ESCOLHA do caminho (peso na busca), nunca o tempo
@@ -60,8 +68,23 @@ const noMaisProximo = (grafo, lat, lng, candidatos = grafo.saidas.keys()) => {
   return { id: melhor, distancia: menorDistancia };
 };
 
+const noAFrente = (grafo, lat, lng, rumoVeiculo) => {
+  let melhor = null;
+  let menorDistancia = Infinity;
+  for (const id of grafo.saidas.keys()) {
+    const no = grafo.nos.get(id);
+    const d = distanciaMetros(lat, lng, no.lat, no.lng);
+    if (d > RAIO_NO_A_FRENTE || d >= menorDistancia) continue;
+    const desvio = Math.abs(diferencaRumo(rumoVeiculo, rumo([lat, lng], [no.lat, no.lng])));
+    if (d > DISTANCIA_SOBRE_O_NO && desvio > TOLERANCIA_RUMO) continue;
+    melhor = id;
+    menorDistancia = d;
+  }
+  return melhor;
+};
+
 /**
- * Converte o ponto enviado pelo front ({ rua } ou { lat, lng }) em um nó do grafo.
+ * Converte o ponto enviado pelo front ({ rua } ou { lat, lng, rumo? }) em um nó do grafo.
  * Para uma rua, usa o nó dela mais próximo do "centro" da rua.
  */
 export const resolverPonto = (grafo, ponto) => {
@@ -78,6 +101,10 @@ export const resolverPonto = (grafo, ponto) => {
   }
 
   if (Number.isFinite(ponto?.lat) && Number.isFinite(ponto?.lng)) {
+    if (Number.isFinite(ponto.rumo)) {
+      const id = noAFrente(grafo, ponto.lat, ponto.lng, ponto.rumo);
+      if (id) return { id };
+    }
     const { id, distancia } = noMaisProximo(grafo, ponto.lat, ponto.lng);
     if (!id || distancia > DISTANCIA_MAXIMA_SNAP) {
       return { erro: 'O ponto informado está fora da área de ruas desta cidade.' };
@@ -136,14 +163,22 @@ const fatorPreferencia = (aresta, preferencias) => {
 /**
  * A* sobre ARESTAS (não nós): o estado é "cheguei por esta aresta", o que permite cobrar
  * conversões, semáforos e preferências que dependem de onde o veículo vem.
+ *
+ * Opcionais:
+ * - `penalidades`: Map<idAresta, { fator, tempo, distancia }> das ocorrências do Feed
+ *   (rotas/ocorrencias.js) — multiplicam o peso e somam um custo fixo (s ou m, conforme o critério).
+ * - `rumoInicial`: rumo do veículo em navegação; sair da origem num sentido diferente custa a
+ *   conversão equivalente (retorno se for o sentido oposto).
+ * Como as preferências, os dois mudam só a ESCOLHA do caminho, nunca o tempo exibido.
  * Devolve a lista de índices de arestas do caminho, ou null.
  */
-export const buscarCaminho = (grafo, origemId, destinoId, { pico, preferencias }) => {
+export const buscarCaminho = (grafo, origemId, destinoId, { pico, preferencias, penalidades, rumoInicial }) => {
   const { arestas, saidas, nos } = grafo;
   const alvo = nos.get(destinoId);
   const porTempo = preferencias.criterio !== 'curta';
 
-  // Heurística admissível: distância em linha reta (÷ maior velocidade do grafo, se por tempo)
+  // Heurística admissível: distância em linha reta (÷ maior velocidade do grafo, se por tempo).
+  // Continua admissível com as penalidades, que só aumentam o custo.
   const heuristica = (noId) => {
     const no = nos.get(noId);
     const d = distanciaMetros(no.lat, no.lng, alvo.lat, alvo.lng);
@@ -151,9 +186,13 @@ export const buscarCaminho = (grafo, origemId, destinoId, { pico, preferencias }
   };
   const pesoAresta = (aresta, transicao) => {
     const tempo = aresta.tempoLivre * multiplicadorPico(aresta, pico);
-    return porTempo
-      ? transicao + tempo * fatorPreferencia(aresta, preferencias)
-      : aresta.comprimento * fatorPreferencia(aresta, preferencias) + 0.01 * (tempo + transicao);
+    const ocorrencia = penalidades?.get(aresta.id);
+    const fator = fatorPreferencia(aresta, preferencias) * (ocorrencia?.fator ?? 1);
+    const peso = porTempo
+      ? transicao + tempo * fator
+      : aresta.comprimento * fator + 0.01 * (tempo + transicao);
+    if (!ocorrencia) return peso;
+    return peso + (porTempo ? ocorrencia.tempo : ocorrencia.distancia);
   };
 
   const custo = new Float64Array(arestas.length).fill(Infinity);
@@ -163,7 +202,10 @@ export const buscarCaminho = (grafo, origemId, destinoId, { pico, preferencias }
 
   for (const id of saidas.get(origemId) ?? []) {
     const aresta = arestas[id];
-    custo[id] = pesoAresta(aresta, porTempo ? custoPartida(aresta) : 0);
+    const manobraInicial = Number.isFinite(rumoInicial)
+      ? custoConversao(diferencaRumo(rumoInicial, aresta.rumoInicio))
+      : 0;
+    custo[id] = pesoAresta(aresta, porTempo ? custoPartida(aresta) + manobraInicial : 0);
     fila.inserir(id, custo[id] + heuristica(aresta.para));
   }
 
@@ -205,10 +247,11 @@ const descreverManobra = (rumoAnterior, rumoNovo) => {
 
 const kmh = (metros, segundos) => (segundos > 0 ? Math.round((metros / segundos) * 3.6) : 0);
 
-// Agrupa trechos consecutivos da mesma rua em instruções estilo GPS, com tempo por instrução
+// Agrupa trechos consecutivos da mesma rua em instruções estilo GPS, com tempo por instrução.
+// `inicio` é o índice, em `coordenadas`, do ponto onde a instrução começa (usado na navegação).
 const montarInstrucoes = (trechos) => {
   const instrucoes = [];
-  for (const { aresta, tempo } of trechos) {
+  for (const { aresta, tempo, inicio } of trechos) {
     const atual = instrucoes[instrucoes.length - 1];
     const absorver =
       atual && (atual.rua === aresta.nome || (!aresta.nome && aresta.comprimento < TRECHO_SEM_NOME_IGNORADO));
@@ -227,15 +270,16 @@ const montarInstrucoes = (trechos) => {
         rumo(aresta.coords[0], pontoAFrente(aresta.coords, BASE_RUMO)),
       );
     }
-    instrucoes.push({ ...manobra, rua: aresta.nome, distancia: aresta.comprimento, tempo, pontos: [...aresta.coords] });
+    instrucoes.push({ ...manobra, rua: aresta.nome, distancia: aresta.comprimento, tempo, inicio, pontos: [...aresta.coords] });
   }
-  return instrucoes.map(({ tipo, texto, rua, distancia, tempo }) => ({
+  return instrucoes.map(({ tipo, texto, rua, distancia, tempo, inicio }) => ({
     tipo,
     texto,
     rua: rua ?? 'via sem nome',
     distancia: Math.round(distancia),
     tempo: Math.round(tempo),
     velocidadeMedia: kmh(distancia, tempo),
+    inicio,
   }));
 };
 
@@ -257,6 +301,8 @@ export const avaliarCaminho = (grafo, caminho, { pico, preferencias, partida }) 
   };
   const eventos = [];
   const trechos = [];
+  // Índice em `coordenadas` onde cada aresta começa (a 1ª entra inteira; as demais sem o ponto repetido)
+  let inicio = 0;
 
   arestasDoCaminho.forEach((aresta, i) => {
     let transicao = 0;
@@ -271,7 +317,8 @@ export const avaliarCaminho = (grafo, caminho, { pico, preferencias, partida }) 
     }
     const deslocamento = aresta.tempoLivre * multiplicadorPico(aresta, pico);
     composicao.deslocamento += deslocamento;
-    trechos.push({ aresta, tempo: deslocamento + transicao });
+    trechos.push({ aresta, tempo: deslocamento + transicao, inicio });
+    inicio += aresta.coords.length - 1;
   });
   trechos[0].tempo += custoPartida(primeira);
   trechos[trechos.length - 1].tempo += custoChegada(ultima);
@@ -370,6 +417,9 @@ export const avaliarCaminho = (grafo, caminho, { pico, preferencias, partida }) 
     duracaoSegundos: Math.round(duracao),
     coordenadas,
     instrucoes,
+    // Arestas do grafo percorridas e onde cada uma começa em `coordenadas`: o front cruza com as
+    // arestas afetadas por ocorrências do Feed para saber se o trecho que falta ficou impedido
+    arestas: trechos.map((trecho) => ({ id: trecho.aresta.id, inicio: trecho.inicio })),
     analise,
   };
 };

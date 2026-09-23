@@ -1,8 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 // Ajuste este caminho se você já tem um cliente Supabase em outro arquivo do projeto
 import { supabase } from "@/app/lib/banco";
+import {
+  CENTRO_MUNICIPIO,
+  TIPOS_OCORRENCIA,
+  type Municipio,
+  type TipoOcorrencia,
+} from "@/app/lib/constantes";
+import type { Coordenada } from "@/app/lib/geo";
+import { obterPosicaoAtual } from "@/app/lib/localizacao";
 import {
   AlertTriangle,
   Wrench,
@@ -28,7 +37,20 @@ import {
   Copy,
   Mail,
   MessageCircle,
+  Loader2,
+  LocateFixed,
+  MapPinned,
 } from "lucide-react";
+
+// Mapa para marcar o ponto exato da ocorrência (Leaflet só no navegador)
+const SeletorLocalSemSSR = dynamic(() => import("@/app/components/SeletorLocalMapa"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-44 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-500 animate-pulse">
+      Carregando mapa...
+    </div>
+  ),
+});
 
 interface Comentario {
   id: string;
@@ -41,18 +63,6 @@ type StatusOcorrencia =
   | "Em Andamento"
   | "Visualizado"
   | "Concluído";
-
-// Tipos de ocorrência — usados no menu da publicação e nos filtros do feed
-const TIPOS_OCORRENCIA = [
-  "Alagamento",
-  "Árvore caída",
-  "Buraco na via",
-  "Deslizamento de terra",
-  "Via interditada",
-  "Outros",
-] as const;
-
-type TipoOcorrencia = (typeof TIPOS_OCORRENCIA)[number];
 
 // Os 39 municípios do Vale do Paraíba e Litoral Norte — usados no filtro e na publicação
 const CIDADES = [
@@ -114,6 +124,20 @@ interface Ocorrencia {
   curtido: boolean;
   curtidas: number;
   comentarios: Comentario[];
+}
+
+// Linha inserida em "ocorrencias" ao publicar (latitude/longitude só com o ponto marcado)
+interface LinhaNovaOcorrencia {
+  autor_id: string;
+  tipo: TipoOcorrencia;
+  cidade: string;
+  bairro: string;
+  endereco: string;
+  descricao: string | null;
+  imagem_url: string | null;
+  status: StatusOcorrencia;
+  latitude?: number;
+  longitude?: number;
 }
 
 const STATUS_ESTILO: Record<
@@ -424,6 +448,11 @@ export default function FeedPage() {
   const [novaCidade, setNovaCidade] = useState("");
   const [novoBairro, setNovoBairro] = useState("");
   const [novoEndereco, setNovoEndereco] = useState("");
+  // Ponto exato da ocorrência (opcional): o mapa de rotas usa para desviar só daquele trecho
+  const [novaLocalizacao, setNovaLocalizacao] = useState<Coordenada | null>(null);
+  const [mapaLocalAberto, setMapaLocalAberto] = useState(false);
+  const [localizandoPublicacao, setLocalizandoPublicacao] = useState(false);
+  const [erroLocalizacao, setErroLocalizacao] = useState<string | null>(null);
   const inputImagemRef = useRef<HTMLInputElement>(null);
 
   // Texto do comentário sendo digitado, por ocorrência (id -> texto)
@@ -634,7 +663,25 @@ export default function FeedPage() {
     setNovaCidade("");
     setNovoBairro("");
     setNovoEndereco("");
+    setNovaLocalizacao(null);
+    setMapaLocalAberto(false);
+    setErroLocalizacao(null);
     setModalAberto(false);
+  };
+
+  const handleUsarLocalizacaoPublicacao = async () => {
+    setLocalizandoPublicacao(true);
+    setErroLocalizacao(null);
+    try {
+      setNovaLocalizacao(await obterPosicaoAtual());
+    } catch (err) {
+      console.error("Erro ao obter localização da ocorrência:", err);
+      setErroLocalizacao(
+        "Não foi possível obter sua localização. Permita o acesso ou marque o ponto no mapa.",
+      );
+    } finally {
+      setLocalizandoPublicacao(false);
+    }
   };
 
   // Três etapas do formulário: tipo, local e conteúdo (descrição ou foto)
@@ -683,7 +730,7 @@ export default function FeedPage() {
       imagemUrlFinal = urlPublica.publicUrl;
     }
 
-    const { error: erroInsercao } = await supabase.from("ocorrencias").insert({
+    const novaOcorrencia: LinhaNovaOcorrencia = {
       autor_id: usuarioId,
       tipo: novoTipo,
       cidade: novaCidade,
@@ -692,7 +739,19 @@ export default function FeedPage() {
       descricao: novaLegenda.trim() || null,
       imagem_url: imagemUrlFinal,
       status: "Aguardando",
-    });
+    };
+    let { error: erroInsercao } = await supabase.from("ocorrencias").insert(
+      novaLocalizacao
+        ? { ...novaOcorrencia, latitude: novaLocalizacao[0], longitude: novaLocalizacao[1] }
+        : novaOcorrencia,
+    );
+
+    // Banco ainda sem as colunas latitude/longitude (migração em supabase/migrations/ não
+    // aplicada): publica só com o endereço, que o mapa de rotas também sabe usar
+    if (erroInsercao?.code === "PGRST204" && novaLocalizacao) {
+      console.warn("Ocorrência publicada sem o ponto exato:", erroInsercao.message);
+      ({ error: erroInsercao } = await supabase.from("ocorrencias").insert(novaOcorrencia));
+    }
 
     setPublicando(false);
 
@@ -1694,7 +1753,9 @@ export default function FeedPage() {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto md:overflow-visible">
+            {/* Com o mapa do local aberto o conteúdo passa da altura da tela: o corpo rola para o
+                rodapé (Publicar) continuar visível */}
+            <div className={`p-6 overflow-y-auto ${mapaLocalAberto ? "" : "md:overflow-visible"}`}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
                 {/* COLUNA ESQUERDA: TIPO E LOCALIZAÇÃO */}
                 <div className="space-y-4 md:pr-8">
@@ -1753,11 +1814,78 @@ export default function FeedPage() {
                         type="text"
                         value={novoEndereco}
                         onChange={(e) => setNovoEndereco(e.target.value)}
-                        placeholder="Rua e número (ou ponto de referência)"
+                        placeholder="Ex: Avenida Navrik Feres Aguiar, 1500"
                         className={`${CAMPO_CLASSE} pl-10`}
                       />
                     </div>
+                    {/* O mapa de rotas identifica a via pelo nome da rua escrito aqui */}
+                    <p className="mt-1.5 text-[11px] font-medium text-slate-500">
+                      Informe o nome da rua ou avenida. É por ele que o mapa de rotas sabe qual via
+                      evitar.
+                    </p>
                   </CampoModal>
+
+                  {/* LOCAL EXATO (opcional) — o mapa de rotas desvia só do trecho afetado */}
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleUsarLocalizacaoPublicacao}
+                        disabled={localizandoPublicacao}
+                        className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#091f75] bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-2 rounded-xl transition cursor-pointer disabled:opacity-50"
+                      >
+                        {localizandoPublicacao ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          <LocateFixed size={13} />
+                        )}
+                        Usar minha localização
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMapaLocalAberto((aberto) => !aberto)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#091f75] bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-2 rounded-xl transition cursor-pointer"
+                      >
+                        <MapPinned size={13} />
+                        {mapaLocalAberto ? "Fechar mapa" : "Marcar no mapa"}
+                      </button>
+                    </div>
+
+                    {mapaLocalAberto && (
+                      <div className="mt-2">
+                        <SeletorLocalSemSSR
+                          centroCidade={
+                            CENTRO_MUNICIPIO[novaCidade as Municipio] ?? CENTRO_MUNICIPIO.Taubaté
+                          }
+                          valor={novaLocalizacao}
+                          onChange={setNovaLocalizacao}
+                        />
+                      </div>
+                    )}
+
+                    {erroLocalizacao ? (
+                      <p className="mt-1.5 text-[11px] font-medium text-red-600">
+                        {erroLocalizacao}
+                      </p>
+                    ) : novaLocalizacao ? (
+                      <p className="mt-1.5 text-[11px] font-semibold text-[#091f75] flex items-center gap-1.5">
+                        <CheckCircle size={12} />
+                        Local marcado ({novaLocalizacao[0].toFixed(5)},{" "}
+                        {novaLocalizacao[1].toFixed(5)})
+                        <button
+                          type="button"
+                          onClick={() => setNovaLocalizacao(null)}
+                          className="font-bold text-slate-500 hover:text-red-600 cursor-pointer"
+                        >
+                          Remover
+                        </button>
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-[11px] font-medium text-slate-500">
+                        Opcional: marque o ponto exato para as rotas desviarem da ocorrência.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* COLUNA DIREITA: DESCRIÇÃO E FOTO */}

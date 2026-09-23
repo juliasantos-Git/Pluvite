@@ -31,7 +31,8 @@ Legenda de prioridade: 🔴 essencial para a banca · 🟡 importante · 🟢 de
 
 - [ ] Mover chaves do código para `.env` (Supabase em `banco.ts`/`server.js`/mobile, WeatherAPI em `Clima2`, OpenWeather em `MapaValeComponent`)
 - [ ] Revogar/rotacionar as chaves de clima que já foram commitadas
-- [ ] Corrigir `web/app/backend/supabase.js` (declaração duplicada) e usá-lo no `server.js`
+- [x] Corrigir `web/app/backend/supabase.js` (declaração duplicada) e usá-lo no `server.js`
+- [ ] Tirar o backend de dentro de `web/app/` (o `next build` trata `backend/node_modules/router/lib/route.js` como rota)
 - [ ] URL do backend via `NEXT_PUBLIC_API_URL` (remover `http://localhost:3001` fixo)
 - [ ] Criar `web/app/lib/constantes.ts` com municípios, tipos, status e prioridades (remover as 3 listas divergentes; tirar "Potunduva", incluir Canas, Lavrinhas e Queluz no painel)
 - [ ] Unificar o mapeamento de status (`aguardando/andamento/resolvido` do mobile → valores canônicos)
@@ -59,7 +60,9 @@ Legenda de prioridade: 🔴 essencial para a banca · 🟡 importante · 🟢 de
 - [ ] **Conectar o painel do servidor à tabela `ocorrencias`** (hoje ele lê só `alertas_tempo_real`)
 - [ ] Servidor altera status da ocorrência e o autor vê a mudança no Feed
 - [ ] Ocultar ocorrências `Concluído` do feed público (manter no histórico/perfil)
-- [ ] Salvar latitude/longitude na ocorrência e exibir os pontos no mapa
+- [x] Salvar latitude/longitude na ocorrência (GPS ou ponto marcado no mapa do modal) e exibir no mapa de rotas
+- [ ] **Aplicar `supabase/migrations/20260923120000_ocorrencias_localizacao.sql` no Supabase** (colunas + Realtime)
+- [x] Tipo de ocorrência "Acidente"
 - [ ] Feed mobile conectado ao Supabase (hoje é mock) com FlatList
 - [ ] Publicação pelo mobile com câmera (`expo-image-picker`) e localização atual (`expo-location`)
 - [ ] Feed em tempo real (Supabase Realtime) em vez de recarregar
@@ -77,6 +80,8 @@ Legenda de prioridade: 🔴 essencial para a banca · 🟡 importante · 🟢 de
 - [ ] Alerta automático por limiar de chuva (portar `teste de chuva.py` para job agendado no backend ou Edge Function)
 - [ ] Push notifications no mobile (`expo-notifications`) respeitando `notif_*` do perfil
 - [ ] Envio de SMS pelo backend via Twilio (portar `python/Sms/app.py`)
+- [x] Protótipo de envio do último alerta por WhatsApp via Twilio (`python/WhatsApp/app.py`)
+- [ ] WhatsApp em produção: remetente aprovado pela Meta + template de mensagem (fora do Sandbox / janela de 24 h) e disparo automático pelo backend
 - [ ] 🟡 Envio de e-mail de alerta usando o template `web/email.html`
 - [ ] 🟡 Página "Alertas" para o cidadão com histórico de alertas da sua cidade
 - [ ] 🟢 Integração com fontes oficiais (Defesa Civil SP, CEMADEN, INMET)
@@ -101,7 +106,16 @@ Legenda de prioridade: 🔴 essencial para a banca · 🟡 importante · 🟢 de
 - [ ] Controles de preferência de rota na interface da página `/Rotas`
 - [ ] Calibrar os parâmetros marcados como "estimativa" com medições reais (cronometragem em campo ou Waze for Cities / TomTom)
 - [ ] Mapear lombadas e placas de PARE no OpenStreetMap (dados ainda escassos na região)
-- [ ] Evitar vias com ocorrências ativas (alagamento, via interditada, deslizamento) no cálculo da rota
+- [x] Evitar vias com ocorrências ativas (alagamento, via interditada, deslizamento) no cálculo da rota
+- [x] Navegação em tempo real na web: GPS, trajeto percorrido/restante, câmera seguindo, recálculo ao sair da rota, chegada
+- [x] Recálculo automático quando uma ocorrência do Feed atinge o trajeto (Realtime + consulta periódica)
+- [x] Card de seleção de cidade mais largo e baixo (desktop e celular)
+- [x] Manter cidade, origem e destino ao sair da página `/Rotas` e voltar (`lib/rotas/sessao.ts`, sessionStorage)
+- [x] Interditar só o trecho da via dentro do raio da ocorrência, não a aresta inteira do grafo (até 5,6 km em Taubaté)
+- [ ] Calibrar raio/validade de cada tipo de ocorrência (`EFEITO_OCORRENCIA`, hoje estimativa)
+- [ ] Testar a navegação em campo no celular (exige HTTPS; em sala use `/Rotas?simular`)
+- [ ] 🟢 Avisar "rota mais rápida disponível" quando uma ocorrência evitada for concluída
+- [ ] 🟢 Instruções de voz na navegação (`speechSynthesis`)
 - [ ] Decidir onde hospedar os grafos em produção (a pasta `Rotas/` tem ~110 MB e ainda não está no git)
 - [ ] Tela de Rotas no mobile (citada no README, ainda não existe)
 - [ ] 🟡 Pontos de abrigo e rotas de evacuação cadastrados pela prefeitura

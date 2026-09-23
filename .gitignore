@@ -1,1 +1,3 @@
 node_modules
+# Cache HTTP do OSMnx e tiles de elevação SRTM (gerados por Rotas/gerar_grafos.py)
+cache/
