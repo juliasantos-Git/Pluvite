@@ -113,18 +113,6 @@ export const normalizar = (texto: string) =>
     .toLowerCase()
     .trim();
 
-// Tipos de ocorrência que o cidadão pode relatar no Feed
-export const TIPOS_OCORRENCIA = [
-  "Alagamento",
-  "Árvore caída",
-  "Buraco na via",
-  "Deslizamento de terra",
-  "Via interditada",
-  "Outros",
-] as const;
-
-export type TipoOcorrencia = (typeof TIPOS_OCORRENCIA)[number];
-
 // Fluxo de status de uma ocorrência, nessa ordem
 export const STATUS_OCORRENCIA = [
   "Aguardando",
@@ -158,6 +146,7 @@ export const CORES_PRIORIDADE: Record<Prioridade, string> = {
 export const PRIORIDADE_POR_TIPO_PADRAO: Record<TipoOcorrencia, Prioridade> = {
   "Deslizamento de terra": "Alerta Máximo",
   Alagamento: "Estado de Alerta",
+  Acidente: "Atenção Crítica",
   "Via interditada": "Atenção Crítica",
   "Árvore caída": "Atenção Crítica",
   "Buraco na via": "Atenção Crítica",

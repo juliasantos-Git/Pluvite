@@ -36,14 +36,11 @@ import {
   Copy,
   Mail,
   MessageCircle,
-<<<<<<< HEAD
   Loader2,
   LocateFixed,
   MapPinned,
-=======
   Users,
   ShieldAlert,
->>>>>>> cf3c7d01f14c5487523e56cfe39f3a91c8d6ece6
 } from "lucide-react";
 
 // Mapa para marcar o ponto exato da ocorrência (Leaflet só no navegador)
