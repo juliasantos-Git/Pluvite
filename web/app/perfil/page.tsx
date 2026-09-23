@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/app/lib/banco";
 import {
@@ -24,7 +24,65 @@ import {
   Wrench,
   Eye,
   CheckCircle,
+  Trash2,
+  Check,
+  MoreVertical,
+  Share2,
+  Link as LinkIcon,
 } from "lucide-react";
+
+// Tipos de ocorrência — mesma lista usada no Feed, pro formulário de edição
+const TIPOS_OCORRENCIA = [
+  "Alagamento",
+  "Árvore caída",
+  "Buraco na via",
+  "Deslizamento de terra",
+  "Via interditada",
+  "Outros",
+] as const;
+
+// Os 39 municípios do Vale do Paraíba e Litoral Norte — mesma lista do Feed
+const CIDADES = [
+  "Aparecida",
+  "Arapeí",
+  "Areias",
+  "Bananal",
+  "Caçapava",
+  "Cachoeira Paulista",
+  "Campos do Jordão",
+  "Canas",
+  "Caraguatatuba",
+  "Cruzeiro",
+  "Cunha",
+  "Guaratinguetá",
+  "Igaratá",
+  "Ilhabela",
+  "Jacareí",
+  "Jambeiro",
+  "Lagoinha",
+  "Lavrinhas",
+  "Lorena",
+  "Monteiro Lobato",
+  "Natividade da Serra",
+  "Paraibuna",
+  "Pindamonhangaba",
+  "Piquete",
+  "Potim",
+  "Queluz",
+  "Redenção da Serra",
+  "Roseira",
+  "Santa Branca",
+  "Santo Antônio do Pinhal",
+  "São Bento do Sapucaí",
+  "São José do Barreiro",
+  "São José dos Campos",
+  "São Luiz do Paraitinga",
+  "São Sebastião",
+  "Silveiras",
+  "Taubaté",
+  "Tremembé",
+  "Ubatuba",
+] as const;
 
 type Secao = "dados" | "emergencia" | "notificacoes" | "seguranca" | "acessibilidade" | "publicacoes";
 type Bloco = "pessoais" | "endereco" | "medico" | "contatoEmergencia" | null;
@@ -46,14 +104,33 @@ type StatusPublicacao = "Aguardando" | "Em Andamento" | "Visualizado" | "Conclu�
 
 interface Publicacao {
   id: string;
+  tipo: string;
+  cidade: string;
+  bairro: string;
+  endereco: string;
+  criadoEm: string;
   tempo: string;
   status: StatusPublicacao;
   descricao: string;
-  imagemUrl: string;
+  imagemUrl: string | null;
   curtido: boolean;
   curtidas: number;
   comentarios: ComentarioPublicacao[];
 }
+
+// Calcula um texto relativo ("há 15 minutos", "há 2 horas"...) a partir do
+// timestamp `criado_em` que vem do Supabase — mesma lógica usada no Feed
+const tempoRelativo = (dataIso: string) => {
+  const diffMs = Date.now() - new Date(dataIso).getTime();
+  const minutos = Math.floor(diffMs / 60000);
+  if (minutos < 1) return "Agora mesmo";
+  if (minutos < 60)
+    return `há ${minutos} ${minutos === 1 ? "minuto" : "minutos"}`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `há ${horas} ${horas === 1 ? "hora" : "horas"}`;
+  const dias = Math.floor(horas / 24);
+  return `há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+};
 
 const STATUS_ESTILO_PUB: Record<StatusPublicacao, { badge: string; icon: any; texto: string }> = {
   Aguardando: { badge: "bg-red-50 text-red-700 border-red-200", icon: AlertTriangle, texto: "Aguardando" },
@@ -62,42 +139,8 @@ const STATUS_ESTILO_PUB: Record<StatusPublicacao, { badge: string; icon: any; te
   Concluído: { badge: "bg-slate-100 text-slate-600 border-slate-200", icon: CheckCircle, texto: "Concluído" },
 };
 
-const MINHAS_PUBLICACOES_INICIAIS: Publicacao[] = [
-  {
-    id: "pub-1",
-    tempo: "há 2 dias",
-    status: "Concluído",
-    descricao: "Alagamento na Rua das Acácias após a chuva forte de domingo. Já foi resolvido pela equipe.",
-    imagemUrl: "https://picsum.photos/seed/perfil-pub1/700/700",
-    curtido: false,
-    curtidas: 6,
-    comentarios: [
-      { id: "pc1", autor: "Juliana Alves", texto: "Vi que resolveram rápido, muito bom!" },
-    ],
-  },
-  {
-    id: "pub-2",
-    tempo: "há 1 semana",
-    status: "Visualizado",
-    descricao: "Bueiro entupido na esquina perto de casa, começando a acumular água.",
-    imagemUrl: "https://picsum.photos/seed/perfil-pub2/700/700",
-    curtido: true,
-    curtidas: 3,
-    comentarios: [],
-  },
-  {
-    id: "pub-3",
-    tempo: "há 3 semanas",
-    status: "Concluído",
-    descricao: "Galho de árvore quebrado bloqueando parte da calçada.",
-    imagemUrl: "https://picsum.photos/seed/perfil-pub3/700/700",
-    curtido: false,
-    curtidas: 1,
-    comentarios: [
-      { id: "pc2", autor: "Roberto Dias", texto: "Obrigado por avisar, passei por ali hoje e já tinham limpado." },
-    ],
-  },
-];
+// Lista inicial vazia — as publicações reais vêm do Supabase (ver carregarMinhasPublicacoes)
+const MINHAS_PUBLICACOES_INICIAIS: Publicacao[] = [];
 
 export default function PerfilCidadao() {
   /* NAVEGACAO E ROTEAMENTO */
@@ -137,8 +180,41 @@ export default function PerfilCidadao() {
 
   /* ESTADO DAS PUBLICAÇÕES DO PRÓPRIO CIDADÃO */
   const [minhasPublicacoes, setMinhasPublicacoes] = useState<Publicacao[]>(MINHAS_PUBLICACOES_INICIAIS);
+  const [carregandoPublicacoes, setCarregandoPublicacoes] = useState(false);
   const [publicacaoSelecionada, setPublicacaoSelecionada] = useState<string | null>(null);
   const [comentarioAtualPub, setComentarioAtualPub] = useState<Record<string, string>>({});
+
+  // Id da linha de "cidadao" do usuário logado — é esse id que ocorrencias.autor_id espera
+  const [cidadaoId, setCidadaoId] = useState<string | null>(null);
+
+  /* EDIÇÃO DE UMA PUBLICAÇÃO PRÓPRIA */
+  const [editandoPublicacao, setEditandoPublicacao] = useState(false);
+  const [salvandoEdicaoPub, setSalvandoEdicaoPub] = useState(false);
+  const [apagandoPub, setApagandoPub] = useState(false);
+  const [edicaoPub, setEdicaoPub] = useState<{
+    tipo: string;
+    cidade: string;
+    bairro: string;
+    endereco: string;
+    descricao: string;
+  } | null>(null);
+
+  /* MENU DE AÇÕES (⋮) DE UMA PUBLICAÇÃO PRÓPRIA */
+  const [menuAcoesAberto, setMenuAcoesAberto] = useState(false);
+  const [linkCopiadoPub, setLinkCopiadoPub] = useState(false);
+  const menuAcoesRef = useRef<HTMLDivElement>(null);
+
+  // Fecha o menu de ações ao clicar fora dele
+  useEffect(() => {
+    if (!menuAcoesAberto) return;
+    const aoClicarFora = (e: MouseEvent) => {
+      if (menuAcoesRef.current && !menuAcoesRef.current.contains(e.target as Node)) {
+        setMenuAcoesAberto(false);
+      }
+    };
+    document.addEventListener("mousedown", aoClicarFora);
+    return () => document.removeEventListener("mousedown", aoClicarFora);
+  }, [menuAcoesAberto]);
 
   /* CARREGAR DADOS DO SUPABASE */
   useEffect(() => {
@@ -177,6 +253,7 @@ export default function PerfilCidadao() {
         }
 
         if (data && ativo) {
+          setCidadaoId(data.id);
           setPerfil((prev) => ({
             ...prev,
             nome_completo: data.nome_completo || nomeDoCadastro,
@@ -223,6 +300,69 @@ export default function PerfilCidadao() {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  /* CARREGAR MINHAS PUBLICAÇÕES DO SUPABASE */
+  const carregarMinhasPublicacoes = async (cidadaoIdAtual: string) => {
+    setCarregandoPublicacoes(true);
+
+    const { data: linhas, error: erroOcorrencias } = await supabase
+      .from("ocorrencias")
+      .select("*")
+      .eq("autor_id", cidadaoIdAtual)
+      .order("criado_em", { ascending: false });
+
+    if (erroOcorrencias || !linhas) {
+      console.error("Erro ao carregar minhas publicações:", erroOcorrencias);
+      setCarregandoPublicacoes(false);
+      return;
+    }
+
+    const { data: curtidasLinhas } = await supabase
+      .from("curtidas")
+      .select("ocorrencia_id, usuario_id");
+    const { data: comentariosLinhas } = await supabase
+      .from("comentarios")
+      .select("id, ocorrencia_id, texto, cidadao(nome_completo)")
+      .order("criado_em", { ascending: true });
+
+    const publicacoesMontadas: Publicacao[] = linhas.map((linha: any) => {
+      const curtidasDaOcorrencia = (curtidasLinhas || []).filter(
+        (c: any) => c.ocorrencia_id === linha.id,
+      );
+      const comentariosDaOcorrencia = (comentariosLinhas || [])
+        .filter((c: any) => c.ocorrencia_id === linha.id)
+        .map((c: any) => ({
+          id: c.id,
+          autor: c.cidadao?.nome_completo || "Cidadão",
+          texto: c.texto,
+        }));
+
+      return {
+        id: linha.id,
+        tipo: linha.tipo,
+        cidade: linha.cidade,
+        bairro: linha.bairro,
+        endereco: linha.endereco,
+        criadoEm: linha.criado_em,
+        tempo: tempoRelativo(linha.criado_em),
+        status: linha.status,
+        descricao: linha.descricao || "",
+        imagemUrl: linha.imagem_url,
+        curtido: cidadaoIdAtual
+          ? curtidasDaOcorrencia.some((c: any) => c.usuario_id === cidadaoIdAtual)
+          : false,
+        curtidas: curtidasDaOcorrencia.length,
+        comentarios: comentariosDaOcorrencia,
+      };
+    });
+
+    setMinhasPublicacoes(publicacoesMontadas);
+    setCarregandoPublicacoes(false);
+  };
+
+  useEffect(() => {
+    if (cidadaoId) carregarMinhasPublicacoes(cidadaoId);
+  }, [cidadaoId]);
 
   /* FORMATACAO MASCARA DE TELEFONE */
   function formatarTelefone(valor: string) {
@@ -386,21 +526,51 @@ export default function PerfilCidadao() {
   };
 
   /* CURTIR UMA PUBLICAÇÃO PRÓPRIA */
-  const handleCurtirPublicacao = (id: string) => {
+  const handleCurtirPublicacao = async (id: string) => {
+    if (!cidadaoId) return;
+
+    const pub = minhasPublicacoes.find((p) => p.id === id);
+    if (!pub) return;
+    const vaiCurtir = !pub.curtido;
+
+    // Atualização otimista — muda na tela antes da resposta do banco
     setMinhasPublicacoes((prev) =>
-      prev.map((pub) =>
-        pub.id === id
-          ? { ...pub, curtido: !pub.curtido, curtidas: pub.curtido ? pub.curtidas - 1 : pub.curtidas + 1 }
-          : pub,
+      prev.map((p) =>
+        p.id === id
+          ? {
+            ...p,
+            curtido: vaiCurtir,
+            curtidas: vaiCurtir ? p.curtidas + 1 : p.curtidas - 1,
+          }
+          : p,
       ),
     );
+
+    if (vaiCurtir) {
+      const { error } = await supabase
+        .from("curtidas")
+        .insert({ ocorrencia_id: id, usuario_id: cidadaoId });
+      if (error) console.error(error);
+    } else {
+      const { error } = await supabase
+        .from("curtidas")
+        .delete()
+        .eq("ocorrencia_id", id)
+        .eq("usuario_id", cidadaoId);
+      if (error) console.error(error);
+    }
   };
 
   /* ENVIAR COMENTÁRIO EM UMA PUBLICAÇÃO PRÓPRIA */
-  const handleEnviarComentarioPub = (id: string) => {
+  const handleEnviarComentarioPub = async (id: string) => {
+    if (!cidadaoId) return;
+
     const texto = (comentarioAtualPub[id] || "").trim();
     if (!texto) return;
 
+    setComentarioAtualPub((prev) => ({ ...prev, [id]: "" }));
+
+    // Atualização otimista — mostra o comentário antes da resposta do banco
     setMinhasPublicacoes((prev) =>
       prev.map((pub) =>
         pub.id === id
@@ -408,13 +578,144 @@ export default function PerfilCidadao() {
             ...pub,
             comentarios: [
               ...pub.comentarios,
-              { id: `pc-${Date.now()}`, autor: perfil.nome_completo || "Você", texto },
+              { id: `temp-${Date.now()}`, autor: perfil.nome_completo || "Você", texto },
             ],
           }
           : pub,
       ),
     );
-    setComentarioAtualPub((prev) => ({ ...prev, [id]: "" }));
+
+    const { error } = await supabase.from("comentarios").insert({
+      ocorrencia_id: id,
+      autor_id: cidadaoId,
+      texto,
+    });
+
+    if (error) {
+      console.error(error);
+      alert("Não foi possível enviar o comentário.");
+    }
+  };
+
+  /* COMPARTILHAR UMA PUBLICAÇÃO PRÓPRIA — leva pro Feed, que já abre o post pelo ?ocorrencia=id */
+  const handleCompartilharPub = async (pub: Publicacao) => {
+    if (typeof window === "undefined") return;
+    const link = `${window.location.origin}/Feed?ocorrencia=${pub.id}`;
+    const texto = `${pub.tipo} em ${pub.bairro}, ${pub.cidade} — via Pluvite`;
+
+    setMenuAcoesAberto(false);
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "Pluvite", text: texto, url: link });
+      } catch {
+        // Usuário cancelou o compartilhamento nativo — sem tratamento extra
+      }
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopiadoPub(true);
+      setTimeout(() => setLinkCopiadoPub(false), 2000);
+    } catch {
+      // Navegador sem permissão de clipboard — sem tratamento extra por enquanto
+    }
+  };
+
+  /* EDITAR UMA PUBLICAÇÃO PRÓPRIA */
+  const iniciarEdicaoPublicacao = (pub: Publicacao) => {
+    setEdicaoPub({
+      tipo: pub.tipo,
+      cidade: pub.cidade,
+      bairro: pub.bairro,
+      endereco: pub.endereco,
+      descricao: pub.descricao,
+    });
+    setEditandoPublicacao(true);
+    setMenuAcoesAberto(false);
+  };
+
+  const cancelarEdicaoPublicacao = () => {
+    setEditandoPublicacao(false);
+    setEdicaoPub(null);
+  };
+
+  const salvarEdicaoPublicacao = async (id: string) => {
+    if (!edicaoPub) return;
+    if (!edicaoPub.tipo || !edicaoPub.cidade || !edicaoPub.bairro.trim() || !edicaoPub.endereco.trim()) {
+      alert("Preencha o tipo, a cidade, o bairro e o endereço antes de salvar.");
+      return;
+    }
+
+    setSalvandoEdicaoPub(true);
+
+    const { error } = await supabase
+      .from("ocorrencias")
+      .update({
+        tipo: edicaoPub.tipo,
+        cidade: edicaoPub.cidade,
+        bairro: edicaoPub.bairro.trim(),
+        endereco: edicaoPub.endereco.trim(),
+        descricao: edicaoPub.descricao.trim() || null,
+      })
+      .eq("id", id);
+
+    setSalvandoEdicaoPub(false);
+
+    if (error) {
+      console.error("Erro ao salvar publicação:", error);
+      alert("Não foi possível salvar as alterações: " + error.message);
+      return;
+    }
+
+    setMinhasPublicacoes((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+            ...p,
+            tipo: edicaoPub.tipo,
+            cidade: edicaoPub.cidade,
+            bairro: edicaoPub.bairro.trim(),
+            endereco: edicaoPub.endereco.trim(),
+            descricao: edicaoPub.descricao.trim(),
+          }
+          : p,
+      ),
+    );
+    setEditandoPublicacao(false);
+    setEdicaoPub(null);
+  };
+
+  /* APAGAR UMA PUBLICAÇÃO PRÓPRIA */
+  const apagarPublicacao = async (id: string) => {
+    setMenuAcoesAberto(false);
+    const confirmar = window.confirm(
+      "Tem certeza que deseja apagar esta publicação? Essa ação não pode ser desfeita.",
+    );
+    if (!confirmar) return;
+
+    setApagandoPub(true);
+
+    // Remove primeiro curtidas e comentários ligados a essa ocorrência,
+    // pra não esbarrar numa restrição de chave estrangeira ao apagar
+    await supabase.from("curtidas").delete().eq("ocorrencia_id", id);
+    await supabase.from("comentarios").delete().eq("ocorrencia_id", id);
+
+    const { error } = await supabase.from("ocorrencias").delete().eq("id", id);
+
+    setApagandoPub(false);
+
+    if (error) {
+      console.error("Erro ao apagar publicação:", error);
+      alert("Não foi possível apagar a publicação: " + error.message);
+      return;
+    }
+
+    setMinhasPublicacoes((prev) => prev.filter((p) => p.id !== id));
+    setPublicacaoSelecionada(null);
+    setEditandoPublicacao(false);
+    setEdicaoPub(null);
   };
 
   /* LOGOUT DO USUARIO */
@@ -578,7 +879,7 @@ export default function PerfilCidadao() {
   );
 
   return (
-    <main className="w-full mt-15 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 min-h-[calc(100vh-68px)] relative">
+    <main className="w-full mt-15 bg-slate-50 font-sans antialiased p-4 sm:p-6 md:p-8 min-h-full overflow-hidden relative">
       {/* FUNDO BOLHAS DE DECORACAO */}
       <div className="absolute top-[400px] -left-35 w-96 h-96 bg-[#0f35a0]/5 rounded-full pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#0f35a0]/4 rounded-full blur-2xl pointer-events-none" />
@@ -637,6 +938,7 @@ export default function PerfilCidadao() {
                     <img
                       src={perfil.avatar_url}
                       alt="Avatar"
+                      referrerPolicy="no-referrer"
                       className={
                         perfil.avatar_url === "/perfil.png"
                           ? "w-full h-full object-contain scale-160"
@@ -826,7 +1128,14 @@ export default function PerfilCidadao() {
                   </p>
                 </div>
 
-                {minhasPublicacoes.length === 0 ? (
+                {carregandoPublicacoes ? (
+                  <div className="py-10 text-center">
+                    <Loader2 size={22} className="text-slate-300 mx-auto mb-2 animate-spin" />
+                    <p className="text-xs text-slate-400 font-medium">
+                      Carregando suas publicações...
+                    </p>
+                  </div>
+                ) : minhasPublicacoes.length === 0 ? (
                   <div className="py-10 text-center">
                     <ImageIcon size={28} className="text-slate-300 mx-auto mb-2" />
                     <p className="text-xs text-slate-400 font-medium">
@@ -841,11 +1150,20 @@ export default function PerfilCidadao() {
                         onClick={() => setPublicacaoSelecionada(pub.id)}
                         className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer bg-slate-100"
                       >
-                        <img
-                          src={pub.imagemUrl}
-                          alt="Publicação"
-                          className="w-full h-full object-cover"
-                        />
+                        {pub.imagemUrl ? (
+                          <img
+                            src={pub.imagemUrl}
+                            alt="Publicação"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-2 bg-blue-50/60">
+                            <ImageIcon size={20} className="text-[#091f75]/40" />
+                            <span className="text-[9px] font-bold text-[#091f75]/70 text-center leading-tight line-clamp-3">
+                              {pub.tipo}
+                            </span>
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/50 transition-all flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100">
                           <span className="flex items-center gap-1.5 text-white text-xs font-bold">
                             <ThumbsUp size={14} fill="currentColor" />
@@ -1217,10 +1535,18 @@ export default function PerfilCidadao() {
         return (
           <div
             className="fixed inset-0 bg-slate-950/90 z-[10002] flex items-center justify-center p-4"
-            onClick={() => setPublicacaoSelecionada(null)}
+            onClick={() => {
+              setPublicacaoSelecionada(null);
+              cancelarEdicaoPublicacao();
+              setMenuAcoesAberto(false);
+            }}
           >
             <button
-              onClick={() => setPublicacaoSelecionada(null)}
+              onClick={() => {
+                setPublicacaoSelecionada(null);
+                cancelarEdicaoPublicacao();
+                setMenuAcoesAberto(false);
+              }}
               className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/80 hover:text-white cursor-pointer z-10"
               title="Fechar"
             >
@@ -1231,13 +1557,23 @@ export default function PerfilCidadao() {
               className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* IMAGEM GRANDE */}
+              {/* IMAGEM GRANDE (ou marcador do tipo, quando a publicação não tem foto) */}
               <div className="w-full md:w-3/5 bg-black flex items-center justify-center max-h-[45vh] md:max-h-[90vh] shrink-0">
-                <img
-                  src={pub.imagemUrl}
-                  alt="Publicação"
-                  className="w-full h-full object-contain"
-                />
+                {pub.imagemUrl ? (
+                  <img
+                    src={pub.imagemUrl}
+                    alt="Publicação"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-white/60 p-10 text-center">
+                    <ImageIcon size={36} />
+                    <span className="text-xs font-bold">{pub.tipo}</span>
+                    <span className="text-[11px] text-white/40">
+                      Essa publicação não tem foto
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* PAINEL DE LEGENDA E COMENTÁRIOS */}
@@ -1247,7 +1583,12 @@ export default function PerfilCidadao() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-blue-50 overflow-hidden flex items-center justify-center text-[#091f75] font-black text-xs shrink-0">
                       {perfil.avatar_url && perfil.avatar_url !== "/perfil.png" ? (
-                        <img src={perfil.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                        <img
+                          src={perfil.avatar_url}
+                          alt="Avatar"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
                         gerarIniciais(perfil.nome_completo || "Você")
                       )}
@@ -1259,28 +1600,199 @@ export default function PerfilCidadao() {
                       <span className="text-[11px] text-slate-400">{pub.tempo}</span>
                     </div>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border shrink-0 ${estiloPub.badge}`}>
-                    <StatusIconPub size={11} />
-                    {estiloPub.texto}
-                  </span>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {!editandoPublicacao && (
+                      <div className="relative" ref={menuAcoesRef}>
+                        <button
+                          onClick={() => setMenuAcoesAberto((prev) => !prev)}
+                          className="p-1.5 text-slate-400 hover:text-[#091f75] hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+                          title="Mais ações"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+
+                        {menuAcoesAberto && (
+                          <ul className="absolute right-0 top-full mt-1.5 z-20 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 overflow-hidden">
+                            <li>
+                              <button
+                                onClick={() => apagarPublicacao(pub.id)}
+                                disabled={apagandoPub}
+                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                {apagandoPub ? (
+                                  <Loader2 size={14} className="animate-spin" />
+                                ) : (
+                                  <Trash2 size={14} />
+                                )}
+                                Apagar
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                onClick={() => iniciarEdicaoPublicacao(pub)}
+                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                              >
+                                <Pencil size={14} className="text-slate-400" />
+                                Editar
+                              </button>
+                            </li>
+                            <li>
+                              <button
+                                onClick={() => handleCompartilharPub(pub)}
+                                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                              >
+                                <Share2 size={14} className="text-slate-400" />
+                                Compartilhar
+                              </button>
+                            </li>
+                          </ul>
+                        )}
+
+                        {linkCopiadoPub && (
+                          <span className="absolute right-0 top-full mt-1.5 z-30 flex items-center gap-1 bg-slate-900 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                            <LinkIcon size={11} />
+                            Link copiado!
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 border shrink-0 ${estiloPub.badge}`}>
+                      <StatusIconPub size={11} />
+                      {estiloPub.texto}
+                    </span>
+                  </div>
                 </div>
 
                 {/* LEGENDA + COMENTÁRIOS (rolável) */}
                 <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3.5">
-                  {pub.descricao && (
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-blue-50 overflow-hidden flex items-center justify-center text-[#091f75] font-black text-[10px] shrink-0">
-                        {perfil.avatar_url && perfil.avatar_url !== "/perfil.png" ? (
-                          <img src={perfil.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                          gerarIniciais(perfil.nome_completo || "Você")
-                        )}
+                  {editandoPublicacao && edicaoPub ? (
+                    /* FORMULÁRIO DE EDIÇÃO */
+                    <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                          Tipo de ocorrência
+                        </span>
+                        <select
+                          value={edicaoPub.tipo}
+                          onChange={(e) =>
+                            setEdicaoPub((prev) => prev && { ...prev, tipo: e.target.value })
+                          }
+                          className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none focus:border-[#091f75]"
+                        >
+                          {TIPOS_OCORRENCIA.map((tipo) => (
+                            <option key={tipo} value={tipo}>
+                              {tipo}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      <p className="text-xs text-slate-700 leading-relaxed">
-                        <span className="font-bold text-slate-900">{perfil.nome_completo || "Você"}</span>{" "}
-                        {pub.descricao}
-                      </p>
+
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                          Cidade
+                        </span>
+                        <select
+                          value={edicaoPub.cidade}
+                          onChange={(e) =>
+                            setEdicaoPub((prev) => prev && { ...prev, cidade: e.target.value })
+                          }
+                          className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none focus:border-[#091f75]"
+                        >
+                          {CIDADES.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                            Bairro
+                          </span>
+                          <input
+                            type="text"
+                            value={edicaoPub.bairro}
+                            onChange={(e) =>
+                              setEdicaoPub((prev) => prev && { ...prev, bairro: e.target.value })
+                            }
+                            className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none focus:border-[#091f75]"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                            Endereço
+                          </span>
+                          <input
+                            type="text"
+                            value={edicaoPub.endereco}
+                            onChange={(e) =>
+                              setEdicaoPub((prev) => prev && { ...prev, endereco: e.target.value })
+                            }
+                            className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none focus:border-[#091f75]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">
+                          Descrição
+                        </span>
+                        <textarea
+                          rows={3}
+                          value={edicaoPub.descricao}
+                          onChange={(e) =>
+                            setEdicaoPub((prev) => prev && { ...prev, descricao: e.target.value })
+                          }
+                          className="w-full bg-white text-xs font-semibold text-slate-700 rounded-lg px-2.5 py-1.5 border border-slate-200 outline-none resize-none focus:border-[#091f75]"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          onClick={cancelarEdicaoPublicacao}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:bg-slate-100 rounded-lg transition-all cursor-pointer border border-slate-200"
+                        >
+                          <X size={13} />
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={() => salvarEdicaoPublicacao(pub.id)}
+                          disabled={salvandoEdicaoPub}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#091f75] hover:bg-[#0f35a0] rounded-lg transition-all cursor-pointer disabled:opacity-60"
+                        >
+                          {salvandoEdicaoPub ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Check size={13} />
+                          )}
+                          Salvar
+                        </button>
+                      </div>
                     </div>
+                  ) : (
+                    pub.descricao && (
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-blue-50 overflow-hidden flex items-center justify-center text-[#091f75] font-black text-[10px] shrink-0">
+                          {perfil.avatar_url && perfil.avatar_url !== "/perfil.png" ? (
+                            <img
+                              src={perfil.avatar_url}
+                              alt="Avatar"
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            gerarIniciais(perfil.nome_completo || "Você")
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">
+                          <span className="font-bold text-slate-900">{perfil.nome_completo || "Você"}</span>{" "}
+                          {pub.descricao}
+                        </p>
+                      </div>
+                    )
                   )}
 
                   {pub.comentarios.length === 0 ? (
