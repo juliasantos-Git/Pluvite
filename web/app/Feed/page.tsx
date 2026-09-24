@@ -671,7 +671,7 @@ export default function FeedPage() {
   // Três etapas do formulário: tipo, local e conteúdo (descrição ou foto)
   const etapasConcluidas = [
     novoTipo !== "",
-    novaCidade !== "" && novoBairro.trim() !== "" && novoEndereco.trim() !== "",
+    novaCidade !== "" && novoEndereco.trim() !== "",
     novaLegenda.trim() !== "" || novaImagemPreview !== null,
   ].filter(Boolean).length;
 
@@ -682,8 +682,7 @@ export default function FeedPage() {
       alert("Você precisa estar logada para publicar uma ocorrência.");
       return;
     }
-    if (!novoTipo || !novaCidade || !novoBairro.trim() || !novoEndereco.trim())
-      return;
+    if (!novoTipo || !novaCidade || !novoEndereco.trim()) return;
     if (!novaLegenda.trim() && !novaImagemArquivo) return;
 
     setPublicando(true);
@@ -1862,13 +1861,13 @@ export default function FeedPage() {
                     />
                   </CampoModal>
 
-                  <CampoModal htmlFor="novo-bairro" rotulo="Bairro" obrigatorio>
+                  <CampoModal htmlFor="novo-bairro" rotulo="Bairro">
                     <input
                       id="novo-bairro"
                       type="text"
                       value={novoBairro}
                       onChange={(e) => setNovoBairro(e.target.value)}
-                      placeholder="Ex: Quiririm"
+                      placeholder="Ex: Quiririm (deixe vazio em rodovias)"
                       className={CAMPO_CLASSE}
                     />
                   </CampoModal>

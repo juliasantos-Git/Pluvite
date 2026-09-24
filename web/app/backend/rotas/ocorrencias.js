@@ -132,7 +132,17 @@ export const encontrarRua = (grafo, endereco) => {
     if (rua.palavras < 3 || !texto.includes(` ${rua.normalizado} `)) continue;
     if (!melhor || rua.normalizado.length > melhor.normalizado.length) melhor = rua;
   }
-  return melhor?.nome ?? null;
+  if (melhor) return melhor.nome;
+
+  // Apelido da via: "Dutra" ou "Via Dutra" para "Rodovia Presidente Dutra". Só vale quando o
+  // termo aparece como palavra inteira em UMA única via da cidade — com duas ou mais seria
+  // palpite, e bloquear a rua errada é pior do que não localizar a ocorrência.
+  const apelido = semTipoDeVia(alvo);
+  if (apelido.length >= 4) {
+    const candidatas = lista.filter((rua) => ` ${rua.normalizado} `.includes(` ${apelido} `));
+    if (candidatas.length === 1) return candidatas[0].nome;
+  }
+  return null;
 };
 
 // ───── ARESTAS AFETADAS ─────

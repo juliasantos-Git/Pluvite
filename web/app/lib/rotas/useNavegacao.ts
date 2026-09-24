@@ -40,6 +40,12 @@ interface Recalculo {
 const INTERVALO_OCORRENCIAS_NAVEGANDO_MS = 20000;
 const INTERVALO_OCORRENCIAS_PARADO_MS = 60000;
 
+// O grafo só tem nós nos cruzamentos, então o backend "cola" a origem no nó mais próximo.
+// Quando a origem veio do GPS ou de um clique no mapa, o traçado começa nesse ponto exato:
+// sem isso o marcador verde saltava do lugar escolhido para o nó do grafo ao calcular a rota.
+const coordenadaDoPonto = (ponto: Ponto): Coordenada | undefined =>
+  'lat' in ponto ? [ponto.lat, ponto.lng] : undefined;
+
 /**
  * @param velocidadeSimulacao m/s para simular o deslocamento (página aberta com ?simular), ou null
  */
@@ -93,7 +99,11 @@ export function useNavegacao(cidade: string | null, velocidadeSimulacao: number 
     try {
       const resultado = await calcularRota(cidade, origem, destino);
       if (id !== idRequisicao.current) return;
-      const nova = prepararRota(resultado, destinoTexto, recalculo?.origemGps);
+      const nova = prepararRota(
+        resultado,
+        destinoTexto,
+        recalculo?.origemGps ?? coordenadaDoPonto(origem),
+      );
       setRota(nova);
       // O progresso antigo se refere à rota anterior: recalcula já sobre a nova
       leiturasForaDaRota.current = 0;

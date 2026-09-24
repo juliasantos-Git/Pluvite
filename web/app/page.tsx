@@ -86,7 +86,6 @@ export default function Home() {
 
         <div className="border-t border-slate-300 my-5" />
 
-<<<<<<< HEAD
         <section id="painel" className="max-w-6xl mx-auto px-6 py-24">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
             <div>
@@ -102,24 +101,6 @@ export default function Home() {
                 resposta.
               </p>
             </div>
-=======
-      {/* ── CHAMADOS ────────────────────────────────────────────────────────── */}
-      <section id="painel" className="max-w-6xl mx-auto px-6 py-15">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-          <div>
-            <span className="text-md font-bold text-[#2C4A6F] uppercase tracking-widest">
-              Dados unificados
-            </span>
-            <h2 className="text-5xl font-extrabold text-slate-950 mt-4 leading-snug">
-              Análise e Despacho Integrado
-            </h2>
-            <p className="text-base text-slate-800 font-medium mt-5">
-              O Pluvite centraliza chamados, monitora cidades criticamente
-              afetadas e oferece suporte visual imediato para equipes de
-              resposta.
-            </p>
-          </div>
->>>>>>> cf3c7d01f14c5487523e56cfe39f3a91c8d6ece6
 
             <div className="lg:col-span-2 border border-[#ccddff] bg-white rounded-2xl p-8 shadow-md">
               <div className="flex items-center justify-between border-b border-slate-200 pb-5 mb-8">
