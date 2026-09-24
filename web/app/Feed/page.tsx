@@ -429,6 +429,8 @@ export default function FeedPage() {
   // porque é esse id que as foreign keys de ocorrencias/curtidas/comentarios esperam.
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
   const [usuarioNome, setUsuarioNome] = useState("Você");
+  // true quando há sessão no Auth mas nenhuma linha em "cidadao" para esse auth_id
+  const [semCadastro, setSemCadastro] = useState(false);
 
   // Modal de nova publicação
   const [modalAberto, setModalAberto] = useState(false);
@@ -499,17 +501,36 @@ export default function FeedPage() {
       const usuario = data.user;
       if (!usuario) return;
 
+      // maybeSingle (e não single): contas criadas antes do trigger
+      // handle_new_user não têm linha em "cidadao", e o single devolvia o erro
+      // PGRST116 ("0 rows") como se a consulta tivesse falhado.
       const { data: cidadaoRow, error: erroCidadao } = await supabase
         .from("cidadao")
         .select("id, nome_completo")
         .eq("auth_id", usuario.id)
-        .single();
+        .maybeSingle();
 
-      if (erroCidadao || !cidadaoRow) {
-        console.error("Não foi possível carregar o cidadão logado:", erroCidadao);
+      if (erroCidadao) {
+        console.error("Erro ao carregar o cidadão logado:", {
+          message: erroCidadao.message,
+          details: erroCidadao.details,
+          hint: erroCidadao.hint,
+          code: erroCidadao.code,
+        });
         return;
       }
 
+      if (!cidadaoRow) {
+        console.warn(
+          `Sem linha em "cidadao" para o auth_id ${usuario.id}. Aplique a migration ` +
+            "supabase/migrations/20260924120000_cidadao_automatico.sql (cria a linha " +
+            "no cadastro e preenche as contas antigas) ou salve o perfil uma vez.",
+        );
+        setSemCadastro(true);
+        return;
+      }
+
+      setSemCadastro(false);
       setUsuarioId(cidadaoRow.id);
       setUsuarioNome(cidadaoRow.nome_completo || "Você");
     };
@@ -555,7 +576,7 @@ export default function FeedPage() {
         .from("cidadao")
         .select("id")
         .eq("auth_id", sessaoAtual.user.id)
-        .single();
+        .maybeSingle();
       idUsuarioAtual = cidadaoAtual?.id ?? null;
     }
 
@@ -639,6 +660,15 @@ export default function FeedPage() {
     setCategoriaAtiva("Todas");
   };
 
+  // Aviso quando usuarioId está vazio: quem não tem sessão precisa entrar; quem
+  // está logada mas ainda não tem cadastro de cidadão precisa salvar o perfil.
+  const avisarSemCadastro = (acao: string) =>
+    alert(
+      semCadastro
+        ? `Complete seu perfil antes de ${acao}.`
+        : `Você precisa estar logada para ${acao}.`,
+    );
+
   // ───── NOVA PUBLICAÇÃO ─────
   const handleSelecionarImagem = (e: React.ChangeEvent<HTMLInputElement>) => {
     const arquivo = e.target.files?.[0];
@@ -649,7 +679,7 @@ export default function FeedPage() {
 
   const handleAbrirModal = () => {
     if (!usuarioId) {
-      alert("Você precisa estar logada para publicar uma ocorrência.");
+      avisarSemCadastro("publicar uma ocorrência");
       return;
     }
     // Já sugere a cidade escolhida no filtro, se houver
@@ -679,7 +709,7 @@ export default function FeedPage() {
 
   const handlePublicar = async () => {
     if (!usuarioId) {
-      alert("Você precisa estar logada para publicar uma ocorrência.");
+      avisarSemCadastro("publicar uma ocorrência");
       return;
     }
     if (!novoTipo || !novaCidade || !novoEndereco.trim()) return;
@@ -748,7 +778,7 @@ export default function FeedPage() {
 
   const handleCurtir = async (id: string) => {
     if (!usuarioId) {
-      alert("Você precisa estar logada para curtir uma ocorrência.");
+      avisarSemCadastro("curtir uma ocorrência");
       return;
     }
 
@@ -843,7 +873,7 @@ export default function FeedPage() {
 
   const handleEnviarComentario = async (id: string) => {
     if (!usuarioId) {
-      alert("Você precisa estar logada para comentar.");
+      avisarSemCadastro("comentar");
       return;
     }
 
