@@ -36,7 +36,7 @@ Legenda de prioridade: 🔴 essencial para a banca · 🟡 importante · 🟢 de
 - [ ] URL do backend via `NEXT_PUBLIC_API_URL` (remover `http://localhost:3001` fixo)
 - [ ] Criar `web/app/lib/constantes.ts` com municípios, tipos, status e prioridades (remover as 3 listas divergentes; tirar "Potunduva", incluir Canas, Lavrinhas e Queluz no painel)
 - [ ] Unificar o mapeamento de status (`aguardando/andamento/resolvido` do mobile → valores canônicos)
-- [ ] Corrigir links da sidebar (`/servidor/alertas`, `/feed`, `/Perfil`) e dados fixos "Prefeitura de Taubaté"
+- [ ] Corrigir links da sidebar (`/servidor/alertas`, `/feed`, `/perfil`) e dados fixos "Prefeitura de Taubaté"
 - [ ] Botão "Sair" funcional na sidebar e na navbar do cidadão
 - [ ] Remover dependências não usadas do `web/package.json` (`expo`, `mysql2`, `bcrypt`, `@expo/vector-icons`)
 - [ ] Versionar o schema do Supabase em `supabase/migrations/` e apagar `BD-antigo.sql`
