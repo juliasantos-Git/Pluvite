@@ -1,17 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import dynamic from "next/dynamic";
 // Ajuste este caminho se você já tem um cliente Supabase em outro arquivo do projeto
 import { supabase } from "@/app/lib/banco";
-import {
-  CENTRO_MUNICIPIO,
-  TIPOS_OCORRENCIA,
-  type Municipio,
-  type TipoOcorrencia,
-} from "@/app/lib/constantes";
-import type { Coordenada } from "@/app/lib/geo";
-import { obterPosicaoAtual } from "@/app/lib/localizacao";
 import {
   AlertTriangle,
   Wrench,
@@ -36,22 +27,15 @@ import {
   Copy,
   Mail,
   MessageCircle,
-  Loader2,
-  LocateFixed,
-  MapPinned,
   Users,
   ShieldAlert,
+  Droplets,
+  TreeDeciduous,
+  Construction,
+  Mountain,
+  Ban,
+  LayoutGrid,
 } from "lucide-react";
-
-// Mapa para marcar o ponto exato da ocorrência (Leaflet só no navegador)
-const SeletorLocalSemSSR = dynamic(() => import("@/app/components/SeletorLocalMapa"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-44 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xs text-slate-500 animate-pulse">
-      Carregando mapa...
-    </div>
-  ),
-});
 
 interface Comentario {
   id: string;
@@ -64,6 +48,29 @@ type StatusOcorrencia =
   | "Em Andamento"
   | "Visualizado"
   | "Concluído";
+
+// Tipos de ocorrência — usados no menu da publicação e nos filtros do feed
+const TIPOS_OCORRENCIA = [
+  "Alagamento",
+  "Árvore caída",
+  "Buraco na via",
+  "Deslizamento de terra",
+  "Via interditada",
+  "Outros",
+] as const;
+
+type TipoOcorrencia = (typeof TIPOS_OCORRENCIA)[number];
+
+// Ícone de cada categoria nos chips de filtro
+const ICONE_CATEGORIA: Record<string, any> = {
+  Todas: LayoutGrid,
+  Alagamento: Droplets,
+  "Árvore caída": TreeDeciduous,
+  "Buraco na via": Construction,
+  "Deslizamento de terra": Mountain,
+  "Via interditada": Ban,
+  Outros: FileText,
+};
 
 // Os 39 municípios do Vale do Paraíba e Litoral Norte — usados no filtro e na publicação
 const CIDADES = [
@@ -126,20 +133,6 @@ interface Ocorrencia {
   curtido: boolean;
   curtidas: number;
   comentarios: Comentario[];
-}
-
-// Linha inserida em "ocorrencias" ao publicar (latitude/longitude só com o ponto marcado)
-interface LinhaNovaOcorrencia {
-  autor_id: string;
-  tipo: TipoOcorrencia;
-  cidade: string;
-  bairro: string;
-  endereco: string;
-  descricao: string | null;
-  imagem_url: string | null;
-  status: StatusOcorrencia;
-  latitude?: number;
-  longitude?: number;
 }
 
 const STATUS_ESTILO: Record<
@@ -380,10 +373,10 @@ function MenuSuspenso({
                 onMouseEnter={() => setIndiceAtivo(i)}
                 onClick={() => selecionar(op.valor)}
                 className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm cursor-pointer transition-colors ${escolhida
-                    ? "bg-white/15 text-white font-semibold"
-                    : destacada
-                      ? "bg-white/10 text-white"
-                      : "text-white/85"
+                  ? "bg-white/15 text-white font-semibold"
+                  : destacada
+                    ? "bg-white/10 text-white"
+                    : "text-white/85"
                   }`}
               >
                 <span className="truncate">{op.rotulo}</span>
@@ -449,11 +442,6 @@ export default function FeedPage() {
   const [novaCidade, setNovaCidade] = useState("");
   const [novoBairro, setNovoBairro] = useState("");
   const [novoEndereco, setNovoEndereco] = useState("");
-  // Ponto exato da ocorrência (opcional): o mapa de rotas usa para desviar só daquele trecho
-  const [novaLocalizacao, setNovaLocalizacao] = useState<Coordenada | null>(null);
-  const [mapaLocalAberto, setMapaLocalAberto] = useState(false);
-  const [localizandoPublicacao, setLocalizandoPublicacao] = useState(false);
-  const [erroLocalizacao, setErroLocalizacao] = useState<string | null>(null);
   const inputImagemRef = useRef<HTMLInputElement>(null);
 
   // Texto do comentário sendo digitado, por ocorrência (id -> texto)
@@ -470,21 +458,6 @@ export default function FeedPage() {
   // Id da ocorrência aberta no menu de compartilhamento (null = nenhum aberto)
   const [compartilhandoId, setCompartilhandoId] = useState<string | null>(null);
   const [linkCopiado, setLinkCopiado] = useState(false);
-
-  // Barra de filtros fixa ao rolar a página. A altura dela é medida pra a coluna lateral
-  // ficar fixa logo ABAIXO dela, sem os dois se sobreporem (mesmo se a barra crescer/encolher).
-  const TOPO_NAVBAR_PX = 80; // altura da barra de navegação fixa — igual ao "top-20" abaixo
-  const filtrosRef = useRef<HTMLDivElement>(null);
-  const [alturaFiltros, setAlturaFiltros] = useState(153);
-  useEffect(() => {
-    const el = filtrosRef.current;
-    if (!el) return;
-    const atualizar = () => setAlturaFiltros(el.offsetHeight);
-    atualizar();
-    const observador = new ResizeObserver(atualizar);
-    observador.observe(el);
-    return () => observador.disconnect();
-  }, []);
 
   // Se a página foi aberta a partir de um link compartilhado (?ocorrencia=<id>),
   // abre automaticamente o post correspondente assim que a página carrega.
@@ -655,6 +628,11 @@ export default function FeedPage() {
     return true;
   });
 
+  // Quantas ocorrências existem por categoria (respeita a cidade escolhida) — aparece nos chips
+  const ocorrenciasNaCidade = ocorrencias.filter(
+    (o) => !cidade || o.cidade === cidade,
+  );
+
   const limparFiltros = () => {
     setBusca("");
     setCidade("");
@@ -687,25 +665,7 @@ export default function FeedPage() {
     setNovaCidade("");
     setNovoBairro("");
     setNovoEndereco("");
-    setNovaLocalizacao(null);
-    setMapaLocalAberto(false);
-    setErroLocalizacao(null);
     setModalAberto(false);
-  };
-
-  const handleUsarLocalizacaoPublicacao = async () => {
-    setLocalizandoPublicacao(true);
-    setErroLocalizacao(null);
-    try {
-      setNovaLocalizacao(await obterPosicaoAtual());
-    } catch (err) {
-      console.error("Erro ao obter localização da ocorrência:", err);
-      setErroLocalizacao(
-        "Não foi possível obter sua localização. Permita o acesso ou marque o ponto no mapa.",
-      );
-    } finally {
-      setLocalizandoPublicacao(false);
-    }
   };
 
   // Três etapas do formulário: tipo, local e conteúdo (descrição ou foto)
@@ -754,7 +714,7 @@ export default function FeedPage() {
       imagemUrlFinal = urlPublica.publicUrl;
     }
 
-    const novaOcorrencia: LinhaNovaOcorrencia = {
+    const { error: erroInsercao } = await supabase.from("ocorrencias").insert({
       autor_id: usuarioId,
       tipo: novoTipo,
       cidade: novaCidade,
@@ -763,19 +723,7 @@ export default function FeedPage() {
       descricao: novaLegenda.trim() || null,
       imagem_url: imagemUrlFinal,
       status: "Aguardando",
-    };
-    let { error: erroInsercao } = await supabase.from("ocorrencias").insert(
-      novaLocalizacao
-        ? { ...novaOcorrencia, latitude: novaLocalizacao[0], longitude: novaLocalizacao[1] }
-        : novaOcorrencia,
-    );
-
-    // Banco ainda sem as colunas latitude/longitude (migração em supabase/migrations/ não
-    // aplicada): publica só com o endereço, que o mapa de rotas também sabe usar
-    if (erroInsercao?.code === "PGRST204" && novaLocalizacao) {
-      console.warn("Ocorrência publicada sem o ponto exato:", erroInsercao.message);
-      ({ error: erroInsercao } = await supabase.from("ocorrencias").insert(novaOcorrencia));
-    }
+    });
 
     setPublicando(false);
 
@@ -980,7 +928,7 @@ export default function FeedPage() {
 
       <main className="relative z-10 max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8">
         {/* BANNER — no lugar do título, mapa decorativo com "pessoas" e marcações plotadas */}
-        <div className="relative overflow-hidden rounded-2xl bg-[#091f75] p-6 sm:p-8 text-white shadow-sm mb-6">
+        <div className="relative overflow-hidden rounded-2xl bg-[#091f75] p-6 sm:p-8 text-white shadow-sm">
           <svg
             className="absolute inset-0 w-full h-full opacity-[0.18]"
             viewBox="0 0 1200 220"
@@ -1098,270 +1046,293 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* FILTROS DE PESQUISA — ficam fixos no topo (abaixo da navbar) ao rolar a página */}
-        <div
-          ref={filtrosRef}
-          className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4 mb-6 md:sticky md:top-20 md:z-30"
-        >
-          <div className="flex flex-col sm:flex-row gap-3">
-            <MenuSuspenso
-              id="filtro-cidade"
-              className="sm:w-64"
-              valor={cidade}
-              onChange={setCidade}
-              opcoes={opcoesCidadeFiltro}
-              placeholder="Todas as cidades"
-              icone={<MapPin size={16} />}
-              negrito
-            />
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* COLUNA ESQUERDA */}
+          <div className="w-full lg:w-2/3">
+            {/* FILTROS DE PESQUISA  */}
+            <div className="pt-6 pb-2 md:bg-[#f4f5f7] md:sticky md:top-14 md:z-30">
+              <div className="bg-white px-3 py-4 sm:px-4 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <MenuSuspenso
+                    id="filtro-cidade"
+                    className="sm:w-64"
+                    valor={cidade}
+                    onChange={setCidade}
+                    opcoes={opcoesCidadeFiltro}
+                    placeholder="Todas as cidades"
+                    icone={<MapPin size={16} />}
+                    negrito
+                  />
 
-            <div className="relative flex-1">
-              <Search
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                type="text"
-                placeholder="Buscar por bairro, rua ou descrição (ex: Quiririm)..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className={`${CAMPO_CLASSE} pl-10 pr-10`}
-              />
-              {busca && (
-                <button
-                  onClick={() => setBusca("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  title="Limpar busca"
+                  <div className="relative flex-1">
+                    <Search
+                      size={16}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Buscar por bairro, rua ou descrição (ex: Quiririm)..."
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      className={`${CAMPO_CLASSE} pl-10 pr-10`}
+                    />
+                    {busca && (
+                      <button
+                        onClick={() => setBusca("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title="Limpar busca"
+                      >
+                        <X size={15} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* CATEGORIAS — chips quadrados (rounded-lg), com ícone e quantidade.
+                    Rola horizontalmente se não couber, mas sem mostrar a barra de rolagem. */}
+                <div
+                  className="flex items-center gap-1 overflow-x-auto border-t border-slate-100 pt-3 pb-0.5 -mx-1 px-1 [&::-webkit-scrollbar]:hidden"
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
-                  <X size={15} />
-                </button>
+                  <Filter size={13} className="text-slate-400 mr-0.5 shrink-0" />
+                  {categorias.map((cat) => {
+                    const IconeCat = ICONE_CATEGORIA[cat] ?? FileText;
+                    const ativa = categoriaAtiva === cat;
+                    const total =
+                      cat === "Todas"
+                        ? ocorrenciasNaCidade.length
+                        : ocorrenciasNaCidade.filter((o) => o.tipo === cat).length;
+
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setCategoriaAtiva(cat)}
+                        className={`group flex items-center gap-1 pl-2 pr-1 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${ativa
+                          ? "bg-[#091f75] text-white border-[#091f75] shadow-sm shadow-[#091f75]/25"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-[#091f75]/30 hover:bg-blue-50/60 hover:text-[#091f75]"
+                          }`}
+                      >
+                        <IconeCat
+                          size={13}
+                          className={
+                            ativa
+                              ? "text-white"
+                              : "text-slate-400 group-hover:text-[#091f75]"
+                          }
+                        />
+                        {cat}
+                        <span
+                          className={`min-w-[16px] text-center rounded-md px-0.5 py-px text-[10px] font-bold ${ativa
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 text-slate-500 group-hover:bg-white"
+                            }`}
+                        >
+                          {total}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {temFiltroAtivo && (
+                    <button
+                      onClick={limparFiltros}
+                      className="ml-auto pl-3 flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-red-600 whitespace-nowrap shrink-0 cursor-pointer transition"
+                    >
+                      <X size={13} />
+                      Limpar filtros
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* FEED */}
+            <div className="space-y-4 pt-4">
+              <p className="text-xs font-semibold text-slate-500 px-1">
+                {ocorrenciasFiltradas.length}{" "}
+                {ocorrenciasFiltradas.length === 1
+                  ? "ocorrência encontrada"
+                  : "ocorrências encontradas"}
+              </p>
+
+              {carregandoFeed && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
+                  <p className="text-xs text-slate-500 font-semibold">
+                    Carregando ocorrências...
+                  </p>
+                </div>
               )}
+
+              {!carregandoFeed && ocorrenciasFiltradas.length === 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
+                  <div className="p-3 rounded-full bg-slate-100 text-slate-400">
+                    <Search size={22} />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm">
+                    Nenhuma ocorrência encontrada
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-xs">
+                    Não há publicações com esses filtros. Tente outra busca ou
+                    limpe os filtros.
+                  </p>
+                  <button
+                    onClick={limparFiltros}
+                    className="mt-1 bg-[#091f75] hover:bg-[#0f2a8f] text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer"
+                  >
+                    Limpar filtros
+                  </button>
+                </div>
+              )}
+
+              {ocorrenciasFiltradas.map((oc) => {
+                const estilo = STATUS_ESTILO[oc.status];
+                const StatusIcon = estilo.icon;
+
+                return (
+                  <article
+                    key={oc.id}
+                    className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:border-slate-300 transition"
+                  >
+                    <div className="p-4 sm:p-5 flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shrink-0 overflow-hidden">
+                          {oc.autorAvatarUrl ? (
+                            <img
+                              src={oc.autorAvatarUrl}
+                              alt={oc.autor}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            oc.iniciais
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
+                            {oc.autor}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500 mt-0.5">
+                            <MapPin
+                              size={12}
+                              className="text-slate-400 shrink-0"
+                            />
+                            <span className="truncate">{oc.endereco}</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="font-semibold text-slate-700">
+                              {oc.bairro}
+                            </span>
+                            <span className="text-slate-300">•</span>
+                            <span>{oc.cidade}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          {oc.tempo}
+                        </span>
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border ${estilo.badge}`}
+                        >
+                          <StatusIcon size={12} />
+                          {estilo.texto}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* TIPO DA OCORRÊNCIA — chip neutro, quadrado, combinando com os filtros */}
+                    <div className="px-4 sm:px-5 pb-3 -mt-1.5">
+                      <span className="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
+                        {oc.tipo}
+                      </span>
+                    </div>
+
+                    {/* FOTO DA OCORRÊNCIA — clique abre o post completo, tipo Instagram */}
+                    {oc.imagemUrl && (
+                      <button
+                        onClick={() => abrirPost(oc.id)}
+                        className="w-full h-72 sm:h-80 bg-slate-100 overflow-hidden relative block cursor-pointer"
+                      >
+                        <img
+                          src={oc.imagemUrl}
+                          alt="Foto da ocorrência"
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    )}
+
+                    {/* BARRA DE INTERAÇÕES E AÇÕES */}
+                    <div className="px-4 sm:px-5 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => handleCurtir(oc.id)}
+                          className={`relative flex items-center gap-1.5 transition cursor-pointer ${oc.curtido ? "text-red-600" : "text-slate-500 hover:text-red-600"}`}
+                        >
+                          {curtidaAnimando[oc.id] && (
+                            <span className="absolute -left-1.5 -top-1.5 w-7 h-7 rounded-full bg-red-500/20 animate-ping pointer-events-none" />
+                          )}
+                          <ThumbsUp
+                            size={15}
+                            fill={oc.curtido ? "currentColor" : "none"}
+                            className={
+                              curtidaAnimando[oc.id] ? "animate-curtir-pop" : ""
+                            }
+                          />
+                          <span>Curtidas ({oc.curtidas})</span>
+                        </button>
+                        <button
+                          onClick={() => abrirPost(oc.id)}
+                          className="flex items-center gap-1.5 hover:text-[#091f75] transition cursor-pointer"
+                        >
+                          <MessageSquare size={15} />
+                          <span>Comentários ({oc.comentarios.length})</span>
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => handleCompartilhar(oc.id)}
+                        className="flex items-center gap-1.5 hover:text-[#091f75] transition cursor-pointer"
+                      >
+                        <Share2 size={15} />
+                        <span className="hidden sm:inline">Compartilhar</span>
+                      </button>
+                    </div>
+
+                    {/* PRÉVIA DA LEGENDA — clique abre o post completo */}
+                    {oc.descricao && (
+                      <button
+                        onClick={() => abrirPost(oc.id)}
+                        className="block w-full text-left px-4 sm:px-5 pb-3 text-xs text-slate-700 font-medium leading-relaxed cursor-pointer"
+                      >
+                        <span className="font-bold text-slate-900">
+                          {oc.autor}
+                        </span>{" "}
+                        <span className="line-clamp-2">{oc.descricao}</span>
+                      </button>
+                    )}
+
+                    {oc.comentarios.length > 0 && (
+                      <button
+                        onClick={() => abrirPost(oc.id)}
+                        className="block w-full text-left px-4 sm:px-5 pb-4 -mt-1.5 text-xs text-slate-400 font-semibold hover:text-slate-600 cursor-pointer"
+                      >
+                        Ver{" "}
+                        {oc.comentarios.length === 1
+                          ? "o comentário"
+                          : `todos os ${oc.comentarios.length} comentários`}
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           </div>
 
-          {/* CATEGORIAS — chips quadrados (rounded-lg), sem o efeito de pílula */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1 no-scrollbar">
-            <Filter size={13} className="text-slate-400 mr-0.5 shrink-0" />
-            {categorias.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategoriaAtiva(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer border ${categoriaAtiva === cat
-                    ? "bg-[#091f75] text-white border-[#091f75]"
-                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
-
-            {temFiltroAtivo && (
-              <button
-                onClick={limparFiltros}
-                className="ml-auto pl-3 flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-red-600 whitespace-nowrap shrink-0 cursor-pointer transition"
-              >
-                <X size={13} />
-                Limpar filtros
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
-          {/* FEED */}
-          <div className="w-full lg:w-2/3 space-y-4">
-            <p className="text-xs font-semibold text-slate-500 px-1">
-              {ocorrenciasFiltradas.length}{" "}
-              {ocorrenciasFiltradas.length === 1
-                ? "ocorrência encontrada"
-                : "ocorrências encontradas"}
-            </p>
-
-            {carregandoFeed && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
-                <p className="text-xs text-slate-500 font-semibold">
-                  Carregando ocorrências...
-                </p>
-              </div>
-            )}
-
-            {!carregandoFeed && ocorrenciasFiltradas.length === 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 flex flex-col items-center text-center gap-3">
-                <div className="p-3 rounded-full bg-slate-100 text-slate-400">
-                  <Search size={22} />
-                </div>
-                <h3 className="font-bold text-slate-800 text-sm">
-                  Nenhuma ocorrência encontrada
-                </h3>
-                <p className="text-xs text-slate-500 max-w-xs">
-                  Não há publicações com esses filtros. Tente outra busca ou
-                  limpe os filtros.
-                </p>
-                <button
-                  onClick={limparFiltros}
-                  className="mt-1 bg-[#091f75] hover:bg-[#0f2a8f] text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer"
-                >
-                  Limpar filtros
-                </button>
-              </div>
-            )}
-
-            {ocorrenciasFiltradas.map((oc) => {
-              const estilo = STATUS_ESTILO[oc.status];
-              const StatusIcon = estilo.icon;
-
-              return (
-                <article
-                  key={oc.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:border-slate-300 transition"
-                >
-                  <div className="p-4 sm:p-5 flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-[#091f75] text-white font-bold flex items-center justify-center text-xs shrink-0 overflow-hidden">
-                        {oc.autorAvatarUrl ? (
-                          <img
-                            src={oc.autorAvatarUrl}
-                            alt={oc.autor}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          oc.iniciais
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">
-                          {oc.autor}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-x-1.5 text-xs text-slate-500 mt-0.5">
-                          <MapPin
-                            size={12}
-                            className="text-slate-400 shrink-0"
-                          />
-                          <span className="truncate">{oc.endereco}</span>
-                          <span className="text-slate-300">•</span>
-                          <span className="font-semibold text-slate-700">
-                            {oc.bairro}
-                          </span>
-                          <span className="text-slate-300">•</span>
-                          <span>{oc.cidade}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        {oc.tempo}
-                      </span>
-                      <span
-                        className={`text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border ${estilo.badge}`}
-                      >
-                        <StatusIcon size={12} />
-                        {estilo.texto}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* TIPO DA OCORRÊNCIA — chip neutro, quadrado, combinando com os filtros */}
-                  <div className="px-4 sm:px-5 pb-3 -mt-1.5">
-                    <span className="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
-                      {oc.tipo}
-                    </span>
-                  </div>
-
-                  {/* FOTO DA OCORRÊNCIA — clique abre o post completo, tipo Instagram */}
-                  {oc.imagemUrl && (
-                    <button
-                      onClick={() => abrirPost(oc.id)}
-                      className="w-full h-72 sm:h-80 bg-slate-100 overflow-hidden relative block cursor-pointer"
-                    >
-                      <img
-                        src={oc.imagemUrl}
-                        alt="Foto da ocorrência"
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  )}
-
-                  {/* BARRA DE INTERAÇÕES E AÇÕES */}
-                  <div className="px-4 sm:px-5 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleCurtir(oc.id)}
-                        className={`relative flex items-center gap-1.5 transition cursor-pointer ${oc.curtido ? "text-red-600" : "text-slate-500 hover:text-red-600"}`}
-                      >
-                        {curtidaAnimando[oc.id] && (
-                          <span className="absolute -left-1.5 -top-1.5 w-7 h-7 rounded-full bg-red-500/20 animate-ping pointer-events-none" />
-                        )}
-                        <ThumbsUp
-                          size={15}
-                          fill={oc.curtido ? "currentColor" : "none"}
-                          className={
-                            curtidaAnimando[oc.id] ? "animate-curtir-pop" : ""
-                          }
-                        />
-                        <span>Curtidas ({oc.curtidas})</span>
-                      </button>
-                      <button
-                        onClick={() => abrirPost(oc.id)}
-                        className="flex items-center gap-1.5 hover:text-[#091f75] transition cursor-pointer"
-                      >
-                        <MessageSquare size={15} />
-                        <span>Comentários ({oc.comentarios.length})</span>
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() => handleCompartilhar(oc.id)}
-                      className="flex items-center gap-1.5 hover:text-[#091f75] transition cursor-pointer"
-                    >
-                      <Share2 size={15} />
-                      <span className="hidden sm:inline">Compartilhar</span>
-                    </button>
-                  </div>
-
-                  {/* PRÉVIA DA LEGENDA — clique abre o post completo */}
-                  {oc.descricao && (
-                    <button
-                      onClick={() => abrirPost(oc.id)}
-                      className="block w-full text-left px-4 sm:px-5 pb-3 text-xs text-slate-700 font-medium leading-relaxed cursor-pointer"
-                    >
-                      <span className="font-bold text-slate-900">
-                        {oc.autor}
-                      </span>{" "}
-                      <span className="line-clamp-2">{oc.descricao}</span>
-                    </button>
-                  )}
-
-                  {oc.comentarios.length > 0 && (
-                    <button
-                      onClick={() => abrirPost(oc.id)}
-                      className="block w-full text-left px-4 sm:px-5 pb-4 -mt-1.5 text-xs text-slate-400 font-semibold hover:text-slate-600 cursor-pointer"
-                    >
-                      Ver{" "}
-                      {oc.comentarios.length === 1
-                        ? "o comentário"
-                        : `todos os ${oc.comentarios.length} comentários`}
-                    </button>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-
-          {/* COLUNA DIREITA — fixa na tela (sticky) logo abaixo da barra de filtros. Se a tela for
-                        baixa, ela rola por dentro (sem mostrar a barra) em vez de ser cortada. */}
-          <aside
-            style={
-              {
-                "--topo-aside": `${TOPO_NAVBAR_PX + alturaFiltros + 12}px`,
-              } as React.CSSProperties
-            }
-            className="w-full lg:w-1/3 lg:sticky lg:top-[var(--topo-aside)] lg:self-start lg:max-h-[calc(100vh-var(--topo-aside)-1rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden space-y-3"
-          >
+          {/* COLUNA DIREITA */}
+          <aside className="w-full lg:w-1/3 lg:sticky lg:top-14 lg:self-start pt-6 space-y-3">
             {/* STATUS */}
             <div className="grid grid-cols-3 gap-2">
-              <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-sm">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center gap-1 shadow-sm">
                 <div className="p-1.5 rounded-lg bg-red-50 text-red-600">
                   <AlertTriangle size={15} />
                 </div>
@@ -1435,7 +1406,7 @@ export default function FeedPage() {
                 Estatísticas da comunidade
               </h3>
               <div className="grid grid-cols-3 gap-2 pt-1">
-                <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col items-center gap-0.5">
+                <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 flex flex-col items-center gap-0.5">
                   <span className="text-lg font-black text-[#091f75] leading-tight">
                     {estatisticas.total}
                   </span>
@@ -1463,7 +1434,7 @@ export default function FeedPage() {
             </div>
 
             {/* CARD DICAS DE SEGURANÇA */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-2">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-2">
               <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
                 <ShieldAlert size={16} className="text-[#091f75]" />
                 Dicas de segurança
@@ -1805,8 +1776,8 @@ export default function FeedPage() {
                     <button
                       onClick={() => handleCopiarLink(oc.id)}
                       className={`flex items-center gap-1.5 shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition cursor-pointer ${linkCopiado
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-[#091f75] hover:bg-[#0f2a8f] text-white"
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-[#091f75] hover:bg-[#0f2a8f] text-white"
                         }`}
                     >
                       {linkCopiado ? <Check size={14} /> : <Copy size={14} />}
@@ -1858,9 +1829,7 @@ export default function FeedPage() {
               </button>
             </div>
 
-            {/* Com o mapa do local aberto o conteúdo passa da altura da tela: o corpo rola para o
-                rodapé (Publicar) continuar visível */}
-            <div className={`p-6 overflow-y-auto ${mapaLocalAberto ? "" : "md:overflow-visible"}`}>
+            <div className="p-6 overflow-y-auto md:overflow-visible">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
                 {/* COLUNA ESQUERDA: TIPO E LOCALIZAÇÃO */}
                 <div className="space-y-4 md:pr-8">
@@ -1919,78 +1888,11 @@ export default function FeedPage() {
                         type="text"
                         value={novoEndereco}
                         onChange={(e) => setNovoEndereco(e.target.value)}
-                        placeholder="Ex: Avenida Navrik Feres Aguiar, 1500"
+                        placeholder="Rua e número (ou ponto de referência)"
                         className={`${CAMPO_CLASSE} pl-10`}
                       />
                     </div>
-                    {/* O mapa de rotas identifica a via pelo nome da rua escrito aqui */}
-                    <p className="mt-1.5 text-[11px] font-medium text-slate-500">
-                      Informe o nome da rua ou avenida. É por ele que o mapa de rotas sabe qual via
-                      evitar.
-                    </p>
                   </CampoModal>
-
-                  {/* LOCAL EXATO (opcional) — o mapa de rotas desvia só do trecho afetado */}
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleUsarLocalizacaoPublicacao}
-                        disabled={localizandoPublicacao}
-                        className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#091f75] bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-2 rounded-xl transition cursor-pointer disabled:opacity-50"
-                      >
-                        {localizandoPublicacao ? (
-                          <Loader2 size={13} className="animate-spin" />
-                        ) : (
-                          <LocateFixed size={13} />
-                        )}
-                        Usar minha localização
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMapaLocalAberto((aberto) => !aberto)}
-                        className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#091f75] bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-2 rounded-xl transition cursor-pointer"
-                      >
-                        <MapPinned size={13} />
-                        {mapaLocalAberto ? "Fechar mapa" : "Marcar no mapa"}
-                      </button>
-                    </div>
-
-                    {mapaLocalAberto && (
-                      <div className="mt-2">
-                        <SeletorLocalSemSSR
-                          centroCidade={
-                            CENTRO_MUNICIPIO[novaCidade as Municipio] ?? CENTRO_MUNICIPIO.Taubaté
-                          }
-                          valor={novaLocalizacao}
-                          onChange={setNovaLocalizacao}
-                        />
-                      </div>
-                    )}
-
-                    {erroLocalizacao ? (
-                      <p className="mt-1.5 text-[11px] font-medium text-red-600">
-                        {erroLocalizacao}
-                      </p>
-                    ) : novaLocalizacao ? (
-                      <p className="mt-1.5 text-[11px] font-semibold text-[#091f75] flex items-center gap-1.5">
-                        <CheckCircle size={12} />
-                        Local marcado ({novaLocalizacao[0].toFixed(5)},{" "}
-                        {novaLocalizacao[1].toFixed(5)})
-                        <button
-                          type="button"
-                          onClick={() => setNovaLocalizacao(null)}
-                          className="font-bold text-slate-500 hover:text-red-600 cursor-pointer"
-                        >
-                          Remover
-                        </button>
-                      </p>
-                    ) : (
-                      <p className="mt-1.5 text-[11px] font-medium text-slate-500">
-                        Opcional: marque o ponto exato para as rotas desviarem da ocorrência.
-                      </p>
-                    )}
-                  </div>
                 </div>
 
                 {/* COLUNA DIREITA: DESCRIÇÃO E FOTO */}
