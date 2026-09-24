@@ -294,7 +294,7 @@ export default function ClimaPage() {
               {forecast.forecastday.map((item: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between px-2 py-2.5 rounded-xl bg-zinc-50 border border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   <span className="text-xs font-bold text-gray-600 capitalize w-20">
                     {idx === 0 ? "Hoje" : formatarDiaSemana(item.date, "short")}
@@ -322,7 +322,7 @@ export default function ClimaPage() {
         {/* DIREITA */}
         <div className="flex flex-col gap-6">
           {/* MAIS INFORMAÇÕES */}
-          <div className="p-5 sm:p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="p-5 sm:p-9.5 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <span className="text-sm font-bold text-gray-800 block mb-4">
               Detalhes de hoje
             </span>
@@ -428,7 +428,7 @@ export default function ClimaPage() {
           </div>
 
           {/* OUTRAS CIDADES */}
-          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="p-8 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <span className="text-sm font-bold text-gray-700 block mb-3">
               Outras cidades próximas
             </span>

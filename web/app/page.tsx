@@ -86,87 +86,86 @@ export default function Home() {
 
         <div className="border-t border-slate-300 my-5" />
 
-      {/* ── CHAMADOS ────────────────────────────────────────────────────────── */}
-      <section id="painel" className="max-w-6xl mx-auto px-6 py-15">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
-          <div>
-            <span className="text-md font-bold text-[#2C4A6F] uppercase tracking-widest">
-              Dados unificados
-            </span>
-            <h2 className="text-5xl font-extrabold text-slate-950 mt-4 leading-snug">
-              Análise e Despacho Integrado
-            </h2>
-            <p className="text-base text-slate-800 font-medium mt-5">
-              O Pluvite centraliza chamados, monitora cidades criticamente
-              afetadas e oferece suporte visual imediato para equipes de
-              resposta.
-            </p>
-          </div>
+        <section id="painel" className="max-w-6xl mx-auto px-6 py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+            <div>
+              <span className="text-md font-bold text-[#2C4A6F] uppercase tracking-widest">
+                Dados unificados
+              </span>
+              <h2 className="text-5xl font-extrabold text-slate-950 mt-4 leading-snug">
+                Análise e Despacho Integrado
+              </h2>
+              <p className="text-base text-slate-800 font-medium mt-5">
+                O Pluvite centraliza chamados, monitora cidades criticamente
+                afetadas e oferece suporte visual imediato para equipes de
+                resposta.
+              </p>
+            </div>
 
-          <div className="lg:col-span-2 border border-[#ccddff] bg-white rounded-2xl p-8 shadow-md">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-5 mb-8">
-              <div className="flex items-center gap-2.5">
-                <img src="/grafico.png" alt="Painel" width={18} height={18} />
-                <span className="text-base font-bold text-slate-900">
-                  Visão Geral do Painel
+            <div className="lg:col-span-2 border border-[#ccddff] bg-white rounded-2xl p-8 shadow-md">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-5 mb-8">
+                <div className="flex items-center gap-2.5">
+                  <img src="/grafico.png" alt="Painel" width={18} height={18} />
+                  <span className="text-base font-bold text-slate-900">
+                    Visão Geral do Painel
+                  </span>
+                </div>
+                <span className="text-xs font-bold text-black border border-[#ccddff] bg-[#eff5ff] px-3 py-1.5 rounded-md">
+                  Atualizado agora
                 </span>
               </div>
-              <span className="text-xs font-bold text-black border border-[#ccddff] bg-[#eff5ff] px-3 py-1.5 rounded-md">
-                Atualizado agora
-              </span>
-            </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-              {[
-                { label: "Chamados", value: "6", bg: "bg-[#e8000e]" },
-                { label: "Críticos", value: "3", bg: "bg-[#1e0972]" },
-                { label: "Andamento", value: "2", bg: "bg-[#f18200]" },
-                { label: "Concluídos", value: "0", bg: "bg-[#006b26]" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className={`${s.bg} rounded-xl p-4 text-center shadow-sm`}
-                >
-                  <p className="text-3xl font-extrabold text-white">
-                    {s.value}
-                  </p>
-                  <p className="text-xs text-white/85 font-bold mt-2">
-                    {s.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div>
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                Ocorrências por Município
-              </span>
-              <div className="h-28 flex items-end gap-3 pt-5 border-b border-slate-300 px-1 mt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
                 {[
-                  { h: "70%" },
-                  { h: "95%" },
-                  { h: "45%" },
-                  { h: "20%" },
-                  { h: "60%" },
-                ].map((bar, i) => (
+                  { label: "Chamados", value: "6", bg: "bg-[#e8000e]" },
+                  { label: "Críticos", value: "3", bg: "bg-[#1e0972]" },
+                  { label: "Andamento", value: "2", bg: "bg-[#f18200]" },
+                  { label: "Concluídos", value: "0", bg: "bg-[#006b26]" },
+                ].map((s) => (
                   <div
-                    key={i}
-                    className="bg-[#1351cb] w-full rounded-t-sm"
-                    style={{ height: bar.h }}
-                  />
+                    key={s.label}
+                    className={`${s.bg} rounded-xl p-4 text-center shadow-sm`}
+                  >
+                    <p className="text-3xl font-extrabold text-white">
+                      {s.value}
+                    </p>
+                    <p className="text-xs text-white/85 font-bold mt-2">
+                      {s.label}
+                    </p>
+                  </div>
                 ))}
               </div>
-              <div className="flex justify-between text-[11px] text-slate-700 font-bold px-1 mt-3">
-                <span>Taubaté</span>
-                <span>Campos do Jordão</span>
-                <span>Ubatuba</span>
-                <span>Cunha</span>
-                <span>Lagoinha</span>
+
+              <div>
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                  Ocorrências por Município
+                </span>
+                <div className="h-28 flex items-end gap-3 pt-5 border-b border-slate-300 px-1 mt-4">
+                  {[
+                    { h: "70%" },
+                    { h: "95%" },
+                    { h: "45%" },
+                    { h: "20%" },
+                    { h: "60%" },
+                  ].map((bar, i) => (
+                    <div
+                      key={i}
+                      className="bg-[#1351cb] w-full rounded-t-sm"
+                      style={{ height: bar.h }}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-700 font-bold px-1 mt-3">
+                  <span>Taubaté</span>
+                  <span>Campos do Jordão</span>
+                  <span>Ubatuba</span>
+                  <span>Cunha</span>
+                  <span>Lagoinha</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
         <div className="border-t border-slate-300 my-5" />
 
@@ -717,64 +716,64 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-        <footer className="border-t border-slate-800 bg-[#091c4b] px-6 py-8 text-white shadow-inner select-none">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Logo + Nome */}
-            <div className="flex items-center gap-3">
-              <img
-                src="/PluviteIcon.jpg"
-                alt="Logo Pluvite"
-                className="w-12 h-12 rounded-xl object-cover shadow-md flex-shrink-0"
-              />
-              <span className="font-black text-white text-2xl tracking-tight">
-                Pluvite
-              </span>
-            </div>
-
-            {/* GitHub */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-slate-400 font-medium">
-              <span className="text-slate-300 font-semibold">
-                Vale do Paraíba • Litoral Norte
-              </span>
-              <a
-                href="https://github.com/juliasantos-Git/Pluvite"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-5 py-3 rounded-xl border border-white/10 transition-all duration-200 shadow-sm"
-                title="Acessar código-fonte no GitHub"
-              >
-                <img
-                  src="/github.png"
-                  alt="GitHub"
-                  className="w-5 h-5"
-                  style={{ filter: "brightness(0) invert(1)" }}
-                />
-                <span className="font-extrabold text-sm tracking-wider">
-                  GitHub
-                </span>
-              </a>
-            </div>
-          </div>
-        </footer>
       </main>
 
-      {/* ── BOTÃO SCROLL TO TOP ─────────────────────────────────────────────── */}
-      <button
-        onClick={() => scrollTo("hero")}
-        className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group cursor-pointer"
-        title="Voltar ao topo"
-      >
-        <img
-          src="/seta-pra-cima.png"
-          alt="Voltar ao topo"
-          width={20}
-          height={20}
-          className="transition-transform duration-300 group-hover:scale-110"
-          style={{ filter: "brightness(0) invert(1)" }}
-        />
-      </button>
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-800 bg-[#091c4b] px-6 py-8 text-white shadow-inner select-none">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Logo + Nome */}
+          <div className="flex items-center gap-3">
+            <img
+              src="/PluviteIcon.jpg"
+              alt="Logo Pluvite"
+              className="w-12 h-12 rounded-xl object-cover shadow-md flex-shrink-0"
+            />
+            <span className="font-black text-white text-2xl tracking-tight">
+              Pluvite
+            </span>
+          </div>
+
+          {/* GitHub */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-xs text-slate-400 font-medium">
+            <span className="text-slate-300 font-semibold">
+              Vale do Paraíba • Litoral Norte
+            </span>
+            <a
+              href="https://github.com/juliasantos-Git/Pluvite"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 bg-white/5 hover:bg-white/10 text-slate-200 hover:text-white px-5 py-3 rounded-xl border border-white/10 transition-all duration-200 shadow-sm"
+              title="Acessar código-fonte no GitHub"
+            >
+              <img
+                src="/github.png"
+                alt="GitHub"
+                className="w-5 h-5"
+                style={{ filter: "brightness(0) invert(1)" }}
+              />
+              <span className="font-extrabold text-sm tracking-wider">
+                GitHub
+              </span>
+            </a>
+          </div>
+        </div>
+        {/* ── BOTÃO SCROLL TO TOP ─────────────────────────────────────────────── */}
+        <button
+          onClick={() => scrollTo("hero")}
+          className="fixed bottom-6 right-6 p-3.5 rounded-full bg-[#0d43af] hover:bg-[#133986] text-white shadow-lg transition-all duration-300 hover:-translate-y-1 active:scale-95 z-50 group cursor-pointer"
+          title="Voltar ao topo"
+        >
+          <img
+            src="/seta-pra-cima.png"
+            alt="Voltar ao topo"
+            width={20}
+            height={20}
+            className="transition-transform duration-300 group-hover:scale-110"
+            style={{ filter: "brightness(0) invert(1)" }}
+          />
+        </button>
+      </footer>
     </div>
   );
 }
+

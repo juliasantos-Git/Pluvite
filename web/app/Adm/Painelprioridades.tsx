@@ -130,7 +130,7 @@ export default function PainelPrioridades() {
             ainda não existe no Supabase — mostrando os valores padrão (só
             leitura por enquanto). Rode{" "}
             <code className="font-mono">
-              supabase/migrations/0001_config_prioridades.sql
+              supabase/migrations/20260923200000_painel_admin.sql
             </code>{" "}
             no SQL Editor do seu projeto pra poder editar por aqui.
           </span>
