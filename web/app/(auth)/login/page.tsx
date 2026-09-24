@@ -63,20 +63,21 @@ export default function Login() {
       if (error || !data.user) {
         // O Supabase não diz se o erro foi "senha errada" ou "e-mail não
         // cadastrado" (ambos voltam como "Invalid login credentials"), então
-        // pra dar uma mensagem mais específica a gente confere à parte se
-        // esse e-mail existe na tabela cidadao. Contas de admin/servidor
-        // fazem login com o mesmo formulário, mas não têm linha em
-        // "cidadao" — então esse fallback de "conta não encontrada" só
-        // dispara de verdade pra e-mails que nunca foram cadastrados em
-        // lugar nenhum (nem cidadão, nem servidor, nem admin).
-        const [{ data: cidadaoExistente }, { data: servidorExistente }, { data: adminExistente }] =
-          await Promise.all([
-            supabase.from("cidadao").select("id").eq("email", email).maybeSingle(),
-            supabase.from("servidor").select("id").eq("email", email).maybeSingle(),
-            supabase.from("admin").select("id").eq("email", email).maybeSingle(),
-          ]);
+        // pra dar uma mensagem mais específica a gente pergunta à parte se esse
+        // e-mail existe em cidadao, servidor ou admin. A função conta_existe
+        // (supabase/migrations/20260923200000_painel_admin.sql) devolve só um
+        // booleano: as tabelas em si estão fechadas por RLS.
+        const { data: contaExiste, error: erroConsulta } = await supabase.rpc(
+          "conta_existe",
+          { p_email: email },
+        );
 
-        if (!cidadaoExistente && !servidorExistente && !adminExistente) {
+        // Na dúvida (função ainda não criada, rede fora) assume que a conta
+        // existe: dizer "senha incorreta" para quem tem conta é bem menos ruim
+        // do que mandar quem tem conta para a tela de "conta não encontrada".
+        if (erroConsulta) {
+          console.error("Erro ao verificar se a conta existe:", erroConsulta);
+        } else if (!contaExiste) {
           router.push(`/conta-nao-encontrada?email=${encodeURIComponent(email)}`);
           return;
         }

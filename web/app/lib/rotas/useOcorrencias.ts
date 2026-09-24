@@ -50,6 +50,22 @@ export function useOcorrenciasDaCidade(
     return () => clearInterval(intervalo);
   }, [cidade, intervaloMs]);
 
+  // VOLTA DO SEGUNDO PLANO: quem deixou a aba aberta veria o mapa desatualizado até a próxima
+  // consulta periódica. Ao reexibir a aba (ou voltar o foco) busca na hora — assim as ocorrências
+  // publicadas por outras pessoas enquanto a aba estava escondida já aparecem.
+  useEffect(() => {
+    if (!cidade) return;
+    const aoVoltar = () => {
+      if (document.visibilityState === "visible") setVersao((v) => v + 1);
+    };
+    document.addEventListener("visibilitychange", aoVoltar);
+    window.addEventListener("focus", aoVoltar);
+    return () => {
+      document.removeEventListener("visibilitychange", aoVoltar);
+      window.removeEventListener("focus", aoVoltar);
+    };
+  }, [cidade]);
+
   // REALTIME: novas publicações, mudanças de status e exclusões na tabela do Feed
   useEffect(() => {
     if (!cidade) return;

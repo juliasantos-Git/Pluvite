@@ -5,3 +5,8 @@ cache/
 # A service_role do Supabase ignora RLS: nunca pode ser commitada.
 .env*
 !.env.example
+# Prints que o usuario manda para o Claude durante o desenvolvimento
+Print pro Claude/
+*.png
+!web/public/**/*.png
+!mobile/**/*.png

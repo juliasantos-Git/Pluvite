@@ -4,7 +4,7 @@ import { PRIORIDADE_POR_TIPO_PADRAO, PRIORIDADES } from "@/app/lib/constantes";
 
 // Rota ADMIN da tela "Níveis de Risco" — lê e atualiza o mapeamento
 // tipo de ocorrência -> prioridade guardado em "config_prioridades"
-// (ver supabase/migrations/0001_config_prioridades.sql). Se a tabela ainda
+// (ver supabase/migrations/20260923200000_painel_admin.sql). Se a tabela ainda
 // não tiver sido criada no Supabase, cai de volta pros valores padrão que
 // já estavam fixos no código, pra a tela nunca ficar vazia.
 
@@ -97,7 +97,7 @@ export async function PUT(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Não foi possível salvar. A tabela 'config_prioridades' existe no Supabase? Veja supabase/migrations/0001_config_prioridades.sql.",
+            "Não foi possível salvar. A tabela 'config_prioridades' existe no Supabase? Veja supabase/migrations/20260923200000_painel_admin.sql.",
         },
         { status: 500 },
       );
